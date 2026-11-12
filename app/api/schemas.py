@@ -14,6 +14,11 @@ from app.sources import DEMO_ID
 class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500, examples=["Which region's revenue dropped last quarter?"])
     dataset_id: str = Field(default=DEMO_ID, max_length=40, description='"demo" or an uploaded dataset id')
+    conversation_id: str | None = Field(
+        default=None,
+        pattern=r"^[a-f0-9]{32}$",
+        description="Continue a conversation (follow-up questions); omit to start a new one",
+    )
 
 
 class ChartSpec(BaseModel):
@@ -43,6 +48,34 @@ class AskResponse(BaseModel):
     trace: list[dict[str, Any]]  # one entry per agent step (timing, errors, tokens)
     usage: TokenUsage
     latency_ms: int
+    # conversation and logging
+    question_id: str | None = None  # for feedback and export; None if logging failed
+    conversation_id: str
+    turn: int  # 1 = first question of the conversation
+    standalone_question: str  # how a follow-up was understood ("same for 2024" -> full question)
+    cost_usd: float | None = None  # estimated model cost of this answer
+
+
+# ---- /api/auth --------------------------------------------------------------------------------
+class Credentials(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=1, max_length=200)
+
+
+class MeResponse(BaseModel):
+    signed_in: bool
+    email: str = ""
+    is_admin: bool = False
+
+
+# ---- /api/questions ---------------------------------------------------------------------------
+class FeedbackRequest(BaseModel):
+    rating: Literal[1, -1, 0]  # helpful, not helpful, clear
+    note: str = Field(default="", max_length=1000)
+
+
+class ReportRequest(BaseModel):
+    chart_png: str = Field(default="", max_length=3_000_000, description="data:image/png;base64,... (optional)")
 
 
 # ---- /api/health ----------------------------------------------------------------------------

@@ -4,4 +4,4 @@
 pytest==9.2.0
 httpx==0.28.1
 ruff==0.17.4
-fpdf2==2.9.0   # builds sample PDFs in the upload tests
+pytest-cov==7.0.0

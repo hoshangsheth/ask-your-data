@@ -3,7 +3,9 @@ Services container: the long-lived objects one app instance needs, created once 
 all requests (stored on `app.state.services`).
 
     engines     owner + read-only engines for the demo store
-    store       where uploaded datasets live: Postgres (one schema each) or local SQLite files
+    accounts    users and the session-signing secret
+    log         question log + upload events (feedback, follow-up history, metrics)
+    store      where uploaded datasets live: Postgres (one schema each) or local SQLite files
     staging     where upload parts and original files go: Vercel Blob or a local folder
     datasets    upload service (validate -> read -> clean -> profile -> store)
     agent(id)   a SQLAgent per data source ("demo" or an upload id), built lazily and cached
@@ -17,6 +19,7 @@ import threading
 from collections import OrderedDict
 from pathlib import Path
 
+from app.accounts import AccountStore
 from app.agent import SQLAgent
 from app.api.rate_limit import RateLimiter
 from app.core.config import DATA_ROOT, Settings
@@ -27,6 +30,8 @@ from app.datasets.store import DatasetStore, LocalDatasetStore
 from app.db.engine import is_postgres, make_engines
 from app.llm import LLM, build_llm
 from app.sources import DEMO_ID, DataSource, build_demo_source, build_upload_source
+from app.telemetry import QuestionLog
+from app.telemetry.pricing import price_table
 
 MAX_CACHED_AGENTS = 32  # agents hold a schema prompt and an engine; keep the most recent ones
 
@@ -41,6 +46,11 @@ class Services:
         self.settings = settings
         self.owner_engine, self.readonly_engine = make_engines(settings.database_url, settings.readonly_database_url)
         self.limiter = RateLimiter(settings.rate_limit_per_minute)
+        self.login_limiter = RateLimiter(settings.login_attempts_per_minute)
+        self.accounts = AccountStore(
+            self.owner_engine, set(settings.admin_emails.split(",")), secret_override=settings.session_secret
+        )
+        self.log = QuestionLog(self.owner_engine, price_table(settings.llm_prices))
         self.store = self._make_store()
         self.staging = self._make_staging()
         self.datasets = DatasetService(self.store, settings.max_upload_mb)
@@ -86,6 +96,12 @@ class Services:
         if self._llm is None:
             self._llm = build_llm(self.settings)  # may raise LLMServiceError (e.g. no key)
         return self._llm
+
+    def models(self) -> dict[str, str]:
+        """Provider and models answering questions (for the question log)."""
+        llm = self._get_llm()
+        describe = getattr(llm, "describe", None)
+        return describe() if describe else {"provider": "test", "sql_model": "", "summary_model": ""}
 
     def agent(self, dataset_id: str = DEMO_ID) -> SQLAgent:
         """Agent for a data source, built on first use and cached (least-recently-used eviction)."""

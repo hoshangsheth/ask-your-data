@@ -7,20 +7,25 @@ Datasets: the demo store plus files users upload.
     GET    /api/datasets/{id}        one dataset
     DELETE /api/datasets/{id}        delete an uploaded dataset (the demo store can't be deleted)
 
+Uploads are private: uploading needs a signed-in user, and each user only sees and can delete
+their own datasets (others' ids answer 404). Every upload is measured for the metrics page.
+
 Multi-part upload (what the browser uses; each request stays under Vercel's 4.5 MB body limit):
     POST   /api/uploads                          {filename, size} -> {upload_id, part_bytes, parts}
     PUT    /api/uploads/{upload_id}/parts/{n}    raw bytes of part n (0-based)
     POST   /api/uploads/{upload_id}/complete     {filename, parts} -> new dataset
 """
 
+import time
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import func, select
 
+from app.accounts import Identity
 from app.api.container import Services
-from app.api.dependencies import get_services, require_access
+from app.api.dependencies import get_identity, get_services, owned_upload, require_access, require_user
 from app.api.schemas import (
     DatasetSummary,
     DatasetTable,
@@ -76,32 +81,46 @@ def formats(services: Services = Depends(get_services)) -> FormatsResponse:
 
 
 @router.get("/api/datasets", response_model=list[DatasetSummary])
-def list_datasets(services: Services = Depends(get_services)) -> list[DatasetSummary]:
-    return [_demo_summary(services)] + [_upload_summary(m) for m in services.store.list()]
+def list_datasets(
+    services: Services = Depends(get_services), identity: Identity = Depends(get_identity)
+) -> list[DatasetSummary]:
+    own = [m for m in services.store.list() if identity.signed_in and m.owner_id == identity.user_id]
+    return [_demo_summary(services)] + [_upload_summary(m) for m in own]
 
 
 @router.post("/api/datasets", response_model=DatasetSummary, status_code=201, dependencies=[Depends(require_access)])
-async def upload_dataset(file: UploadFile = File(...), services: Services = Depends(get_services)) -> DatasetSummary:
+async def upload_dataset(
+    file: UploadFile = File(...), services: Services = Depends(get_services), user: Identity = Depends(require_user)
+) -> DatasetSummary:
     limit = services.settings.max_upload_mb * 1024 * 1024
     data = await file.read(limit + 1)  # read at most one byte past the limit
+    started = time.perf_counter()
     try:
         # Parsing is CPU-bound: run it off the event loop.
-        meta = await run_in_threadpool(services.datasets.ingest, data, file.filename or "data")
+        meta = await run_in_threadpool(
+            services.datasets.ingest, data, file.filename or "data", owner_id=user.user_id or ""
+        )
     except UploadError as e:
         raise HTTPException(e.status_code, str(e)) from e
-    _log_upload(meta)
+    await run_in_threadpool(_log_upload, services, meta, started)
     return _upload_summary(meta)
 
 
-def _log_upload(meta: DatasetMeta) -> None:
-    log_event(
-        "upload",
-        dataset_id=meta.id,
-        format=meta.file_format,
-        size_bytes=meta.size_bytes,
-        tables=len(meta.tables),
-        rows=sum(t.rows for t in meta.tables),
-    )
+def _log_upload(services: Services, meta: DatasetMeta, started: float) -> None:
+    """Measure the upload (size, rows, processing time) for the metrics page and the server log."""
+    data = {
+        "dataset_id": meta.id,
+        "format": meta.file_format,
+        "size_bytes": meta.size_bytes,
+        "tables": len(meta.tables),
+        "rows": sum(t.rows for t in meta.tables),
+        "processing_ms": int((time.perf_counter() - started) * 1000),
+    }
+    log_event("upload", **data)
+    try:
+        services.log.record_upload(meta.owner_id or None, data)
+    except Exception as e:  # metrics must never fail an upload
+        log_event("upload_log_failed", error=type(e).__name__)
 
 
 # ---- multi-part uploads ------------------------------------------------------------------------
@@ -110,7 +129,9 @@ def _part_bytes(services: Services) -> int:
 
 
 @router.post("/api/uploads", response_model=UploadStarted, status_code=201, dependencies=[Depends(require_access)])
-def start_upload(body: UploadStart, services: Services = Depends(get_services)) -> UploadStarted:
+def start_upload(
+    body: UploadStart, services: Services = Depends(get_services), _: Identity = Depends(require_user)
+) -> UploadStarted:
     try:
         services.datasets.check_upload(body.filename, body.size)
     except UploadError as e:
@@ -121,7 +142,11 @@ def start_upload(body: UploadStart, services: Services = Depends(get_services)) 
 
 @router.put("/api/uploads/{upload_id}/parts/{index}", status_code=204, dependencies=[Depends(require_access)])
 async def upload_part(
-    upload_id: str, index: int, request: Request, services: Services = Depends(get_services)
+    upload_id: str,
+    index: int,
+    request: Request,
+    services: Services = Depends(get_services),
+    _: Identity = Depends(require_user),
 ) -> Response:
     if not 0 <= index < MAX_PARTS:
         raise HTTPException(400, "invalid part number")
@@ -138,7 +163,7 @@ async def upload_part(
     return Response(status_code=204)
 
 
-def _complete(services: Services, upload_id: str, body: UploadComplete) -> DatasetMeta:
+def _complete(services: Services, upload_id: str, body: UploadComplete, owner_id: str) -> DatasetMeta:
     """Join the parts, keep the original, build the dataset; staged parts are always removed."""
     try:
         data = services.staging.assemble(upload_id, body.parts)
@@ -151,7 +176,7 @@ def _complete(services: Services, upload_id: str, body: UploadComplete) -> Datas
             log_event("keep_original_failed", upload_id=upload_id, error=type(e).__name__)
             url = ""
         try:
-            return services.datasets.ingest(data, body.filename, source_url=url)
+            return services.datasets.ingest(data, body.filename, source_url=url, owner_id=owner_id)
         except Exception:
             services.staging.delete_original(url)  # don't keep files of failed uploads
             raise
@@ -169,35 +194,44 @@ def _complete(services: Services, upload_id: str, body: UploadComplete) -> Datas
     dependencies=[Depends(require_access)],
 )
 async def complete_upload(
-    upload_id: str, body: UploadComplete, services: Services = Depends(get_services)
+    upload_id: str,
+    body: UploadComplete,
+    services: Services = Depends(get_services),
+    user: Identity = Depends(require_user),
 ) -> DatasetSummary:
+    started = time.perf_counter()
     try:
         check_upload_id(upload_id)
-        meta = await run_in_threadpool(_complete, services, upload_id, body)
+        meta = await run_in_threadpool(_complete, services, upload_id, body, user.user_id or "")
     except MissingPart as e:
         raise HTTPException(409, str(e)) from e
     except UploadError as e:
         raise HTTPException(e.status_code, str(e)) from e
-    _log_upload(meta)
+    await run_in_threadpool(_log_upload, services, meta, started)
     return _upload_summary(meta)
 
 
 @router.get("/api/datasets/{dataset_id}", response_model=DatasetSummary)
-def get_dataset(dataset_id: str, services: Services = Depends(get_services)) -> DatasetSummary:
+def get_dataset(
+    dataset_id: str, services: Services = Depends(get_services), identity: Identity = Depends(get_identity)
+) -> DatasetSummary:
     if dataset_id == DEMO_ID:
         return _demo_summary(services)
     try:
-        return _upload_summary(services.store.get(dataset_id))
+        return _upload_summary(owned_upload(services, dataset_id, identity))
     except DatasetNotFound as e:
         raise HTTPException(404, "dataset not found") from e
 
 
 @router.delete("/api/datasets/{dataset_id}", status_code=204, dependencies=[Depends(require_access)])
-def delete_dataset(dataset_id: str, services: Services = Depends(get_services)) -> Response:
+def delete_dataset(
+    dataset_id: str, services: Services = Depends(get_services), identity: Identity = Depends(get_identity)
+) -> Response:
     if dataset_id == DEMO_ID:
         raise HTTPException(400, "the demo store can't be deleted")
-    services.forget(dataset_id)
     try:
+        owned_upload(services, dataset_id, identity)
+        services.forget(dataset_id)
         meta = services.store.delete(dataset_id)
     except DatasetNotFound as e:
         raise HTTPException(404, "dataset not found") from e

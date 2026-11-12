@@ -9,9 +9,10 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 
+from app.accounts import Identity
 from app.analytics.kpis import compute_kpis
 from app.api.container import Services
-from app.api.dependencies import get_services
+from app.api.dependencies import get_identity, get_services, owned_upload
 from app.api.schemas import ColumnInfo, SchemaResponse, TableInfo
 from app.datasets.profile import ColumnProfile
 from app.datasets.store import DatasetNotFound
@@ -42,7 +43,11 @@ def _describe_column(c: ColumnProfile) -> str:
 
 
 @router.get("/api/schema", response_model=SchemaResponse)
-def schema(dataset: str = Query(DEMO_ID, max_length=40), services: Services = Depends(get_services)) -> SchemaResponse:
+def schema(
+    dataset: str = Query(DEMO_ID, max_length=40),
+    services: Services = Depends(get_services),
+    identity: Identity = Depends(get_identity),
+) -> SchemaResponse:
     if dataset == DEMO_ID:
         tables: dict[str, TableInfo] = {}
         with services.readonly_engine.connect() as conn:
@@ -58,7 +63,7 @@ def schema(dataset: str = Query(DEMO_ID, max_length=40), services: Services = De
         return SchemaResponse(dataset_id=DEMO_ID, tables=tables)
 
     try:
-        meta = services.store.get(dataset)
+        meta = owned_upload(services, dataset, identity)
     except DatasetNotFound as e:
         raise HTTPException(404, "dataset not found") from e
     return SchemaResponse(

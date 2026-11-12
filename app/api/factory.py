@@ -6,7 +6,7 @@ Usage:
     app = create_app()                              # settings from env/.env, LLM from settings
     app = create_app(Settings(...), llm=FakeLLM())  # tests: custom settings, scripted model
 
-Startup (lifespan): creates tables and seeds the demo store if empty (AUTO_SEED=true; SQLite or
+Startup (lifespan): creates tables (demo store, accounts, question log) and seeds the demo store if empty (AUTO_SEED=true; SQLite or
 Postgres). Shutdown: closes connection pools.
 """
 
@@ -22,10 +22,12 @@ from sqlalchemy import exc as sa_exc
 from sqlalchemy import text
 
 from app.api.container import Services
-from app.api.routes import ask, dashboard, datasets, health
+from app.api.routes import ask, auth, dashboard, datasets, health, metrics, questions
+from app.api.session import install_session_middleware
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, log_event
 from app.datasets.pg_store import PostgresDatasetStore
+from app.db.app_tables import app_metadata
 from app.db.models import metadata
 from app.db.seed import seed
 from app.llm import LLM
@@ -56,8 +58,10 @@ def _prepare_database(services: Services) -> None:
             conn.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": _SEED_LOCK_ID})
             if isinstance(services.store, PostgresDatasetStore):
                 services.store.create_tables(conn)
+            app_metadata.create_all(conn)
             counts = seed(conn) if auto_seed else metadata.create_all(conn)
     else:
+        app_metadata.create_all(engine)
         counts = seed(engine) if auto_seed else metadata.create_all(engine)  # seed: no-op if data exists
     if counts:
         log_event("seeded", **counts)
@@ -87,6 +91,12 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None) -> Fast
     app.include_router(dashboard.router)
     app.include_router(ask.router)
     app.include_router(datasets.router)
+    app.include_router(auth.router)
+    app.include_router(questions.router)
+    app.include_router(metrics.router)
+
+    # Every /api request gets an identity: a signed-in user or an anonymous guest.
+    install_session_middleware(app)
 
     # Make browsers re-check the page and its assets on every load (cheap 304 if unchanged), so a
     # code update is never hidden behind a stale cached file.

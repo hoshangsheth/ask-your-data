@@ -83,6 +83,18 @@ class Settings(BaseSettings):
     # ---- API protection ----------------------------------------------------------------------
     app_api_key: str = ""  # if set, POST /api/ask requires header X-API-Key
     rate_limit_per_minute: int = 20  # per client IP on POST /api/ask; 0 disables
+    login_attempts_per_minute: int = 10  # per client IP on sign-in / sign-up; 0 disables
+
+    # ---- Accounts ----------------------------------------------------------------------------
+    # Cookie-signing key. Empty = generated once and stored in the database (works on serverless).
+    session_secret: str = ""
+    # Comma-separated emails that can see the feedback review list on the metrics page.
+    admin_emails: str = ""
+
+    # ---- Metrics and export ------------------------------------------------------------------
+    # Extra/override model prices, USD per 1M tokens: '{"model": [input, output]}'.
+    llm_prices: str = ""
+    export_max_rows: int = 10_000  # rows in CSV / Excel exports (the chat shows at most max_rows)
 
     # ---- Startup -----------------------------------------------------------------------------
     auto_seed: bool = True  # seed the SQLite demo database on first start

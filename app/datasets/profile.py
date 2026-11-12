@@ -49,6 +49,7 @@ class DatasetMeta:
     tables: list[TableProfile]
     suggestions: list[str] = field(default_factory=list)
     source_url: str = ""  # original file in object storage (Vercel Blob), if kept
+    owner_id: str = ""  # user who uploaded it; only they can see and query it
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

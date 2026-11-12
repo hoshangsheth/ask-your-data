@@ -45,7 +45,7 @@ class DatasetService:
                 f"'{ext}' files are not supported. Supported: {', '.join(SUPPORTED_EXTENSIONS)}", status_code=415
             )
 
-    def ingest(self, data: bytes, filename: str, source_url: str = "") -> DatasetMeta:
+    def ingest(self, data: bytes, filename: str, source_url: str = "", owner_id: str = "") -> DatasetMeta:
         # 1) Validate size and type before doing any parsing work.
         if not data:
             raise UploadError("the file is empty")
@@ -73,6 +73,7 @@ class DatasetService:
             size_bytes=len(data),
             tables=[profile_table(t) for t in tables],
             source_url=source_url,
+            owner_id=owner_id,
         )
         meta.suggestions = suggest_questions(meta)
         self.store.save(meta, tables)
