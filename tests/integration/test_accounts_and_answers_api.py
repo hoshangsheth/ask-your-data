@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 from app.api.factory import create_app
 from app.llm import SQLDraft
 from tests import sample_files as files
-from tests.fakes import GOOD_DRAFT, TEST_PASSWORD, FakeLLM, sign_up
+from tests.fakes import GOOD_DRAFT, TEST_COMPANY, TEST_NAME, TEST_PASSWORD, FakeLLM, sign_up, signup_body
 
 FOLLOW_UP = SQLDraft(
     True,
@@ -27,14 +27,16 @@ def upload(client):
 # ---- accounts ----------------------------------------------------------------------------------
 def test_signup_login_logout(settings):
     with TestClient(create_app(settings, FakeLLM([]))) as c:
-        assert c.get("/api/auth/me").json() == {"signed_in": False, "email": "", "is_admin": False}
+        guest = c.get("/api/auth/me").json()
+        assert guest == {"signed_in": False, "email": "", "is_admin": False, "name": "", "company": ""}
         assert "ayd_session" in c.cookies  # guests get a session too
 
         email = sign_up(c)
         me = c.get("/api/auth/me").json()
         assert me["signed_in"] and me["email"] == email
+        assert me["name"] == TEST_NAME and me["company"] == TEST_COMPANY
 
-        assert c.post("/api/auth/signup", json={"email": email.upper(), "password": TEST_PASSWORD}).status_code == 409
+        assert c.post("/api/auth/signup", json=signup_body(email.upper())).status_code == 409
         assert c.post("/api/auth/logout").json()["signed_in"] is False
         assert c.get("/api/auth/me").json()["signed_in"] is False
 
@@ -52,10 +54,20 @@ def test_signup_login_logout(settings):
 def test_signup_validation_and_rate_limit(settings):
     s = settings.model_copy(update={"login_attempts_per_minute": 3})
     with TestClient(create_app(s, FakeLLM([]))) as c:
-        assert c.post("/api/auth/signup", json={"email": "not-an-email", "password": TEST_PASSWORD}).status_code == 400
-        assert c.post("/api/auth/signup", json={"email": "a@example.test", "password": "short"}).status_code == 400
+        assert c.post("/api/auth/signup", json=signup_body("not-an-email")).status_code == 400
+        assert c.post("/api/auth/signup", json=signup_body("a@example.test", "short")).status_code == 400
         assert c.post("/api/auth/login", json={"email": "a@example.test", "password": "x"}).status_code == 401
         assert c.post("/api/auth/login", json={"email": "a@example.test", "password": "x"}).status_code == 429
+
+
+def test_signup_needs_name_and_company(settings):
+    with TestClient(create_app(settings, FakeLLM([]))) as c:
+        no_name = {**signup_body("b@example.test"), "name": ""}
+        assert c.post("/api/auth/signup", json=no_name).status_code == 422
+        no_company = {k: v for k, v in signup_body("b@example.test").items() if k != "company"}
+        assert c.post("/api/auth/signup", json=no_company).status_code == 422
+        blank = {**signup_body("b@example.test"), "company": "   "}
+        assert c.post("/api/auth/signup", json=blank).status_code == 400
 
 
 def test_tampered_cookie_becomes_a_guest(settings):
@@ -188,3 +200,53 @@ def test_metrics_and_admin_endpoints(settings):
         assert any(i["id"] == qid and i["feedback_note"] == "wrong grouping" for i in items)
         jsonl = c.get("/api/metrics/eval-candidates").text
         assert "Customers by region" in jsonl and "TODO" in jsonl
+
+
+def test_feedback_excel_has_who_rated(settings):
+    admin = "sheet-admin@example.test"
+    s = settings.model_copy(update={"admin_emails": admin})
+    app = create_app(s, FakeLLM([GOOD_DRAFT, GOOD_DRAFT]))
+    with TestClient(app) as user, TestClient(app) as guest, TestClient(app) as owner:
+        email = sign_up(user)
+        qid = user.post("/api/ask", json={"question": "Customers by region"}).json()["question_id"]
+        user.post(f"/api/questions/{qid}/feedback", json={"rating": 1, "note": "spot on"})
+        gid = guest.post("/api/ask", json={"question": "Customers by region"}).json()["question_id"]
+        guest.post(f"/api/questions/{gid}/feedback", json={"rating": -1})
+
+        assert user.get("/api/metrics/feedback.xlsx").status_code == 403  # admins only
+        sign_up(owner, admin)
+        res = owner.get("/api/metrics/feedback.xlsx")
+        assert res.status_code == 200 and "ask-your-data-feedback-" in res.headers["content-disposition"]
+        ws = load_workbook(io.BytesIO(res.content))["Feedback"]
+        header = [cell.value for cell in ws[1]]
+        rows = [dict(zip(header, [cell.value for cell in r], strict=True)) for r in ws.iter_rows(min_row=2)]
+        mine = next(r for r in rows if r["Question ID"] == qid)
+        assert (mine["Name"], mine["Company"], mine["Email"]) == (TEST_NAME, TEST_COMPANY, email)
+        assert mine["Rating"].endswith("Helpful") and mine["Note"] == "spot on"
+        assert next(r for r in rows if r["Question ID"] == gid)["Name"] == "Guest"
+
+        feed = owner.get("/api/metrics/feedback").json()
+        assert next(i for i in feed if i["id"] == qid)["company"] == TEST_COMPANY
+
+
+def test_feedback_goes_to_the_google_sheet_when_set_up(settings, monkeypatch):
+    sent = []
+    monkeypatch.setattr("app.telemetry.feedback.SheetSync.send", lambda self, row: sent.append(row) or True)
+    s = settings.model_copy(update={"feedback_sheet_url": "https://script.google.com/macros/s/x/exec"})
+    with TestClient(create_app(s, FakeLLM([GOOD_DRAFT]))) as c:
+        sign_up(c)
+        qid = c.post("/api/ask", json={"question": "Customers by region"}).json()["question_id"]
+        assert c.post(f"/api/questions/{qid}/feedback", json={"rating": -1, "note": "nope"}).status_code == 204
+    assert len(sent) == 1
+    assert sent[0]["name"] == TEST_NAME and sent[0]["company"] == TEST_COMPANY and sent[0]["note"] == "nope"
+
+
+def test_a_broken_google_sheet_never_fails_the_click(settings, monkeypatch):
+    def boom(self, row):
+        raise OSError("sheet down")
+
+    monkeypatch.setattr("app.telemetry.feedback.SheetSync.send", boom)
+    s = settings.model_copy(update={"feedback_sheet_url": "https://script.google.com/macros/s/x/exec"})
+    with TestClient(create_app(s, FakeLLM([GOOD_DRAFT]))) as c:
+        qid = c.post("/api/ask", json={"question": "Customers by region"}).json()["question_id"]
+        assert c.post(f"/api/questions/{qid}/feedback", json={"rating": 1}).status_code == 204

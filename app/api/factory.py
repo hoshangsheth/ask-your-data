@@ -27,7 +27,7 @@ from app.api.session import install_session_middleware
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, log_event
 from app.datasets.pg_store import PostgresDatasetStore
-from app.db.app_tables import app_metadata
+from app.db.app_tables import add_missing_columns, app_metadata
 from app.db.models import metadata
 from app.db.seed import seed
 from app.llm import LLM
@@ -59,9 +59,12 @@ def _prepare_database(services: Services) -> None:
             if isinstance(services.store, PostgresDatasetStore):
                 services.store.create_tables(conn)
             app_metadata.create_all(conn)
+            add_missing_columns(conn)
             counts = seed(conn) if auto_seed else metadata.create_all(conn)
     else:
         app_metadata.create_all(engine)
+        with engine.begin() as conn:
+            add_missing_columns(conn)
         counts = seed(engine) if auto_seed else metadata.create_all(engine)  # seed: no-op if data exists
     if counts:
         log_event("seeded", **counts)

@@ -2,6 +2,7 @@
 Actions on an answered question (only the user or guest who asked it can use them):
 
     POST /api/questions/{id}/feedback          {rating: 1 | -1 | 0, note}   helpful / not / clear
+                                               (also appended to the owner's Google Sheet, if set up)
     GET  /api/questions/{id}/export?format=csv  result table as CSV (or format=xlsx for Excel)
     POST /api/questions/{id}/report            {chart_png}  one-page PDF report
 
@@ -23,6 +24,7 @@ from app.db.executor import QueryError, run_readonly
 from app.exports import Report, decode_png_data_url, filename_for, to_csv, to_pdf, to_xlsx
 from app.sql.guard import SQLValidationError, validate_sql
 from app.telemetry import StoredQuestion
+from app.telemetry.feedback import make_row
 
 router = APIRouter(tags=["questions"])
 
@@ -76,6 +78,13 @@ def feedback(
     if len(qid) != 32 or not services.log.set_feedback(qid, identity, body.rating, body.note):
         raise HTTPException(404, "question not found")
     log_event("feedback", question_id=qid, rating=body.rating)
+    if services.sheet.enabled:  # optional: append the rating, with who gave it, to the owner's Google Sheet
+        try:
+            q = services.log.get(qid, identity)
+            row = make_row(q, body.rating, body.note, identity.name, identity.company, identity.email)
+            services.sheet.send(row)
+        except Exception as e:  # never fail the user's click because the sheet is unreachable
+            log_event("feedback_sheet_failed", question_id=qid, error=type(e).__name__)
     return Response(status_code=204)
 
 

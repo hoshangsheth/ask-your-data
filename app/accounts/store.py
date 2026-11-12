@@ -2,7 +2,7 @@
 Account storage (users table) and the session-signing secret.
 
     accounts = AccountStore(owner_engine, admin_emails={"me@example.com"}, secret_override="")
-    user = accounts.create("a@b.com", "long password")       # raises AccountError
+    user = accounts.create("a@b.com", "long password", name="Asha Rao", company="Acme")  # raises AccountError
     user = accounts.authenticate("a@b.com", "long password")  # None if wrong
     accounts.get(user_id); accounts.secret()
 
@@ -38,6 +38,8 @@ class AccountError(ValueError):
 class User:
     id: str
     email: str
+    name: str = ""
+    company: str = ""
 
 
 def normalize_email(email: str) -> str:
@@ -55,18 +57,29 @@ class AccountStore:
         return normalize_email(email) in self.admin_emails
 
     # ---- users ---------------------------------------------------------------------------------
-    def create(self, email: str, password: str) -> User:
+    def create(self, email: str, password: str, name: str = "", company: str = "") -> User:
         email = normalize_email(email)
+        name, company = " ".join(name.split()), " ".join(company.split())  # trim, collapse spaces
+        if not name:
+            raise AccountError("enter your name")
+        if not company:
+            raise AccountError("enter your company (or Independent / Student)")
+        if len(name) > 100 or len(company) > 120:
+            raise AccountError("name or company is too long")
         if not _EMAIL.match(email) or len(email) > 254:
             raise AccountError("enter a valid email address")
         if len(password) < MIN_PASSWORD:
             raise AccountError(f"use a password of at least {MIN_PASSWORD} characters")
         if len(password) > 200:
             raise AccountError("that password is too long")
-        user = User(id=uuid.uuid4().hex[:12], email=email)
+        user = User(id=uuid.uuid4().hex[:12], email=email, name=name, company=company)
         try:
             with self.engine.begin() as conn:
-                conn.execute(insert(users).values(id=user.id, email=email, password_hash=hash_password(password)))
+                conn.execute(
+                    insert(users).values(
+                        id=user.id, email=email, password_hash=hash_password(password), name=name, company=company
+                    )
+                )
         except IntegrityError as e:
             raise AccountError("an account with this email already exists; sign in instead", 409) from e
         return user
@@ -77,12 +90,14 @@ class AccountStore:
         if row is None:
             verify_password(password, DUMMY_HASH)  # same work as a real check: don't reveal which emails exist
             return None
-        return User(row.id, row.email) if verify_password(password, row.password_hash) else None
+        return User(row.id, row.email, row.name, row.company) if verify_password(password, row.password_hash) else None
 
     def get(self, user_id: str) -> User | None:
         with self.engine.connect() as conn:
-            row = conn.execute(select(users.c.id, users.c.email).where(users.c.id == user_id)).first()
-        return User(row.id, row.email) if row else None
+            row = conn.execute(
+                select(users.c.id, users.c.email, users.c.name, users.c.company).where(users.c.id == user_id)
+            ).first()
+        return User(row.id, row.email, row.name, row.company) if row else None
 
     # ---- session secret ------------------------------------------------------------------------
     def secret(self) -> str:

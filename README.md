@@ -53,7 +53,8 @@ flowchart LR
 | **Execution** (`app/db/executor.py`) | Read-only transaction, statement timeout, row cap; on Postgres a dedicated `app_readonly` role. Three independent layers of protection. |
 | **Uploads** (`app/datasets/`) | Files arrive in 4 MB parts → read any supported format → clean and type the columns → profile them → store (a SQLite file per dataset locally; a Postgres schema per dataset in the cloud). The profile (types, ranges, values, original headers) is what the model sees. |
 | **Data sources** (`app/sources/`) | The agent only sees a `DataSource` (engine, allowed tables, schema text, currency), so the demo store and uploads work the same way, and a question about one dataset can never read another. |
-| **Accounts** (`app/accounts/`) | Email + password sign-in (scrypt hashes, HMAC-signed HttpOnly session cookies, rate-limited). Guests can ask about the demo store; uploads are private to their owner. |
+| **Accounts** (`app/accounts/`) | Email + password sign-in (scrypt hashes, HMAC-signed HttpOnly session cookies, rate-limited); sign-up also asks for name and company. Guests can ask about the demo store; uploads are private to their owner. |
+| **Feedback** (`app/telemetry/feedback.py`) | Each 👍/👎 is linked to who gave it (name, company, email, or Guest). Admins download it all as Excel; optionally every rating is also appended live to a Google Sheet via a small Apps Script ([setup](docs/GOOGLE_SHEETS.md)). |
 | **Conversations** (`app/telemetry/log.py`, `app/llm/prompts.py`) | Each chat is a conversation: the last 3 answered turns (question, SQL, answer) go to the model, which also returns the question rewritten to stand alone. |
 | **Telemetry** (`app/telemetry/`) | Every question is logged with per-step timings, tokens, estimated cost and feedback; uploads with size, rows and processing time. Aggregated into live metrics (percentiles, rates, satisfaction). |
 | **Exports** (`app/exports.py`) | Re-runs the stored, validated SQL (up to 10K rows) for CSV/Excel; PDF report with question, answer, chart, table and SQL. |
@@ -192,6 +193,7 @@ app/
   telemetry/              measurement
     pricing.py            model prices -> cost per question
     log.py                question log, conversation history, feedback, upload events
+    feedback.py           feedback with who gave it -> Excel / Google Sheet
     metrics.py            live metrics (rates, percentiles, cost, satisfaction)
     reports.py            committed reports in metrics/ (eval, tests, load test)
   exports.py              CSV, Excel and PDF exports of an answer

@@ -25,8 +25,8 @@ function renderAccount() {
   const el = $("account");
   el.innerHTML = me.signed_in
     ? `<span class="acct-avatar" data-icon="user"></span>
-       <span class="acct-text"><span class="acct-email" title="${escapeHtml(me.email)}">${escapeHtml(me.email)}</span>
-         <span class="acct-sub">Your uploads are private</span></span>
+       <span class="acct-text"><span class="acct-email" title="${escapeHtml(me.email)}">${escapeHtml(me.name || me.email)}</span>
+         <span class="acct-sub" title="${escapeHtml(me.email)}">${escapeHtml(me.company || "Your uploads are private")}</span></span>
        <button class="icon-btn acct-out" id="sign-out" title="Sign out" aria-label="Sign out"><span data-icon="logout"></span></button>`
     : `<span class="acct-avatar guest" data-icon="user"></span>
        <span class="acct-text"><span class="acct-email">Guest</span><span class="acct-sub">Sign in to upload your data</span></span>
@@ -51,10 +51,13 @@ const wait = (ms) => new Promise((r) => window.setTimeout(r, ms));
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Success moment: the form gives way to a drawn checkmark, then the dialog floats away. */
-async function celebrate(signup, email) {
+async function celebrate(signup, user) {
   const form = $("auth-form");
-  $("auth-success-title").textContent = signup ? "Account created" : "Welcome back";
-  $("auth-success-sub").textContent = signup ? `Signed in as ${email}. Your uploads stay private.` : `Signed in as ${email}`;
+  const first = (user.name || "").split(" ")[0];
+  $("auth-success-title").textContent = signup ? `Welcome, ${first || "there"}` : `Welcome back${first ? `, ${first}` : ""}`;
+  $("auth-success-sub").textContent = signup
+    ? `Account created for ${user.email}. Your uploads stay private.`
+    : `Signed in as ${user.email}`;
   form.classList.add("is-success");
   await wait(reducedMotion() ? 500 : 1350);
   const dialog = $("auth-dialog");
@@ -82,6 +85,7 @@ function setMode(next, reason = "") {
     ? `Already have an account? <button type="button" class="link-btn" data-mode="signin">Sign in</button>`
     : `New here? <button type="button" class="link-btn" data-mode="signup">Create an account</button>`;
   $("auth-hint").hidden = !signup;
+  $("auth-signup-fields").hidden = !signup; // name + company are asked only when creating an account
   $("auth-error").hidden = true;
 }
 
@@ -113,14 +117,22 @@ async function submit(e) {
   e.preventDefault();
   const email = $("auth-email").value.trim();
   const password = $("auth-password").value;
+  const name = $("auth-name").value.trim();
+  const company = $("auth-company").value.trim();
+  if (mode === "signup" && (!name || !company)) {
+    $("auth-error").textContent = !name ? "Please enter your name" : "Please enter your company (or Independent / Student)";
+    $("auth-error").hidden = false;
+    $(!name ? "auth-name" : "auth-company").focus();
+    return;
+  }
   const btn = $("auth-submit");
   btn.disabled = true;
   $("auth-error").hidden = true;
   try {
     const signup = mode === "signup";
-    const next = signup ? await signUp(email, password) : await signIn(email, password);
+    const next = signup ? await signUp(email, password, name, company) : await signIn(email, password);
     $("auth-password").value = "";
-    await celebrate(signup, next.email);
+    await celebrate(signup, next);
     close(true);
     setMe(next, { animate: true }); // after the dialog: the account row animates in
   } catch (err) {

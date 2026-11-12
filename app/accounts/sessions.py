@@ -27,6 +27,8 @@ class Identity:
     user_id: str | None = None
     guest_id: str | None = None
     email: str = ""
+    name: str = ""
+    company: str = ""
     is_admin: bool = False
     is_new: bool = field(default=False, compare=False)  # a guest created on this request (cookie to set)
 

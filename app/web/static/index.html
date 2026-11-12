@@ -202,9 +202,13 @@
       <span class="auth-mark" data-icon="lock"></span>
       <h2 id="auth-title">Welcome back</h2>
       <p class="muted" id="auth-reason"></p>
+      <div class="auth-signup-fields" id="auth-signup-fields" hidden>
+        <label>Full name<input id="auth-name" type="text" autocomplete="name" maxlength="100"></label>
+        <label>Company<input id="auth-company" type="text" autocomplete="organization" maxlength="120" placeholder="or Independent"></label>
+      </div>
       <label>Email<input id="auth-email" type="email" autocomplete="email" required maxlength="254"></label>
       <label>Password<input id="auth-password" type="password" autocomplete="current-password" required minlength="8" maxlength="200"></label>
-      <p class="auth-hint muted" id="auth-hint" hidden>At least 8 characters.</p>
+      <p class="auth-hint muted" id="auth-hint" hidden>Password: at least 8 characters. Your name and company are only used to understand feedback on answers.</p>
       <p class="auth-error" id="auth-error" role="alert" hidden></p>
       <button type="submit" class="btn btn-primary" id="auth-submit">Sign in</button>
       <p class="auth-switch muted" id="auth-switch"></p>

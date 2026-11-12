@@ -373,6 +373,8 @@ def run(url: str, full: bool) -> dict:
 
         def sign_up():
             page.click('#auth-switch [data-mode="signup"]')
+            page.fill("#auth-name", "Eval User")
+            page.fill("#auth-company", "Evaluation")
             page.fill("#auth-email", email)
             page.fill("#auth-password", password)
             with page.expect_file_chooser(timeout=8000) as fc:  # signing in continues to the picker
@@ -383,8 +385,8 @@ def run(url: str, full: bool) -> dict:
             fc.value.set_files([])  # cancel the picker; the upload is tested next
             page.locator("#auth-dialog[open]").wait_for(state="detached", timeout=5000)
             acct = page.inner_text("#account")
-            expect(email in acct, acct)
-            return {"title": "Account created"}
+            expect("Eval User" in acct and "Evaluation" in acct, acct)
+            return {"title": "Account created", "account_row": acct}
 
         def upload_file():
             tmp = RESULTS / "sales_sample.csv"

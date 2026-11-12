@@ -47,7 +47,13 @@ def install_session_middleware(app: FastAPI) -> None:
         if token and token[0] == "u":
             user = await run_in_threadpool(services.accounts.get, token[1])
             if user:
-                identity = Identity(user_id=user.id, email=user.email, is_admin=services.accounts.is_admin(user.email))
+                identity = Identity(
+                    user_id=user.id,
+                    email=user.email,
+                    name=user.name,
+                    company=user.company,
+                    is_admin=services.accounts.is_admin(user.email),
+                )
         elif token and token[0] == "g":
             identity = Identity(guest_id=token[1])
         if identity is None:

@@ -63,9 +63,16 @@ class Credentials(BaseModel):
     password: str = Field(min_length=1, max_length=200)
 
 
+class SignupRequest(Credentials):
+    name: str = Field(min_length=1, max_length=100)
+    company: str = Field(min_length=1, max_length=120, description="Company, or Independent / Student")
+
+
 class MeResponse(BaseModel):
     signed_in: bool
     email: str = ""
+    name: str = ""
+    company: str = ""
     is_admin: bool = False
 
 

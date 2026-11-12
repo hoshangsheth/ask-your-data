@@ -5,6 +5,7 @@ all requests (stored on `app.state.services`).
     engines     owner + read-only engines for the demo store
     accounts    users and the session-signing secret
     log         question log + upload events (feedback, follow-up history, metrics)
+    sheet       optional Google Sheet that receives every feedback rating
     store      where uploaded datasets live: Postgres (one schema each) or local SQLite files
     staging     where upload parts and original files go: Vercel Blob or a local folder
     datasets    upload service (validate -> read -> clean -> profile -> store)
@@ -31,6 +32,7 @@ from app.db.engine import is_postgres, make_engines
 from app.llm import LLM, build_llm
 from app.sources import DEMO_ID, DataSource, build_demo_source, build_upload_source
 from app.telemetry import QuestionLog
+from app.telemetry.feedback import SheetSync
 from app.telemetry.pricing import price_table
 
 MAX_CACHED_AGENTS = 32  # agents hold a schema prompt and an engine; keep the most recent ones
@@ -51,6 +53,7 @@ class Services:
             self.owner_engine, set(settings.admin_emails.split(",")), secret_override=settings.session_secret
         )
         self.log = QuestionLog(self.owner_engine, price_table(settings.llm_prices))
+        self.sheet = SheetSync(settings.feedback_sheet_url, settings.feedback_sheet_token)
         self.store = self._make_store()
         self.staging = self._make_staging()
         self.datasets = DatasetService(self.store, settings.max_upload_mb)

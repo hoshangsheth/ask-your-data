@@ -14,10 +14,17 @@ from app.llm import SQLDraft, Summary
 TEST_PASSWORD = "test-password-123"
 
 
+TEST_NAME, TEST_COMPANY = "Test User", "Example Co"
+
+
+def signup_body(email: str, password: str = TEST_PASSWORD) -> dict[str, str]:
+    return {"email": email, "password": password, "name": TEST_NAME, "company": TEST_COMPANY}
+
+
 def sign_up(client, email: str | None = None) -> str:
     """Create an account through the API (the client keeps the session cookie); returns the email."""
     email = email or f"user-{uuid.uuid4().hex[:10]}@example.test"
-    r = client.post("/api/auth/signup", json={"email": email, "password": TEST_PASSWORD})
+    r = client.post("/api/auth/signup", json=signup_body(email))
     assert r.status_code == 201, r.text
     return email
 

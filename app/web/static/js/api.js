@@ -62,7 +62,8 @@ export const ask = (question, datasetId, conversationId = null) =>
 
 // Accounts (session cookie set by the server).
 export const getMe = () => request("/api/auth/me");
-export const signUp = (email, password) => request("/api/auth/signup", { method: "POST", body: JSON.stringify({ email, password }) });
+export const signUp = (email, password, name, company) =>
+  request("/api/auth/signup", { method: "POST", body: JSON.stringify({ email, password, name, company }) });
 export const signIn = (email, password) => request("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
 export const signOut = () => request("/api/auth/logout", { method: "POST" });
 

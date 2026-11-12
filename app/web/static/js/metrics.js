@@ -128,14 +128,14 @@ async function feedbackSection() {
         .map((r) => `<div class="card fb-item">
           <div class="fb-q">${escapeHtml(r.standalone_question || r.question)}</div>
           ${r.feedback_note ? `<div class="fb-note">“${escapeHtml(r.feedback_note)}”</div>` : ""}
-          <div class="muted fb-meta">${escapeHtml(r.created_at.slice(0, 16))} · ${escapeHtml(r.dataset_kind)} · ${escapeHtml(r.status)}</div>
+          <div class="muted fb-meta">${escapeHtml(r.created_at.slice(0, 16))} · ${escapeHtml(r.name ? `${r.name}${r.company ? `, ${r.company}` : ""}` : "Guest")} · ${escapeHtml(r.dataset_kind)} · ${escapeHtml(r.status)}</div>
           ${r.sql ? `<pre class="fb-sql"><code>${highlightSql(escapeHtml(r.sql))}</code></pre>` : ""}
         </div>`)
         .join("")
     : missing("No answers rated “not helpful”.");
   return section(
     "Answers to review",
-    `<a class="link-btn" href="/api/metrics/eval-candidates" download="eval-candidates.jsonl">Download as eval candidates</a>`,
+    `<a class="link-btn" href="/api/metrics/feedback.xlsx">Download all feedback (Excel)</a> · <a class="link-btn" href="/api/metrics/eval-candidates" download="eval-candidates.jsonl">Download as eval candidates</a>`,
     `<div class="fb-list">${body}</div>`,
   );
 }

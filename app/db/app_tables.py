@@ -1,12 +1,13 @@
 """
 Tables the application itself owns (separate from the demo store and uploaded data):
 
-    users          accounts (email + scrypt password hash)
+    users          accounts (email, scrypt password hash, name, company)
     app_secrets    generated secrets shared by every instance (e.g. the session-signing key)
     questions      one row per question asked: answer, SQL, timings, tokens, cost, feedback
     usage_events   other measured events (uploads), payload as JSON
 
-They are created at startup (app/api/factory.py) next to the demo tables. Model-generated SQL can't
+They are created at startup (app/api/factory.py) next to the demo tables; columns added after a
+table already existed in a database are added by add_missing_columns() (a tiny migration step). Model-generated SQL can't
 reach them: the SQL guard only allows the selected dataset's tables.
 """
 
@@ -14,6 +15,7 @@ from sqlalchemy import (
     JSON,
     Boolean,
     Column,
+    Connection,
     DateTime,
     Float,
     Integer,
@@ -22,6 +24,8 @@ from sqlalchemy import (
     Table,
     Text,
     func,
+    inspect,
+    text,
 )
 
 app_metadata = MetaData()
@@ -33,6 +37,9 @@ users = Table(
     Column("email", String(254), nullable=False, unique=True),
     Column("password_hash", String(255), nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    # Asked at sign-up so feedback can be read with who gave it (added later: see add_missing_columns).
+    Column("name", String(100), nullable=False, server_default=""),
+    Column("company", String(120), nullable=False, server_default=""),
 )
 
 app_secrets = Table(
@@ -91,3 +98,23 @@ usage_events = Table(
     Column("user_id", String(12)),
     Column("data", JSON, nullable=False),
 )
+
+
+# Columns added to existing tables after the first release: (table, column, DDL type + default).
+LATER_COLUMNS = [
+    ("users", "name", "VARCHAR(100) NOT NULL DEFAULT ''"),
+    ("users", "company", "VARCHAR(120) NOT NULL DEFAULT ''"),
+]
+
+
+def add_missing_columns(conn: Connection) -> list[str]:
+    """Add columns introduced after a table was first created (SQLite and Postgres). Idempotent."""
+    insp = inspect(conn)
+    added = []
+    for table, column, ddl in LATER_COLUMNS:
+        if not insp.has_table(table):
+            continue
+        if column not in {c["name"] for c in insp.get_columns(table)}:
+            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}"))
+            added.append(f"{table}.{column}")
+    return added

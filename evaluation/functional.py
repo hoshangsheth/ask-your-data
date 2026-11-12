@@ -23,6 +23,8 @@ from app.sql.guard import SQLValidationError, validate_sql
 from evaluation.server import RESULTS, running_server
 from tests import sample_files as files
 
+WHO = {"name": "Eval User", "company": "Evaluation"}  # required on sign-up
+
 UPLOAD_SAMPLES = {
     "csv": ("sales.csv", files.csv),
     "csv (semicolon)": ("semi.csv", files.semicolon_csv),
@@ -123,26 +125,32 @@ def run(base: str) -> dict:
     m.op(
         "accounts",
         "sign up",
-        status_is(user, "POST", "/api/auth/signup", 201, json={"email": email, "password": pw}),
+        status_is(user, "POST", "/api/auth/signup", 201, json={"email": email, "password": pw, **WHO}),
         "201",
     )
     m.op(
         "accounts",
         "sign up again with the same email",
-        status_is(other, "POST", "/api/auth/signup", 409, json={"email": email, "password": pw}),
+        status_is(other, "POST", "/api/auth/signup", 409, json={"email": email, "password": pw, **WHO}),
         "409",
     )
     m.op(
         "accounts",
         "sign up with invalid email",
-        status_is(other, "POST", "/api/auth/signup", 400, json={"email": "nope", "password": pw}),
+        status_is(other, "POST", "/api/auth/signup", 400, json={"email": "nope", "password": pw, **WHO}),
         "400",
     )
     m.op(
         "accounts",
         "sign up with short password",
-        status_is(other, "POST", "/api/auth/signup", 400, json={"email": "a@b.test", "password": "123"}),
+        status_is(other, "POST", "/api/auth/signup", 400, json={"email": "a@b.test", "password": "123", **WHO}),
         "400",
+    )
+    m.op(
+        "accounts",
+        "sign up without name / company",
+        status_is(other, "POST", "/api/auth/signup", 422, json={"email": "c@d.test", "password": pw}),
+        "422",
     )
     m.op(
         "accounts",
@@ -159,7 +167,7 @@ def run(base: str) -> dict:
     m.op(
         "accounts",
         "second user signs up",
-        status_is(other, "POST", "/api/auth/signup", 201, json={"email": other_email, "password": pw}),
+        status_is(other, "POST", "/api/auth/signup", 201, json={"email": other_email, "password": pw, **WHO}),
         "201",
     )
     m.op(

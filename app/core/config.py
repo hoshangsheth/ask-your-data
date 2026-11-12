@@ -96,6 +96,10 @@ class Settings(BaseSettings):
     llm_prices: str = ""
     export_max_rows: int = 10_000  # rows in CSV / Excel exports (the chat shows at most max_rows)
 
+    # ---- Feedback to a Google Sheet (optional; see docs/GOOGLE_SHEETS.md) ----------------------
+    feedback_sheet_url: str = ""  # the Apps Script web app URL; empty = off
+    feedback_sheet_token: str = ""  # shared secret checked by the script
+
     # ---- Startup -----------------------------------------------------------------------------
     auto_seed: bool = True  # seed the SQLite demo database on first start
 
