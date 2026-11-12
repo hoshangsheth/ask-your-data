@@ -7,37 +7,37 @@ AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
-{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 12, "latency_ms": 4552, "turn": 1, "cost_usd": 0.0023179, "input_tokens": 2360, "output_tokens": 281}
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 5, "latency_ms": 6149, "turn": 1, "cost_usd": 0.00245075, "input_tokens": 2215, "output_tokens": 332}
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
-{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 5, "latency_ms": 3972, "turn": 2, "cost_usd": 0.00266405, "input_tokens": 2460, "output_tokens": 348}
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 5, "latency_ms": 4538, "turn": 2, "cost_usd": 0.0028012, "input_tokens": 2543, "output_tokens": 372}
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
-{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 10, "latency_ms": 4508, "turn": 3, "cost_usd": 0.002842, "input_tokens": 2901, "output_tokens": 315}
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 10, "latency_ms": 4154, "turn": 3, "cost_usd": 0.00297365, "input_tokens": 3010, "output_tokens": 332}
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
-{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 2567, "turn": 4, "cost_usd": 0.0021525, "input_tokens": 2280, "output_tokens": 118}
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 4264, "turn": 4, "cost_usd": 0.0024795, "input_tokens": 2386, "output_tokens": 184}
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
-{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 9359, "turn": 5, "cost_usd": 0.00204675, "input_tokens": 2139, "output_tokens": 118}
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 2698, "turn": 5, "cost_usd": 0.00213225, "input_tokens": 2233, "output_tokens": 122}
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
-{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "unanswerable", "attempts": 1, "rows": 0, "latency_ms": 2585, "turn": 6, "cost_usd": 0.001737, "input_tokens": 1941, "output_tokens": 75}
-{"event": "feedback", "question_id": "a3a38ae63263422e921b84e57168a35a", "rating": 1}
-{"event": "export", "question_id": "a3a38ae63263422e921b84e57168a35a", "format": "csv", "rows": 5}
-{"event": "export", "question_id": "a3a38ae63263422e921b84e57168a35a", "format": "xlsx", "rows": 5}
-{"event": "export", "question_id": "a3a38ae63263422e921b84e57168a35a", "format": "pdf", "rows": 5}
-{"event": "signup", "user_id": "3893af438955"}
-{"event": "upload", "dataset_id": "783d7994733f", "format": "csv", "size_bytes": 196, "tables": 1, "rows": 6, "processing_ms": 92}
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "unanswerable", "attempts": 1, "rows": 0, "latency_ms": 2979, "turn": 6, "cost_usd": 0.00179025, "input_tokens": 2012, "output_tokens": 75}
+{"event": "feedback", "question_id": "ba08ec6842924e5a92fd347ccd99abf8", "rating": 1}
+{"event": "export", "question_id": "ba08ec6842924e5a92fd347ccd99abf8", "format": "csv", "rows": 5}
+{"event": "export", "question_id": "ba08ec6842924e5a92fd347ccd99abf8", "format": "xlsx", "rows": 5}
+{"event": "export", "question_id": "ba08ec6842924e5a92fd347ccd99abf8", "format": "pdf", "rows": 5}
+{"event": "signup", "user_id": "9725be3a8511"}
+{"event": "upload", "dataset_id": "34e90c9662c1", "format": "csv", "size_bytes": 196, "tables": 1, "rows": 6, "processing_ms": 101}
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
-{"event": "ask", "provider": "gemini", "dataset_id": "783d7994733f", "status": "ok", "attempts": 1, "rows": 4, "latency_ms": 3522, "turn": 1, "cost_usd": 0.0012694, "input_tokens": 1184, "output_tokens": 163}
+{"event": "ask", "provider": "gemini", "dataset_id": "34e90c9662c1", "status": "ok", "attempts": 1, "rows": 4, "latency_ms": 3780, "turn": 1, "cost_usd": 0.00126815, "input_tokens": 1184, "output_tokens": 162}
 AFC is enabled with max remote calls: 10.
 HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
-{"event": "ask", "provider": "gemini", "dataset_id": "783d7994733f", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 2874, "turn": 2, "cost_usd": 0.00133875, "input_tokens": 1035, "output_tokens": 150}
+{"event": "ask", "provider": "gemini", "dataset_id": "34e90c9662c1", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 13991, "turn": 2, "cost_usd": 0.00137475, "input_tokens": 1033, "output_tokens": 160}
