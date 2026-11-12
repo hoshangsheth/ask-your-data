@@ -165,7 +165,7 @@ after the fixes above; AI accuracy is reported separately (§5.4).
 | `/api/health` | 3.5 / 3.1 / 5.0 / 5.6 | 237 / 223 / 284 |
 | `/api/datasets` | 5.5 / 5.1 / 6.9 / 7.6 | 296 / 288 / 309 |
 | `/api/schema` | 5.9 / 5.5 / 7.3 / 8.1 | 265 / 264 / 282 |
-| `/api/kpis` (6 aggregate queries) | 113 / 111 / 134 / 140 | 500 / 438 / 1,065 |
+| `/api/kpis` (5 aggregate queries) | 113 / 111 / 134 / 140 | 500 / 438 / 1,065 |
 | `/` (app shell) | 5.2 / 4.8 / 7.3 / 8.8 | 225 / 222 / 255 |
 | static JS / CSS | 4.3–4.6 / 4.0–4.3 / 5.8–6.4 | 240–314 / 236–237 / 248–454 |
 
@@ -189,7 +189,7 @@ reason. "App ready" waits on two sequential API calls (~300–550 ms each from I
 |---|---|
 | Demo store | 45,077 rows (2,500 customers, 96 products, 15,779 orders, 26,702 order lines); seeded in 0.87 s |
 | 39 realistic analytical queries (eval reference SQL), 10 runs each | median **10 ms**, p95 27 ms, slowest 49 ms; **all under 50 ms** |
-| Dashboard KPIs (6 queries) | p50 103 ms, p95 113 ms |
+| Dashboard KPIs (5 queries) | p50 103 ms, p95 113 ms |
 | SQL safety check (sqlglot parse + rules) | **3.0 ms** average per query (max 8 ms) |
 | Upload ingestion, CSV (read → clean → profile → store) | 10K rows 0.31 s · 100K rows **2.65 s** · 500K rows (21 MB) **13.0 s**: ~**38,000 rows/s** |
 | Upload ingestion, Excel 50K rows | 9.1 s (5,500 rows/s; Excel parsing is the cost) |
@@ -291,7 +291,7 @@ minute between 290 and 332 ms (no drift); memory 214 → 213 MB (no leak); serve
 - AI questions: **~40 questions/min** sustained by one instance with 5–8 concurrent users, 0 errors.
 
 **Interpretation.** One Python process saturates one core at ~245 req/s for light endpoints. The
-dashboard KPI queries (110 ms of CPU each) are the main server-side bottleneck. Beyond ~25
+dashboard KPI queries (about 110 ms of CPU per request) are the main server-side bottleneck. Beyond ~25
 concurrent users locally the load generator and the server compete for the same 4 threads, so
 those steps understate the server. On production, p95/p99 at 50 users (2.7 s / 10.9 s) is
 consistent with Vercel starting new instances (cold starts). **No step on either environment

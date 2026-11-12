@@ -1,7 +1,7 @@
 """
 Database and data-processing performance (no AI, no server):
 
-    - demo store size and dashboard KPI time (6 aggregate queries)
+    - demo store size and dashboard KPI time (5 aggregate queries)
     - every eval reference query (realistic analytical SQL), 10 runs each, read-only executor
     - SQL guard (safety check) cost per query
     - upload ingestion speed: CSV files of 10K / 100K / 500K rows and an Excel file, end to end

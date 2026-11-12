@@ -84,7 +84,7 @@ round trip.
 | Throughput | **35 requests/s** at 20 concurrent clients |
 | Latency p50 / p95 / p99 | 330 ms / 1.25 s / 1.52 s |
 | Fastest endpoint (health) p50 / p95 | 226 ms / 379 ms |
-| Heaviest endpoint (KPIs: 6 aggregate queries) p50 / p95 | 1.19 s / 1.43 s |
+| Heaviest endpoint (KPIs: 5 aggregate queries) p50 / p95 | 1.19 s / 1.43 s |
 
 ## 5. Resume lines
 
