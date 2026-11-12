@@ -147,10 +147,13 @@ page. Change `LLM_PROVIDER` / models and re-run to compare.
 
 | SQL model | Accuracy | Single | Follow-up | Declines | Latency p50 / p95 | Cost / question |
 |---|---|---|---|---|---|---|
-| gemini-3.8-flash | **97.6%** (40/41) | 96.6% | 100% (10/10) | 100% (2/2) | 4.3 s / 5.4 s | $0.0020 |
+| gemini-3.8-flash | **97.9%** (47/48) | 96.6% | 100% (10/10) | 100% (2/2) | 4.4 s / 10.6 s | $0.0021 |
 
-All metrics (evaluation, live usage, tests and coverage, load test) and resume-ready summaries
-are in [docs/METRICS.md](docs/METRICS.md).
+Plus 7 / 7 on questions about the data itself (answered without SQL).
+
+The full end-to-end evaluation (functional, browser, AI quality, performance, load, stress, soak,
+business impact, scorecard and resume-ready metrics) is in [EVALUATION_REPORT.md](EVALUATION_REPORT.md);
+the test suite that produced it is in `evaluation/`.
 
 ## Project layout
 

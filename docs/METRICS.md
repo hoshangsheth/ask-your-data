@@ -1,5 +1,9 @@
 # Metrics
 
+> **Latest full evaluation (12 Nov 2026):** [EVALUATION_REPORT.md](../EVALUATION_REPORT.md) supersedes the
+> figures below: 48-item eval 97.9%, 191 tests (87.5% coverage), functional, browser, load, stress,
+> soak and business analysis, with raw results in [`evaluation/results/`](../evaluation/results).
+
 What was measured, how, and the latest numbers. Every number here is reproducible with the
 command next to it; the raw reports are in [`metrics/`](../metrics) and the live numbers are on
 the app's **Metrics** page (`/#metrics`, data from `GET /api/metrics`).
