@@ -6,6 +6,9 @@
     Ask         chat-style questions and answers about the selected dataset (js/ask.js)
     Dashboard   demo-store KPIs, or an overview of an uploaded dataset (js/dashboard.js)
     Data        tables and columns of the selected dataset (js/data.js)
+    Metrics     evaluation, live usage, engineering metrics (js/metrics.js)
+
+  Accounts: guests can ask about the demo store; signing in (js/auth.js) enables private uploads.
 
   Sidebar: new chat, dataset switcher + uploads (js/datasets.js, js/upload.js), recent questions.
   Theme: the ink-bleed transition (js/ink/), triggered by the toggle in the top bar.
@@ -58,6 +61,7 @@
       <button class="nav-item is-active" data-view="ask"><span data-icon="chat"></span>Ask</button>
       <button class="nav-item" data-view="dashboard"><span data-icon="chart"></span>Dashboard</button>
       <button class="nav-item" data-view="data"><span data-icon="database"></span>Data</button>
+      <button class="nav-item" data-view="metrics"><span data-icon="gauge"></span>Metrics</button>
     </nav>
 
     <section class="side-section" aria-labelledby="datasets-h">
@@ -77,6 +81,8 @@
       <ul class="recent-list" id="recent-list"></ul>
       <p class="recent-empty" id="recent-empty">Your questions will appear here.</p>
     </section>
+
+    <div class="account" id="account"></div>
 
     <div class="powered-by" id="powered-by" title="AI model in use">
       <span data-icon="gemini" class="pb-mark"></span><span id="powered-text">Connecting…</span>
@@ -151,6 +157,11 @@
       </div>
     </section>
 
+    <!-- Metrics view -->
+    <section class="view" id="view-metrics">
+      <div id="metrics-root"></div>
+    </section>
+
     <!-- Data view -->
     <section class="view" id="view-data">
       <div class="data-intro card" id="data-intro"></div>
@@ -163,6 +174,22 @@
     <div class="drop-card"><span data-icon="upload"></span><strong>Drop your file to upload</strong><span id="drop-formats"></span></div>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Sign in / create account (js/auth.js) -->
+  <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
+    <form id="auth-form" class="auth-form" novalidate>
+      <button type="button" class="icon-btn auth-close" id="auth-close" aria-label="Close"><span data-icon="x"></span></button>
+      <span class="auth-mark" data-icon="lock"></span>
+      <h2 id="auth-title">Welcome back</h2>
+      <p class="muted" id="auth-reason"></p>
+      <label>Email<input id="auth-email" type="email" autocomplete="email" required maxlength="254"></label>
+      <label>Password<input id="auth-password" type="password" autocomplete="current-password" required minlength="8" maxlength="200"></label>
+      <p class="auth-hint muted" id="auth-hint" hidden>At least 8 characters.</p>
+      <p class="auth-error" id="auth-error" role="alert" hidden></p>
+      <button type="submit" class="btn btn-primary" id="auth-submit">Sign in</button>
+      <p class="auth-switch muted" id="auth-switch"></p>
+    </form>
+  </dialog>
 </div>
 <!-- Ink overlay for the theme transition (excluded from its own snapshots). -->
 <canvas class="ink-canvas" id="ink-canvas" aria-hidden="true" data-html2canvas-ignore></canvas>

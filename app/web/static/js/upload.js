@@ -10,6 +10,7 @@
  */
 
 import { getFormats, uploadDataset } from "./api.js";
+import { requireSignIn } from "./auth.js";
 import { addDataset, describeSize } from "./datasets.js";
 import { escapeHtml } from "./format.js";
 import { icon } from "./icons.js";
@@ -50,6 +51,7 @@ async function upload(file) {
     toast(`That file is larger than ${formats.max_upload_mb} MB.`, { error: true });
     return;
   }
+  if (!(await requireSignIn("Sign in to upload your own data. Your files stay private to your account."))) return;
   uploading = true;
   const row = progressRow(file.name);
   try {

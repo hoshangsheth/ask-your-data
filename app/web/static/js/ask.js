@@ -2,14 +2,16 @@
  * Ask view: chat-style question and answer thread about the selected dataset.
  *
  * Flow: user types (or clicks a suggestion) -> question bubble + live "working" card ->
- * POST /api/ask (with the dataset id) -> answer card with tabs (Chart / Table / SQL /
- * How it worked) and actions (copy SQL, download CSV, ask again). Errors render as friendly
- * cards with a retry button. "New chat" (or switching dataset) clears the thread.
+ * POST /api/ask (with the dataset id and the conversation id) -> answer card with tabs (Chart /
+ * Table / SQL / How it worked) and actions: helpful / not helpful feedback, export (CSV, Excel,
+ * chart PNG, PDF report), ask again. Questions in one chat form a conversation, so follow-ups
+ * ("same for 2024", "break that down by city") build on earlier answers. Errors render as
+ * friendly cards with a retry button. "New chat" (or switching dataset) starts a new conversation.
  *
  * Exports: initAsk(), askQuestion(text), newChat(), showSetup(health)
  */
 
-import { ApiError, ask } from "./api.js";
+import { ApiError, ask, downloadReport, exportUrl, sendFeedback } from "./api.js";
 import { drawChart } from "./charts.js";
 import { currentDataset, describeSize, onDatasetChange } from "./datasets.js";
 import { escapeHtml, formatCell, highlightSql, isMoneyColumn, isRatioColumn, label, num, toCsv } from "./format.js";
@@ -30,6 +32,7 @@ const STEP_NAMES = { generate_sql: "Wrote SQL", validate: "Safety check", execut
 
 let busy = false;
 let health = null;
+let conversationId = null; // set by the first answer; follow-up questions continue it
 const $ = (id) => document.getElementById(id);
 
 /* ---------- Setup banner (no API key) ---------- */
@@ -188,6 +191,7 @@ function renderAnswer(card, r) {
 
   card.innerHTML = `
     <div class="answer-head">${statusBadge(r.status)}<div class="answer-meta">${metaHtml(r)}</div></div>
+    ${followUpHtml(r)}
     <p class="answer-text">${escapeHtml(r.answer)}</p>
     ${r.explanation && r.status === "ok" ? `<p class="answer-explain">${escapeHtml(r.explanation)}</p>` : ""}
     ${tabs.length ? `<div class="tabs" role="tablist">${tabs
@@ -201,8 +205,14 @@ function renderAnswer(card, r) {
         <pre><code>${highlightSql(escapeHtml(r.sql))}</code></pre></div></div>` : ""}
     ${r.trace.length ? `<div class="tab-panel" data-panel="steps">${stepsHtml(r.trace)}</div>` : ""}
     <div class="answer-actions">
-      ${hasTable ? `<button class="btn" data-action="csv">${icon("download")}Download CSV</button>` : ""}
+      ${r.question_id ? feedbackHtml() : ""}
+      <span class="actions-spacer"></span>
+      ${hasTable ? exportMenuHtml(r) : ""}
       <button class="btn" data-action="again">${icon("retry")}Ask again</button>
+    </div>
+    <div class="feedback-note" hidden>
+      <input type="text" maxlength="500" placeholder="What was wrong? (optional, helps improve the answers)" aria-label="What was wrong">
+      <button class="btn" data-action="note">Send</button>
     </div>`;
 
   // Show only the first tab's panel.
@@ -237,8 +247,14 @@ function renderAnswer(card, r) {
     }
     const action = e.target.closest("[data-action]")?.dataset.action;
     if (action === "copy") copyText(r.sql, "SQL copied");
-    if (action === "csv") downloadCsv(r);
     if (action === "again") askQuestion(r.question);
+    if (action === "up" || action === "down") rate(card, r, action === "up" ? 1 : -1);
+    if (action === "note") sendNote(card, r);
+    if (action === "export") card.querySelector(".export-menu")?.toggleAttribute("open");
+    if (["csv", "xlsx", "png", "pdf"].includes(action)) {
+      card.querySelector(".export-menu")?.removeAttribute("open");
+      void exportAs(card, r, action);
+    }
   });
 }
 
@@ -270,13 +286,110 @@ async function copyText(text, done) {
   }
 }
 
-function downloadCsv(r) {
-  const blob = new Blob([toCsv(r.columns, r.rows)], { type: "text/csv" });
+/* ---------- Follow-ups, feedback, export ---------- */
+
+/** "Follow-up · understood as …" when a question built on earlier turns. */
+function followUpHtml(r) {
+  if (!r.turn || r.turn < 2) return "";
+  const same = (r.standalone_question || "").trim().toLowerCase() === r.question.trim().toLowerCase();
+  return `<p class="followup-note">${icon("link")}<span>Follow-up${same ? "" : ` · understood as “${escapeHtml(r.standalone_question)}”`}</span></p>`;
+}
+
+function feedbackHtml() {
+  return `<span class="feedback" role="group" aria-label="Was this answer helpful?">
+      <span class="feedback-label">Helpful?</span>
+      <button class="icon-btn fb" data-action="up" aria-pressed="false" title="Helpful" aria-label="Helpful">${icon("thumbUp")}</button>
+      <button class="icon-btn fb" data-action="down" aria-pressed="false" title="Not helpful" aria-label="Not helpful">${icon("thumbDown")}</button>
+    </span>`;
+}
+
+function exportMenuHtml(r) {
+  const chart = r.chart ? `<button data-action="png">${icon("image")}Chart image (PNG)</button>` : "";
+  const server = r.question_id
+    ? `<button data-action="xlsx">${icon("sheet")}Excel (.xlsx)</button>
+       <button data-action="pdf">${icon("doc")}PDF report</button>`
+    : "";
+  return `<span class="export-wrap">
+      <button class="btn" data-action="export" aria-haspopup="menu">${icon("download")}Export</button>
+      <span class="export-menu" role="menu">
+        <button data-action="csv">${icon("table")}Table (.csv)</button>${server}${chart}
+      </span>
+    </span>`;
+}
+
+async function rate(card, r, rating) {
+  const buttons = card.querySelectorAll(".fb");
+  const target = card.querySelector(`.fb[data-action="${rating === 1 ? "up" : "down"}"]`);
+  const clear = target.getAttribute("aria-pressed") === "true"; // clicking again removes the rating
+  try {
+    await sendFeedback(r.question_id, clear ? 0 : rating);
+  } catch (err) {
+    toast(`Couldn't save feedback: ${err.message}`, { error: true });
+    return;
+  }
+  buttons.forEach((b) => b.setAttribute("aria-pressed", String(!clear && b === target)));
+  const note = card.querySelector(".feedback-note");
+  note.hidden = clear || rating === 1;
+  if (!note.hidden) note.querySelector("input").focus();
+  if (!clear) toast(rating === 1 ? "Thanks for the feedback" : "Thanks - tell us what was wrong (optional)");
+}
+
+async function sendNote(card, r) {
+  const input = card.querySelector(".feedback-note input");
+  try {
+    await sendFeedback(r.question_id, -1, input.value.trim());
+    card.querySelector(".feedback-note").hidden = true;
+    toast("Thanks - noted");
+  } catch (err) {
+    toast(`Couldn't save: ${err.message}`, { error: true });
+  }
+}
+
+const fileStem = (q) => q.slice(0, 50).replace(/[^\w]+/g, "_").replace(/^_|_$/g, "") || "result";
+
+function saveBlob(blob, name) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${r.question.slice(0, 40).replace(/[^\w]+/g, "_").replace(/_$/, "") || "result"}.csv`;
+  a.download = name;
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/** The answer's chart as a PNG data URL on a solid background (null if there is no chart). */
+function chartPng(card) {
+  const src = card.querySelector(".chart-box canvas");
+  if (!src || !src.width) return null;
+  const out = document.createElement("canvas");
+  out.width = src.width;
+  out.height = src.height;
+  const ctx = out.getContext("2d");
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--surface").trim() || "#fff";
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(src, 0, 0);
+  return out.toDataURL("image/png");
+}
+
+async function exportAs(card, r, format) {
+  try {
+    if (format === "csv" && !r.question_id) {
+      saveBlob(new Blob([toCsv(r.columns, r.rows)], { type: "text/csv" }), `${fileStem(r.question)}.csv`);
+    } else if (format === "csv" || format === "xlsx") {
+      const a = document.createElement("a"); // server re-runs the query: full result, not just shown rows
+      a.href = exportUrl(r.question_id, format);
+      a.click();
+    } else if (format === "png") {
+      // Panels are hidden until their tab is opened; draw the chart tab first if needed.
+      const png = chartPng(card);
+      if (!png) return toast("Open the Chart tab first");
+      const res = await fetch(png);
+      saveBlob(await res.blob(), `${fileStem(r.question)}.png`);
+    } else if (format === "pdf") {
+      toast("Preparing the PDF report…");
+      saveBlob(await downloadReport(r.question_id, chartPng(card) || ""), `${fileStem(r.question)}.pdf`);
+    }
+  } catch (err) {
+    toast(`Export failed: ${err.message}`, { error: true });
+  }
 }
 
 /* ---------- Public ---------- */
@@ -297,7 +410,8 @@ export async function askQuestion(text) {
   scrollToBottom();
 
   try {
-    const result = await ask(question, currentDataset().id);
+    const result = await ask(question, currentDataset().id, conversationId);
+    conversationId = result.conversation_id;
     stop();
     renderAnswer(card, result);
   } catch (err) {
@@ -336,6 +450,7 @@ function renderWelcome() {
 export function newChat() {
   if (busy) return;
   $("thread").querySelector(".thread-inner")?.remove();
+  conversationId = null;
   renderWelcome();
   $("welcome").hidden = false;
   $("thread").scrollTop = 0;

@@ -3,17 +3,19 @@
  * feature module.
  *
  * Views are sections with id "view-<name>"; navigation buttons carry data-view="<name>".
- * The current view is kept in the URL hash (#ask, #dashboard, #data) so refresh and the browser
+ * The current view is kept in the URL hash (#ask, #dashboard, #data, #metrics) so refresh and the browser
  * back button work. Every view follows the selected dataset (js/datasets.js).
  */
 
 import { getHealth } from "./api.js";
-import { askQuestion, initAsk, showSetup } from "./ask.js";
+import { askQuestion, initAsk, newChat, showSetup } from "./ask.js";
+import { initAuth, onAuthChange } from "./auth.js";
 import { redrawAll } from "./charts.js";
 import { loadDashboard } from "./dashboard.js";
 import { loadData } from "./data.js";
-import { currentDataset, initDatasets, onDatasetChange } from "./datasets.js";
+import { currentDataset, initDatasets, onDatasetChange, refreshDatasets, selectDataset } from "./datasets.js";
 import { hydrateIcons } from "./icons.js";
+import { loadMetrics } from "./metrics.js";
 import { initRecent } from "./recent.js";
 import { initTheme, onThemeChange } from "./theme.js";
 import { initUpload } from "./upload.js";
@@ -26,6 +28,7 @@ const VIEWS = {
     load: loadDashboard,
   },
   data: { title: "Your data", sub: (ds) => `Tables and columns in ${ds.name}.`, load: loadData },
+  metrics: { title: "Metrics", sub: () => "How accurate, fast and cheap the answers are.", load: loadMetrics },
 };
 const PROVIDER_NAMES = { gemini: "Gemini", anthropic: "Claude", openai: "OpenAI" };
 
@@ -80,8 +83,15 @@ async function init() {
   initTheme($("theme-toggle"), $("ink-canvas"));
   onThemeChange(() => redrawAll());
 
-  // Data: load the dataset list first so every view starts on the right dataset.
+  // Account first (the dataset list depends on who is signed in), then the datasets.
+  await initAuth();
   await initDatasets();
+  onAuthChange(async () => {
+    await refreshDatasets(); // uploads are private: the list changes with the account
+    selectDataset(currentDataset().id);
+    newChat();
+    if (currentView === "metrics") loadMetrics();
+  });
   onDatasetChange(() => showView(currentView === "ask" ? "ask" : currentView));
   void initUpload();
 

@@ -112,8 +112,10 @@ export async function refreshDatasets() {
   } catch {
     datasets = [DEMO];
   }
-  if (!datasets.some((d) => d.id === currentId)) currentId = "demo";
+  const missing = !datasets.some((d) => d.id === currentId);
+  if (missing) currentId = "demo";
   render();
+  if (missing && listeners.size) notify(); // e.g. signed out while viewing an upload
 }
 
 export async function initDatasets() {

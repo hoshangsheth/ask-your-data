@@ -6,7 +6,12 @@
  *   getHealth()                   GET    /api/health
  *   getKpis()                     GET    /api/kpis
  *   getSchema(datasetId)          GET    /api/schema?dataset=
- *   ask(question, datasetId)      POST   /api/ask
+ *   ask(question, datasetId, conversationId)  POST /api/ask   (conversationId: follow-ups)
+ *   getMe / signUp / signIn / signOut          /api/auth/...
+ *   sendFeedback(id, rating, note)  POST   /api/questions/{id}/feedback
+ *   exportUrl(id, "csv"|"xlsx")     GET    /api/questions/{id}/export   (a download link)
+ *   downloadReport(id, chartPng)    POST   /api/questions/{id}/report   (PDF blob)
+ *   getMetrics() / getFeedbackList()  GET  /api/metrics[/feedback]
  *   listDatasets()                GET    /api/datasets
  *   getFormats()                  GET    /api/formats
  *   uploadDataset(file, onProgress)  POST /api/uploads, PUT .../parts/{n}, POST .../complete
@@ -49,8 +54,48 @@ async function request(path, options = {}) {
 export const getHealth = () => request("/api/health");
 export const getKpis = () => request("/api/kpis");
 export const getSchema = (datasetId) => request(`/api/schema?dataset=${encodeURIComponent(datasetId)}`);
-export const ask = (question, datasetId) =>
-  request("/api/ask", { method: "POST", body: JSON.stringify({ question, dataset_id: datasetId }) });
+export const ask = (question, datasetId, conversationId = null) =>
+  request("/api/ask", {
+    method: "POST",
+    body: JSON.stringify({ question, dataset_id: datasetId, conversation_id: conversationId }),
+  });
+
+// Accounts (session cookie set by the server).
+export const getMe = () => request("/api/auth/me");
+export const signUp = (email, password) => request("/api/auth/signup", { method: "POST", body: JSON.stringify({ email, password }) });
+export const signIn = (email, password) => request("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+export const signOut = () => request("/api/auth/logout", { method: "POST" });
+
+// Answer actions and metrics.
+export const sendFeedback = (questionId, rating, note = "") =>
+  request(`/api/questions/${questionId}/feedback`, { method: "POST", body: JSON.stringify({ rating, note }) });
+export const exportUrl = (questionId, format) => `/api/questions/${questionId}/export?format=${format}`;
+export const getMetrics = () => request("/api/metrics");
+export const getFeedbackList = (rating) => request(`/api/metrics/feedback${rating ? `?rating=${rating}` : ""}`);
+
+/** POST for a file (PDF report) and return it as a Blob. */
+export async function downloadReport(questionId, chartPng = "") {
+  let res;
+  try {
+    res = await fetch(`/api/questions/${questionId}/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chart_png: chartPng }),
+    });
+  } catch {
+    throw new ApiError("Can't reach the server.", 0);
+  }
+  if (!res.ok) {
+    let body = null;
+    try {
+      body = await res.json();
+    } catch {
+      /* ignore */
+    }
+    throw new ApiError(errorMessage(body, res.status), res.status);
+  }
+  return res.blob();
+}
 export const listDatasets = () => request("/api/datasets");
 export const getFormats = () => request("/api/formats");
 export const deleteDataset = (id) => request(`/api/datasets/${encodeURIComponent(id)}`, { method: "DELETE" });
