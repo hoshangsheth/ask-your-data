@@ -41,9 +41,11 @@ def ro_engine(engines):
 
 
 @pytest.fixture
-def settings(db_url) -> Settings:
-    """App settings for the test database: no seeding, no API key, no rate limit, no .env file."""
+def settings(db_url, tmp_path) -> Settings:
+    """App settings for the test database: no seeding, no API key, no rate limit, no .env file,
+    and uploads in a temporary folder (never the real data/uploads)."""
     return Settings(
+        uploads_dir=str(tmp_path / "uploads"),
         database_url=db_url,
         readonly_database_url=os.environ.get("TEST_READONLY_DATABASE_URL", ""),
         auto_seed=False,
