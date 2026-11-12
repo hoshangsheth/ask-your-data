@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-11-12T14:05:27+00:00",
+  "target": "https://ask-your-data-chi.vercel.app",
+  "requests": 400,
+  "concurrency": 20,
+  "duration_s": 11.3,
+  "overall": {
+    "requests": 400,
+    "errors": 0,
+    "error_rate": 0.0,
+    "rps": 35.4,
+    "p50_ms": 329.5,
+    "p95_ms": 1250.0,
+    "p99_ms": 1520.9
+  },
+  "by_endpoint": {
+    "/api/health": {
+      "requests": 100,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 8.8,
+      "p50_ms": 225.7,
+      "p95_ms": 379.4,
+      "p99_ms": 540.8
+    },
+    "/api/datasets": {
+      "requests": 100,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 8.8,
+      "p50_ms": 340.4,
+      "p95_ms": 491.8,
+      "p99_ms": 614.8
+    },
+    "/api/schema?dataset=demo": {
+      "requests": 100,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 8.8,
+      "p50_ms": 289.7,
+      "p95_ms": 468.4,
+      "p99_ms": 625.4
+    },
+    "/api/kpis": {
+      "requests": 100,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 8.8,
+      "p50_ms": 1191.9,
+      "p95_ms": 1427.8,
+      "p99_ms": 1544.1
+    }
+  }
+}
