@@ -1,0 +1,139 @@
+<!doctype html>
+<!--
+  Ask Your Data - single-page UI served at "/" by app/api/factory.py.
+
+  Views (switched by js/main.js, no page reloads):
+    Ask         chat-style questions and answers (js/ask.js)
+    Dashboard   KPI cards and charts (js/dashboard.js)
+    Data        tables and column descriptions (js/data.js)
+
+  Styles: css/tokens.css (colours, light/dark) -> base.css -> layout.css -> components.css
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ask Your Data</title>
+  <meta name="description" content="Ask business questions in plain English and get answers, charts and the SQL behind them.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M9 21V14M16 21V10M23 21v-5' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <!-- Apply the saved theme before first paint to avoid a light/dark flash. -->
+  <script>
+    try { const t = localStorage.getItem("ayd-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+  <script type="module" src="/static/js/main.js"></script>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== Sidebar: brand, navigation, recent questions, status ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true" data-icon="logo"></span>
+      <div>
+        <div class="brand-name">Ask Your Data</div>
+        <div class="brand-sub">Analytics in plain English</div>
+      </div>
+    </div>
+
+    <nav class="nav" aria-label="Main">
+      <button class="nav-item is-active" data-view="ask"><span data-icon="chat"></span>Ask</button>
+      <button class="nav-item" data-view="dashboard"><span data-icon="chart"></span>Dashboard</button>
+      <button class="nav-item" data-view="data"><span data-icon="database"></span>Data</button>
+    </nav>
+
+    <div class="recent">
+      <div class="recent-head">
+        <span>Recent questions</span>
+        <button class="link-btn" id="clear-recent" hidden>Clear</button>
+      </div>
+      <ul class="recent-list" id="recent-list"></ul>
+      <p class="recent-empty" id="recent-empty">Your questions will appear here.</p>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="status-pill" id="status-pill" title="AI model in use">
+        <span class="dot"></span><span id="status-text">Connecting…</span>
+      </div>
+      <button class="icon-btn" id="theme-toggle" aria-label="Switch light/dark theme" title="Switch theme">
+        <span data-icon="moon"></span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== Main area ===== -->
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menu-btn" aria-label="Open menu"><span data-icon="menu"></span></button>
+      <div>
+        <h1 class="page-title" id="page-title">Ask a question</h1>
+        <p class="page-sub" id="page-sub">Get answers, charts and the SQL behind them.</p>
+      </div>
+    </header>
+
+    <!-- Ask view -->
+    <section class="view is-active" id="view-ask" aria-labelledby="page-title">
+      <div class="thread" id="thread">
+        <details class="setup-banner" id="setup-banner" hidden></details>
+        <div class="welcome" id="welcome">
+          <div class="welcome-art" data-icon="sparkles" aria-hidden="true"></div>
+          <h2>What would you like to know?</h2>
+          <p>Ask about sales, customers, products or orders from the demo store (2024–2025).
+             Try one of these to start:</p>
+          <div class="suggestions" id="suggestions"></div>
+        </div>
+      </div>
+
+      <form class="composer" id="composer" autocomplete="off">
+        <div class="composer-box">
+          <textarea id="question" rows="1" maxlength="500"
+                    placeholder="Ask a question about your data…"
+                    aria-label="Your question"></textarea>
+          <button class="send-btn" id="send-btn" type="submit" aria-label="Ask"><span data-icon="send"></span></button>
+        </div>
+        <div class="composer-hint"><kbd>Enter</kbd> to ask · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line · <kbd>/</kbd> to focus</div>
+      </form>
+    </section>
+
+    <!-- Dashboard view -->
+    <section class="view" id="view-dashboard">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="chart-grid">
+        <div class="card chart-card wide">
+          <div class="card-head"><h3>Monthly revenue</h3><span class="muted" id="trend-note"></span></div>
+          <div class="chart-box tall"><canvas id="chart-monthly"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-head"><h3>Revenue by region</h3></div>
+          <div class="chart-box"><canvas id="chart-region"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-head"><h3>Revenue by category</h3></div>
+          <div class="chart-box"><canvas id="chart-category"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data view -->
+    <section class="view" id="view-data">
+      <div class="data-intro card">
+        <span data-icon="info"></span>
+        <p>This is the data the assistant can query. It's a synthetic Indian e-commerce store with
+           planted patterns (festive spikes, an East-region slump in Q4 2025) so there's something to discover.</p>
+      </div>
+      <div class="table-cards" id="table-cards"></div>
+    </section>
+  </main>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+</body>
+</html>

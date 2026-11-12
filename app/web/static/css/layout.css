@@ -1,0 +1,81 @@
+/*
+ * App shell: sidebar + main column, views, and responsive behaviour.
+ *   >= 900px  sidebar always visible
+ *   <  900px  sidebar slides in from the left (menu button), with a scrim behind it
+ */
+
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 20px 16px 16px;
+  background: var(--bg-elev);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; padding: 0 6px; }
+.brand-mark {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: var(--gradient); color: #fff;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+}
+.brand-mark svg { width: 20px; height: 20px; }
+.brand-name { font-weight: 700; font-size: 16px; }
+.brand-sub { font-size: 12px; color: var(--muted); }
+
+.nav { display: flex; flex-direction: column; gap: 2px; }
+
+.recent { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.recent-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 10px; font-size: 12px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+.sidebar-foot { display: flex; align-items: center; gap: 8px; }
+
+/* ---- Main column ---- */
+.main { display: flex; flex-direction: column; min-width: 0; height: 100%; overflow: hidden; }
+
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 22px 32px 14px;
+}
+.page-title { font-size: 22px; font-weight: 700; }
+.page-sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.topbar .menu-btn { display: none; } /* shown only on small screens (below) */
+
+/* Views: only the active one is shown. */
+.view { display: none; flex: 1; min-height: 0; overflow-y: auto; padding: 8px 32px 32px; }
+.view.is-active { display: block; }
+
+/* The Ask view is a column: scrolling thread + fixed composer at the bottom. */
+#view-ask.is-active { display: flex; flex-direction: column; padding-bottom: 0; overflow: hidden; }
+.thread { flex: 1; overflow-y: auto; padding: 4px 4px 24px; scroll-behavior: smooth; }
+.thread-inner, .welcome, .composer, .setup-banner { max-width: 880px; margin-left: auto; margin-right: auto; width: 100%; }
+
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); z-index: 30;
+    transform: translateX(-102%); transition: transform 0.22s ease;
+    box-shadow: var(--shadow-lg);
+  }
+  .sidebar.is-open { transform: none; }
+  .scrim { position: fixed; inset: 0; background: rgba(8, 10, 25, 0.45); z-index: 20; }
+  .topbar .menu-btn { display: inline-flex; }
+  .topbar { padding: 14px 16px 8px; }
+  .page-title { font-size: 19px; }
+  .page-sub { display: none; }
+  .view { padding: 8px 16px 24px; }
+}
