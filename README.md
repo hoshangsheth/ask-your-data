@@ -36,7 +36,7 @@ flowchart LR
 | **LLM layer** (`app/llm/`) | Provider-agnostic: one `complete_json()` contract, adapters for Gemini, Claude and OpenAI, all using structured JSON-schema output. Prompts are written once and shared by every provider. Token usage is tracked per step. |
 | **SQL guard** (`app/sql/guard.py`) | Parses with sqlglot: single statement, SELECT only, allow-listed tables, no system catalogs, no `pg_sleep`/file functions, no `FOR UPDATE`, enforced `LIMIT`. |
 | **Execution** (`app/db/executor.py`) | Read-only transaction, statement timeout, row cap; on Postgres a dedicated `app_readonly` role. Three independent layers of protection. |
-| **Uploads** (`app/datasets/`) | Read any supported file → clean and type the columns → profile them → store one read-only SQLite file per dataset. The profile (types, ranges, values, original headers) is what the model sees. |
+| **Uploads** (`app/datasets/`) | Files arrive in 4 MB parts → read any supported format → clean and type the columns → profile them → store (a SQLite file per dataset locally; a Postgres schema per dataset in the cloud). The profile (types, ranges, values, original headers) is what the model sees. |
 | **Data sources** (`app/sources/`) | The agent only sees a `DataSource` (engine, allowed tables, schema text, currency), so the demo store and uploads work the same way, and a question about one dataset can never read another. |
 | **API** (`app/api/`) | FastAPI with one router per feature: `/api/ask`, `/api/datasets` (upload, list, delete), `/api/schema`, `/api/kpis`, `/api/health`; typed request/response models; optional API key and per-IP rate limit; JSON request logs with token counts. |
 | **UI** (`app/web/static/`) | Chat-style answers (chart, table, SQL, step trace), new chat, dataset switcher with drag-and-drop upload and progress, KPI dashboard, data browser, light/dark theme with an animated ink-bleed transition (WebGL, ported from MIT-licensed "Ink Bleed"; see `THIRD_PARTY_NOTICES.md`). |
@@ -93,7 +93,7 @@ Starts Postgres 16, creates a read-only role, seeds the data and serves the app 
 pytest -q
 ```
 
-145 tests, no API key needed (models and SDK clients are replaced by stubs), split into
+154 tests, no API key needed (models and SDK clients are replaced by stubs), split into
 `tests/unit` (SQL guard, LLM adapters and provider switching, file parsing for every upload
 format, chart choice, eval scoring) and `tests/integration` (read-only execution, timeouts, KPIs,
 agent retry paths, upload → ask → delete over HTTP, dataset isolation, auth and rate limiting,
@@ -102,10 +102,11 @@ CI (GitHub Actions) lints with ruff and runs the suite against both SQLite and P
 
 ## Deploying
 
-Local uploads are stored as SQLite files, which won't persist on serverless hosting. See
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the cloud plan: original files in Vercel Blob (direct
-browser upload past the 4.5 MB request limit), tables in Postgres (Neon) with one schema per
-dataset, and the read-only role scoped to that schema.
+Runs on Vercel with Neon Postgres and Vercel Blob, selected purely by configuration: with
+`DATABASE_URL` pointing at Postgres, the demo store and every upload live there (one schema per
+dataset); with a Blob store connected, files are sent in 4 MB parts (under the 4.5 MB request
+limit) and the originals are kept in Blob. Setup steps and the security notes are in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ```bash
 ruff check .        # lint
@@ -158,7 +159,9 @@ app/
     formats.py            one reader per file format -> raw tables
     cleaning.py           safe names, number/date detection, size limits
     profile.py            column profiles, schema text for the model, starter questions
-    store.py              one read-only SQLite file + metadata per dataset
+    store.py              store interface + local backend (one SQLite file + metadata per dataset)
+    pg_store.py           Postgres backend (one schema per dataset + a datasets table)
+    staging.py            upload parts and original files: local folder or Vercel Blob
     service.py            upload pipeline: validate -> read -> clean -> profile -> store
   sources/                what the agent queries
     base.py               DataSource (engine, allowed tables, schema text, currency)

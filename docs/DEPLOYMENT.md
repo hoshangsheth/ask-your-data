@@ -1,63 +1,82 @@
-# Deploying to Vercel with a cloud database
+# Deploying to Vercel (Neon Postgres + Vercel Blob)
 
-Locally, every upload becomes a SQLite file in `data/uploads/`. That cannot work on Vercel:
+Locally, every upload becomes a SQLite file in `data/uploads/`. That can't work on Vercel:
 function instances have no persistent disk, so files written by one request are gone for the
-next. This document is the plan for storing and querying data in the cloud.
+next. In the cloud the app switches storage automatically:
 
-Limits that shape the design (Vercel Functions docs, checked November 2026):
+| | Local (default) | Vercel |
+|---|---|---|
+| Demo store | SQLite file `data/shop.db` | Postgres `public` schema, seeded on first start |
+| Uploaded tables | one SQLite file per dataset | Postgres, one schema per dataset (`ds_<id>`) |
+| Dataset metadata | JSON file per dataset | `datasets` table (profile as `jsonb`) |
+| Upload parts, original files | local temp folder (originals not kept) | private Vercel Blob store |
+
+The switch is configuration only: `DATABASE_URL` pointing at Postgres selects the Postgres store,
+and `BLOB_READ_WRITE_TOKEN` (set by Vercel when a Blob store is connected) selects Blob.
+
+Limits that shaped the design (Vercel docs, November 2026):
 
 | Limit | Value | Consequence |
 |---|---|---|
-| Request body | 4.5 MB | Larger uploads cannot be POSTed to the API; upload them to Blob storage first |
-| Persistent disk | none | Tables and metadata must live in a database |
-| Python bundle | 500 MB uncompressed | pandas + pyarrow + parsers fit, but watch the size |
-| Max duration | Hobby 300 s, Pro up to 800 s | Large files must be parsed within this window |
+| Request body | 4.5 MB | The browser sends files in 4 MB parts |
+| Persistent disk | none | Tables and metadata live in Postgres |
+| Python bundle | 500 MB uncompressed | Tests, docs and data are excluded (`vercel.json`, `.vercelignore`) |
+| Max duration | Hobby 300 s | Set in `vercel.json`; covers parsing a 50 MB file |
 
-## Recommended architecture
+## How an upload works in the cloud
 
 ```mermaid
-flowchart LR
-    B[Browser] -- 1. file, direct --> BL[(Vercel Blob<br/>original files)]
-    B -- 2. POST /api/datasets {blob_url} --> F[FastAPI on Vercel Functions]
-    F -- 3. download + parse --> BL
-    F -- 4. one schema per dataset --> PG[(Neon Postgres<br/>via Vercel Marketplace)]
-    B -- 5. POST /api/ask --> F
-    F -- 6. read-only SQL,<br/>search_path = dataset schema --> PG
+sequenceDiagram
+    participant B as Browser
+    participant F as FastAPI (Vercel Function)
+    participant BL as Vercel Blob (private)
+    participant PG as Neon Postgres
+    B->>F: POST /api/uploads {filename, size}
+    F-->>B: upload_id, part size, number of parts
+    loop each 4 MB part
+        B->>F: PUT /api/uploads/{id}/parts/{n}
+        F->>BL: staging/{id}/{n}.part
+    end
+    B->>F: POST /api/uploads/{id}/complete
+    F->>BL: read parts, keep original (originals/{id}/file)
+    F->>PG: CREATE SCHEMA ds_<id>, COPY tables, insert metadata (one transaction)
+    F->>BL: delete staged parts
+    F-->>B: dataset summary
 ```
 
-1. **Original files: Vercel Blob (private store).** The browser uploads directly to Blob using a
-   short-lived client token issued by our API, which bypasses the 4.5 MB body limit. Keeping the
-   original lets you re-process files when the parser improves.
-2. **Tables: Postgres (Neon from the Vercel Marketplace, or Supabase).** One schema per dataset,
-   e.g. `ds_3f9a1c2b7d10`, created by the owner role. The demo store lives in its own `demo` schema.
-3. **Metadata: a `datasets` table** in Postgres, replacing the JSON files:
-   `id, owner_id, name, filename, file_format, size_bytes, created_at, blob_url, profile jsonb`.
-4. **Querying safely.** Generated SQL runs as the read-only role (already supported through
-   `READONLY_DATABASE_URL`) with `SET LOCAL search_path TO ds_<id>` inside the read-only transaction.
-   The SQL guard already rejects schema-qualified names, so a query can only reach the current
-   dataset's tables, never another user's.
-5. **Connections.** Use Neon's *pooled* connection string and SQLAlchemy's `NullPool` in
-   serverless functions, so short-lived instances don't exhaust database connections.
+Questions about an upload run with `SET LOCAL search_path TO ds_<id>` inside a read-only
+transaction, and the SQL guard rejects schema-qualified names, so generated SQL can only see that
+dataset's tables. Seeding the demo store runs in one transaction holding a Postgres advisory lock,
+so instances that cold-start at the same time don't load the data twice.
 
-## Code changes needed (scoped; the local design was built for this)
+## Setting it up
 
-| Area | Change |
-|---|---|
-| `app/datasets/store.py` | Add `PostgresDatasetStore` with the same methods as `LocalDatasetStore` (`save`, `get`, `list`, `delete`, `readonly_engine`); pick it from config (`DATASETS_BACKEND=postgres`). `save` uses `DataFrame.to_sql(schema=...)`. |
-| `app/db/executor.py` | Accept an optional schema and issue `SET LOCAL search_path` after `SET TRANSACTION READ ONLY`. |
-| `app/api/routes/datasets.py` | Add `POST /api/datasets/upload-token` (issues Blob client tokens) and accept `{blob_url}` as an alternative to multipart. |
-| `app/web/static/js/upload.js` | For files over 4 MB: get a token, upload to Blob, then call the API with the URL. |
-| Auth | Uploads become per-user once sign-in exists (e.g. Clerk or Auth.js): store `owner_id` and filter every dataset query by it. Blob tokens must only be issued to signed-in users. |
-| Retention | A scheduled job (Vercel Cron) that drops schemas and blobs for datasets older than N days. |
+1. **Import the GitHub repo** as a Vercel project (framework preset: FastAPI; entrypoint
+   `app/main.py` is detected automatically, dependencies come from `requirements.txt`).
+2. **Storage → Create → Blob**, access **Private**, connect it to the project (adds
+   `BLOB_READ_WRITE_TOKEN`).
+3. **Storage → Create → Neon (Postgres)** from the Marketplace and connect it to the project (adds
+   `DATABASE_URL`, the pooled connection string the app uses).
+4. **Settings → Environment Variables:** add `GEMINI_API_KEY` (or another provider's key and
+   `LLM_PROVIDER`).
+5. Redeploy. The first request after a deploy seeds the demo store (takes a few seconds once).
 
-## Alternative: one container instead of serverless
+`GET /api/health` shows what is in use, e.g. `"storage": {"datasets": "postgres", "files": "vercel-blob"}`.
 
-If uploads are large or parsing is slow, run the existing Docker image on a container host
-(Vercel's Docker support, Render, Railway, Fly.io or Google Cloud Run) with a persistent volume or
-the same Postgres + Blob setup. This keeps the code almost unchanged and removes the request-size
-and duration limits; the trade-off is paying for an always-on container.
+## Before sharing the link publicly
+
+- Anyone with the URL can upload files and spend your AI quota. The per-IP rate limit
+  (`RATE_LIMIT_PER_MINUTE`) is kept per function instance, so treat it as a speed bump. Set a
+  spending limit on the AI provider's side, or protect the deployment (Vercel Deployment
+  Protection, or `APP_API_KEY` for API clients).
+- Uploads are shared by every visitor until sign-in exists (e.g. Clerk or Auth.js): store an
+  `owner_id` and filter dataset queries by it.
+- Neon gives one database owner role. Model SQL is still limited by the SQL guard and the
+  read-only transaction; for a third layer, create a read-only role in Neon and set
+  `READONLY_DATABASE_URL` (new dataset schemas are granted to it automatically).
+- Retention: a scheduled job (Vercel Cron) could drop schemas and blobs older than N days.
 
 ## Rough cost at portfolio scale
 
-Neon and Vercel Blob both have free tiers that cover a demo with a handful of datasets. The main
-running cost is the AI provider (about ₹0.7 per question with the default Gemini models).
+Neon and Vercel Blob free tiers cover a demo with a handful of datasets. The main running cost is
+the AI provider (about ₹0.7 per question with the default Gemini models).
