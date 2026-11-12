@@ -1,18 +1,23 @@
 /**
  * Ink theme transition: orchestration.
  *
- * Ported to plain JavaScript from "Ink Bleed" (src/ui/inkTransition.ts).
+ * Ported to plain JavaScript from "Ink Bleed" (src/ui/inkTransition.ts): same shader, same
+ * timing (1.4 s spread, power3.out, 150 ms fade), same sun/moon morph and button hand-off.
  * Copyright (c) 2026 Codemure. MIT License (see THIRD_PARTY_NOTICES.md).
  *
- *  1. keeps fresh snapshots of both themes on the GPU (re-captured when the page changes)
- *  2. on toggle: covers the page with the "from" image, flips the live page underneath,
- *     spreads the ink from the click point, then fades the overlay onto the flipped page
- *  3. if toggled mid-spread: freezes the current frame and spreads the next ink over it
- *  4. falls back to a CSS colour cross-fade without WebGL2, with reduced motion, or when
- *     snapshots are not ready yet
- *
- * Changes for this app: snapshots are invalidated by any content change or scroll (chat
- * answers arrive constantly), and captures wait for the page to be idle.
+ * Adapted for a live app, where content changes constantly (answers arrive, panels scroll):
+ *  1. Only ONE snapshot is needed: the page in the *other* theme. The live page stays in the old
+ *     theme during the spread and is the "from" layer; the overlay draws the snapshot with
+ *     alpha = ink coverage on top (pixel-identical to the original two-snapshot blend). When the
+ *     ink has covered everything, the page flips underneath and the overlay fades away.
+ *  2. The snapshot is pre-captured whenever the page is idle and re-captured after any change.
+ *     Constantly moving content (the drifting question pills) is marked data-ink-live like the
+ *     toggle: left out of the snapshot, kept live above the overlay during the spread, and given
+ *     the new colours when the ink reaches it, so it never makes the snapshot stale.
+ *     If it is stale at the moment of the click, it is captured right then and the ink starts
+ *     as soon as it is ready: the switch never silently degrades to a plain toggle.
+ *  3. A click during a spread finishes the current switch instantly, then starts the next one.
+ *  4. Without WebGL2 (or with "reduce motion") a short colour cross-fade is used instead.
  */
 
 import { bumpContentVersion, capturePage, layoutKey, renderScale } from "./capture.js";
@@ -22,7 +27,7 @@ import { ThemeIcon } from "./themeIcon.js";
 const EASE = "power3.out";
 const FADE_OUT = 0.15;
 const CSS_FADE_S = 0.45;
-const IDLE_CAPTURE_MS = 1200; // wait for the page (and chart animations) to settle
+const IDLE_CAPTURE_MS = 700; // wait for the page (and chart animations) to settle
 export const SPREAD = { growth: 0.7, cleanupFrom: 0.45, cleanupReach: 0.4, cleanupPow: 2 };
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -42,11 +47,10 @@ export class InkTransition {
     this.tween = null;
     this.fade = null;
     this.frame = null;
+    this.preparing = false; // capturing on demand after a click
     this.cssFadeTimer = 0;
-    this.captureGen = 0;
-    this.capturing = false;
-    this.captureQueued = false;
     this.captureTimer = 0;
+    this.capture = null; // in-flight capture: { theme, key, promise }
 
     const gsapReady = Boolean(window.gsap);
     this.renderer = gsapReady ? InkRenderer.create(canvas) : null;
@@ -54,7 +58,7 @@ export class InkTransition {
     if (!this.renderer) return;
 
     this.renderer.resize(renderScale());
-    this.renderer.watchContext(() => this.cancel(), () => this.scheduleCapture(0));
+    this.renderer.watchContext(() => this.complete(), () => this.scheduleCapture(0));
     window.addEventListener("resize", () => {
       this.renderer?.resize(renderScale());
       if (this.frame) this.draw();
@@ -66,82 +70,102 @@ export class InkTransition {
   }
 
   /**
-   * Invalidate snapshots when the page content changes or anything scrolls.
-   * Changes made by the capture itself are ignored: html2canvas temporarily adds an iframe and
-   * font-measuring elements to the page, which would otherwise make every snapshot stale the
-   * moment it is taken (an endless capture loop).
+   * Any content change or scroll makes the snapshot stale (a new capture is scheduled for when
+   * the page is idle). Changes made by html2canvas itself (its clone iframe and measuring
+   * elements) and by the overlay/toggle are ignored.
    */
   watchContent() {
-    const ignoredTarget = (node) =>
-      node instanceof Element && (node.closest("[data-ink-live]") || node.classList.contains("ink-canvas"));
+    // Only changes inside the app count (html2canvas works in temporary nodes outside it).
+    const appRoot = document.querySelector(".app");
+    const ignored = (node) =>
+      !(node instanceof Node) ||
+      !appRoot?.contains(node) ||
+      (node instanceof Element && (node.closest("[data-ink-live]") || node.classList.contains("ink-canvas")));
+    // html2canvas adds and removes its own nodes directly on <body> (clone iframe, font-measuring
+    // elements); the app never does, so body-level child changes are never real content changes.
     const byCapture = (r) =>
+      (r.type === "childList" && r.target === document.body) ||
       [...r.addedNodes, ...r.removedNodes].some((n) => n instanceof Element && n.classList.contains("html2canvas-container"));
     const changed = () => {
       bumpContentVersion();
       this.scheduleCapture(IDLE_CAPTURE_MS);
     };
     new MutationObserver((records) => {
-      if (this.capturing) return; // everything that changes during a capture is html2canvas's own scaffolding
-      if (records.some((r) => !ignoredTarget(r.target) && !byCapture(r))) changed();
+      if (this.capture) {
+        // While capturing, only html2canvas scaffolding changes are expected; real changes still count.
+        if (records.some((r) => !ignored(r.target) && !byCapture(r) && !r.target.closest?.(".html2canvas-container"))) changed();
+        return;
+      }
+      if (records.some((r) => !ignored(r.target) && !byCapture(r))) changed();
     }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["class", "hidden", "open", "value"] });
     document.addEventListener("scroll", changed, { capture: true, passive: true });
   }
 
   /** Toggle the theme, spreading from `point` (viewport CSS px) or from the toggle button. */
-  toggle(point) {
-    const gsap = window.gsap;
+  async toggle(point) {
+    if (this.preparing) return; // a click is already waiting for its snapshot
+    if (this.frame) this.complete(); // finish the running spread instantly, then start this one
     const to = otherTheme(getTheme());
     const renderer = this.renderer;
-    const scale = renderScale();
-    const key = layoutKey(scale);
-    const interrupting = this.frame !== null;
-
-    const canAnimate =
-      renderer !== null &&
-      !renderer.isLost &&
-      !reducedMotion.matches &&
-      renderer.hasValid(to, key) &&
-      (interrupting || renderer.hasValid(getTheme(), key));
-
-    if (!canAnimate) {
-      this.cancel();
+    if (!renderer || renderer.isLost || reducedMotion.matches) {
       this.crossFade(to);
-      if (renderer && !reducedMotion.matches) this.scheduleCapture(IDLE_CAPTURE_MS);
       return;
     }
 
-    // Interrupted: freeze exactly what is on screen and spread the new ink over it.
-    let from = getTheme();
-    if (interrupting) {
-      this.tween?.kill();
-      this.fade?.kill();
-      this.tween = this.fade = null;
-      renderer.resize(scale);
-      const frozen = this.currentFrame();
-      from = frozen && renderer.freeze(frozen) ? "composite" : getTheme();
-    }
-
     const center = point ?? this.toggleCenter();
+    root.classList.add("theme-switching"); // live elements (pills) rise above the overlay
+    if (!renderer.hasValid(to, layoutKey(renderScale()))) {
+      // Stale or missing snapshot: take it now (the icon starts turning immediately).
+      this.preparing = true;
+      this.toggleButton?.classList.add("is-preparing");
+      try {
+        await this.captureTheme(to);
+      } catch (err) {
+        console.warn("[ink] capture failed; using the colour fade", err);
+      } finally {
+        this.preparing = false;
+        this.toggleButton?.classList.remove("is-preparing");
+      }
+      if (!renderer.textures.get(to)) {
+        root.classList.remove("theme-switching");
+        this.crossFade(to);
+        return;
+      }
+      // Even if the page changed during the capture, the snapshot is at most a moment old:
+      // spread it (better than giving up on the animation).
+    }
+    this.start(to, center);
+  }
+
+  start(to, center) {
+    const gsap = window.gsap;
+    const renderer = this.renderer;
     const maxDist = farthestCorner(center);
-    this.frame = { from, to, center, maxDist, seed: randomSeed() };
+    this.frame = { to, center, maxDist, seed: randomSeed() };
     this.state.progress = 0;
     this.state.time = 0;
 
-    const chromeFrom = this.icon?.readChrome();
-    renderer.resize(scale);
+    renderer.resize(renderScale());
     this.draw();
-    // Same task: the overlay (showing "from") and the flipped page reach the screen together.
     gsap.set(renderer.canvas, { opacity: 1 });
     renderer.canvas.classList.add("is-active");
-    this.apply(to);
 
     const duration = inkParams.duration;
     this.icon?.morphTo(to, {
       duration,
       ease: EASE,
-      chromeFrom,
+      chromeFrom: this.icon.readChrome(),
+      chromeTo: this.icon.chromeFor(to),
       chromeDelay: this.inkArrival(center, maxDist, this.toggleCenter()) * duration,
     });
+    // Live elements other than the toggle (the drifting pills, left out of the snapshot and
+    // drawn above the overlay) take the new theme's colours when the ink front reaches them.
+    this.liveTimers = [...document.querySelectorAll("[data-ink-live]:not(#theme-toggle)")].map((el) => {
+      const r = el.getBoundingClientRect();
+      const at = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      return window.setTimeout(() => (el.dataset.inkTheme = to), this.inkArrival(center, maxDist, at) * duration * 1000);
+    });
+    this.toggleButton?.setAttribute("aria-pressed", String(to === "dark"));
     this.tween = gsap.to(this.state, {
       progress: 1,
       duration,
@@ -176,29 +200,47 @@ export class InkTransition {
     if (this.renderer && frame) this.renderer.draw(frame);
   }
 
+  /** The ink covers the page: flip the live page underneath, then fade the overlay away. */
   finish() {
     const canvas = this.renderer?.canvas;
+    const to = this.frame?.to;
     this.tween = null;
+    if (to) this.apply(to);
+    this.releaseLive(); // the page itself now has the new theme
+    this.icon?.settle();
     if (!canvas) return;
     this.fade = window.gsap.to(canvas, { opacity: 0, duration: FADE_OUT, ease: "none", onComplete: () => this.hide() });
+  }
+
+  /** Live elements go back to following the page theme. */
+  releaseLive() {
+    (this.liveTimers ?? []).forEach((t) => window.clearTimeout(t));
+    this.liveTimers = [];
+    document.querySelectorAll("[data-ink-theme]").forEach((el) => delete el.dataset.inkTheme);
   }
 
   hide() {
     this.fade = null;
     this.frame = null;
+    this.releaseLive();
     this.renderer?.canvas.classList.remove("is-active");
-    if (this.captureQueued) this.scheduleCapture(0);
+    root.classList.remove("theme-switching"); // moving content resumes
+    this.scheduleCapture(250); // the other theme is now the old one: re-capture it soon
   }
 
-  cancel() {
+  /** Jump to the end of a running spread (a new click, or the GPU context was lost). */
+  complete() {
     if (!this.frame) return;
     this.tween?.kill();
     this.fade?.kill();
+    const to = this.frame.to;
     this.tween = null;
+    if (getTheme() !== to) this.apply(to);
+    this.icon?.set(to);
     this.hide();
   }
 
-  /** Plain CSS colour transition (no WebGL2, reduced motion, or snapshots not ready yet). */
+  /** Plain CSS colour transition (no WebGL2 or reduced motion). */
   crossFade(to) {
     root.classList.add("theme-fade");
     root.style.setProperty("--theme-fade", `${CSS_FADE_S}s`);
@@ -208,7 +250,7 @@ export class InkTransition {
     window.clearTimeout(this.cssFadeTimer);
     this.cssFadeTimer = window.setTimeout(() => {
       root.classList.remove("theme-fade");
-      if (this.captureQueued) this.scheduleCapture(0);
+      this.scheduleCapture(0);
     }, CSS_FADE_S * 1000 + 50);
   }
 
@@ -226,48 +268,35 @@ export class InkTransition {
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
 
-  // ---- capture scheduling -------------------------------------------------------------------
+  // ---- snapshots -----------------------------------------------------------------------------
   scheduleCapture(delay) {
     window.clearTimeout(this.captureTimer);
     this.captureTimer = window.setTimeout(() => {
       // Capturing blocks the main thread briefly: do it when the browser is idle.
-      if ("requestIdleCallback" in window) window.requestIdleCallback(() => void this.captureAll(), { timeout: 2000 });
-      else void this.captureAll();
+      const run = () => {
+        if (this.frame || this.preparing || root.classList.contains("theme-fade") || document.hidden) return;
+        void this.captureTheme(otherTheme(getTheme())).catch(() => {});
+      };
+      if ("requestIdleCallback" in window) window.requestIdleCallback(run, { timeout: 2000 });
+      else run();
     }, delay);
   }
 
-  async captureAll() {
+  /** Capture `theme` unless a valid snapshot exists; shares an in-flight capture of the same state. */
+  captureTheme(theme) {
     const renderer = this.renderer;
-    if (!renderer || renderer.isLost || reducedMotion.matches || document.hidden) return;
-    if (this.capturing || this.frame || root.classList.contains("theme-fade") || root.dataset.busy === "1") {
-      this.captureQueued = true;
-      return;
-    }
-    const scale = renderScale();
-    const key = layoutKey(scale);
-    const current = getTheme();
-    const themes = [current, otherTheme(current)].filter((t) => !renderer.hasValid(t, key));
-    this.captureQueued = false;
-    if (themes.length === 0) return;
-
-    const gen = ++this.captureGen;
-    this.capturing = true;
-    try {
-      for (const theme of themes) {
-        const snap = await capturePage(theme, scale, renderer.maxTextureSize);
-        if (gen !== this.captureGen) return;
-        if (snap.key !== layoutKey(renderScale())) {
-          this.captureQueued = true; // page changed while capturing: snapshot already stale
-          break;
-        }
-        renderer.upload(snap);
-      }
-    } catch (err) {
-      console.warn("[ink] capture failed; using the colour fade instead", err);
-    } finally {
-      this.capturing = false;
-    }
-    if (this.captureQueued) this.scheduleCapture(IDLE_CAPTURE_MS);
+    if (!renderer || renderer.isLost) return Promise.resolve();
+    const key = layoutKey(renderScale());
+    if (renderer.hasValid(theme, key)) return Promise.resolve();
+    if (this.capture && this.capture.theme === theme && this.capture.key === key) return this.capture.promise;
+    const promise = (async () => {
+      const snap = await capturePage(theme, renderScale(), renderer.maxTextureSize);
+      renderer.upload(snap); // tagged with the key at capture start; a later change makes it stale again
+    })().finally(() => {
+      if (this.capture?.promise === promise) this.capture = null;
+    });
+    this.capture = { theme, key, promise };
+    return promise;
   }
 }
 

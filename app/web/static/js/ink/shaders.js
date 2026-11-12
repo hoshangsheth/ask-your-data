@@ -1,13 +1,18 @@
 /**
  * Ink theme transition: GLSL shaders.
  *
- * Ported from "Ink Bleed" (src/gl/shaders.ts), unchanged GLSL.
+ * Ported from "Ink Bleed" (src/gl/shaders.ts). The ink mask is the original GLSL, unchanged.
  * Copyright (c) 2026 Codemure. MIT License (see THIRD_PARTY_NOTICES.md).
  *
- * The fragment shader blends two full-page snapshots ("from" theme, "to" theme) through an
- * organic ink mask that grows from the click point: a domain-warped blob, curling tendrils,
+ * An organic ink mask grows from the click point: a domain-warped blob, curling tendrils,
  * paper-fibre feathering, a faint diffusion haze, droplets ahead of the front, and a pigment
  * rim. A "cleanup" term guarantees full coverage at the end of the animation.
+ *
+ * One change for this app: instead of mixing a "from" snapshot with a "to" snapshot, the shader
+ * outputs the "to" snapshot with alpha = ink coverage (premultiplied), and the browser composites
+ * it over the LIVE page, which is still in the old theme. That is the same pixel result as the
+ * original mix(from, to, coverage) followed by the rim mix, but needs only one snapshot, so the
+ * "from" side can never be stale.
  */
 
 import { NOISE_CELLS } from "./noise.js";
@@ -101,7 +106,7 @@ void main() {
   float inner = R * (1.0 - A_SUM) + cleanup - FIBRE_PX - THIN_MAX_PX - uSoftness * 2.0;
   float outer = R * (1.0 + A_SUM) * (1.0 + TENDRIL_REACH * uTendril) + cleanup + FIBRE_PX + SPECK_PX + uSoftness * 2.0;
   if (d < inner) { outColor = vec4(sampleDoc(uTo, uToSize, uToMap, devPx), 1.0); return; }
-  if (d > outer) { outColor = vec4(sampleDoc(uFrom, uFromSize, uFromMap, devPx), 1.0); return; }
+  if (d > outer) { outColor = vec4(0.0); return; } // not inked yet: the live page shows through
 
   float t = uTime * uDrift;
   vec2 p = rel / uRef;
@@ -158,15 +163,16 @@ void main() {
     cov = max(cov, smoothstep(th, th + 0.04, sn) * 0.75 * (1.0 - ahead));
   }
 
-  vec3 from = sampleDoc(uFrom, uFromSize, uFromMap, devPx);
   vec3 to = sampleDoc(uTo, uToSize, uToMap, devPx);
-  vec3 col = mix(from, to, cov);
 
   // Pigment rim at the frontier.
   float rimX = (f + soft * 1.1) / (soft * 1.4 + 1.2);
   float rim = exp(-rimX * rimX) * inked;
-  col = mix(col, uRimColor, rim * 0.45);
+  float rimA = rim * 0.45;
 
-  outColor = vec4(col, 1.0);
+  // Premultiplied "rim over (to with alpha cov)", composited over the live "from" page:
+  // equals the original mix(mix(from, to, cov), rimColor, rimA).
+  float alpha = rimA + cov * (1.0 - rimA);
+  outColor = vec4(uRimColor * rimA + to * cov * (1.0 - rimA), alpha);
 }
 `;

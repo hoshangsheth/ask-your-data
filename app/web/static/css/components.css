@@ -251,6 +251,7 @@
   pointer-events: none; visibility: hidden;
 }
 .ink-canvas.is-active { visibility: visible; }
+.theme-toggle.is-preparing { cursor: progress; }
 
 /* CSS fallback (no WebGL2, reduced motion, or snapshots not ready): applied only during a flip. */
 html.theme-fade, html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
@@ -486,18 +487,6 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* Answers about the data itself can be a short list: keep the model's line breaks. */
 .answer-text.is-prose { white-space: pre-line; }
 
-/* ===== Theme switch: ink spreading from the click (View Transitions) =====
-   js/theme.js reveals the new theme through a circle growing from the click point (clip-path,
-   animated on the GPU); the old theme stays underneath until covered. */
-:root[data-ink="view-transition"] { view-transition-name: root; }
-::view-transition { pointer-events: none; } /* clicks keep reaching the page mid-transition */
-::view-transition-old(root),
-::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-::view-transition-old(root) { z-index: 1; }
-::view-transition-new(root) { z-index: 2; }
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(root), ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
-}
 /* ===== Quick questions: drifting pills (js/ask.js pillRows) ===== */
 .suggestions { display: flex; flex-direction: column; gap: 10px; margin: 0 -8px;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
@@ -579,5 +568,8 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .auth-form.is-switching *, .account.acct-enter, .account.acct-enter * { animation: none !important; }
 }
 
-/* Hold other animations still while the theme reveal runs (js/theme.js adds the class). */
-html.theme-switching .pill-track { animation-play-state: paused; }
+/* During the ink switch the pill strip is live (left out of snapshots) and sits above the ink
+   overlay; its colours ease to the new theme when the ink reaches it (js/ink/transition.js). */
+html.theme-switching .suggestions { position: relative; z-index: 1001; }
+html.theme-switching .pill { transition: transform 0.2s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease; }
+html.theme-switching .pill svg { transition: color 0.3s ease; }

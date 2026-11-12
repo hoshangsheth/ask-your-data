@@ -55,7 +55,10 @@ export class ThemeIcon {
     gsap.set(this.button, { clearProps: "backgroundColor,borderColor,color" });
   }
 
-  /** Animate to a theme's pose. opts: { duration, ease, chromeFrom?, chromeDelay? } */
+  /**
+   * Animate to a theme's pose. opts: { duration, ease, chromeFrom?, chromeTo?, chromeDelay? }
+   * chromeTo: the button colours of the target theme (when the page flips only at the end).
+   */
   morphTo(theme, opts) {
     const gsap = this.gsap;
     if (!gsap || !window.MorphSVGPlugin) {
@@ -70,17 +73,21 @@ export class ThemeIcon {
     if (this.icon) tl.to(this.icon, { rotation: pose.icon, transformOrigin: "50% 50%" }, 0);
 
     if (opts.chromeFrom) {
-      // Hold the old colours (the live page already has the new theme) until the ink arrives.
+      // Hold the old colours until the ink arrives, then take the new theme's colours. They stay
+      // inline until the page itself flips (the caller clears them with settle()).
       Object.assign(this.button.style, opts.chromeFrom);
+      const to = opts.chromeTo;
       tl.to(
         this.button,
         {
-          backgroundColor: () => this.targetChrome().backgroundColor,
-          borderColor: () => this.targetChrome().borderColor,
-          color: () => this.targetChrome().color,
+          backgroundColor: () => (to ?? this.targetChrome()).backgroundColor,
+          borderColor: () => (to ?? this.targetChrome()).borderColor,
+          color: () => (to ?? this.targetChrome()).color,
           duration: Math.min(0.18, opts.duration * 0.15),
           ease: "power1.out",
-          onComplete: () => gsap.set(this.button, { clearProps: "backgroundColor,borderColor,color" }),
+          onComplete: () => {
+            if (!to) gsap.set(this.button, { clearProps: "backgroundColor,borderColor,color" });
+          },
         },
         opts.chromeDelay ?? 0,
       );
@@ -88,6 +95,21 @@ export class ThemeIcon {
       gsap.set(this.button, { clearProps: "backgroundColor,borderColor,color" });
     }
     this.timeline = tl;
+  }
+
+  /** Drop the inline colours (call once the page has flipped to the new theme). */
+  settle() {
+    this.gsap?.set(this.button, { clearProps: "backgroundColor,borderColor,color" });
+  }
+
+  /** The button's stylesheet colours in `theme` (flips the page attribute and back, no paint). */
+  chromeFor(theme) {
+    const root = document.documentElement;
+    const saved = root.dataset.theme;
+    root.dataset.theme = theme;
+    const c = this.targetChrome();
+    root.dataset.theme = saved;
+    return c;
   }
 
   /** Stylesheet colours for the current (already flipped) theme. */

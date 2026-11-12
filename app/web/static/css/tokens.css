@@ -7,7 +7,9 @@
  *   - <html data-theme="light|dark"> forces one (set by js/theme.js, saved in localStorage)
  */
 
-:root {
+/* [data-ink-theme] lets one live element (the question pills) take a theme's colours on its own
+   while the ink transition passes over it (js/ink/transition.js). */
+:root, [data-ink-theme="light"] {
   /* Typography */
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
@@ -78,7 +80,7 @@
     --gradient: linear-gradient(135deg, #6d6bff 0%, #a77bff 100%);
   }
 }
-:root[data-theme="dark"] {
+:root[data-theme="dark"], [data-ink-theme="dark"] {
   --bg: #0c0e1a;
   --bg-elev: #12152a;
   --surface: #151931;

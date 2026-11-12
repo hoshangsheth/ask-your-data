@@ -4,12 +4,12 @@
  * Ported to plain JavaScript from "Ink Bleed" (src/gl/renderer.ts).
  * Copyright (c) 2026 Codemure. MIT License (see THIRD_PARTY_NOTICES.md).
  *
- * Owns the overlay canvas, the WebGL2 context, one snapshot texture per theme, and two
- * "composite" textures (ping-pong) that freeze whatever is on screen when a transition is
- * interrupted, so the next ink can spread over it.
+ * Owns the transparent overlay canvas, the WebGL2 context and one snapshot texture per theme.
+ * Each frame draws the snapshot of the theme being revealed, with alpha = ink coverage, over the
+ * live page (see shaders.js). Only the "to" snapshot is needed.
  *
- * Frame shape passed to draw(): { from: "light"|"dark"|"composite", to: "light"|"dark",
- *   center: {x, y}, radius, cleanup, maxDist, time, seed: {x, y, angle} }  (CSS px / seconds)
+ * Frame shape passed to draw(): { to: "light"|"dark", center: {x, y}, radius, cleanup, maxDist,
+ *   time, seed: {x, y, angle} }  (CSS px / seconds)
  */
 
 import { createNoiseTexture } from "./noise.js";
@@ -29,11 +29,11 @@ export class InkRenderer {
   /** Returns null when WebGL2 is unavailable. */
   static create(canvas) {
     const gl = canvas.getContext("webgl2", {
-      alpha: false, // opaque: CSS opacity fades it onto the live page
+      alpha: true, // transparent where the ink hasn't reached: the live page shows through
       antialias: false,
       depth: false,
       stencil: false,
-      premultipliedAlpha: false,
+      premultipliedAlpha: true, // the shader outputs premultiplied colour
       preserveDrawingBuffer: false,
       powerPreference: "high-performance",
     });
@@ -116,6 +116,19 @@ export class InkRenderer {
     entry.height = snapshot.canvas.height;
     entry.scale = snapshot.scale;
     entry.key = snapshot.key;
+  }
+
+  /** Overwrite part of a theme's snapshot with { canvas, x, y } (document CSS px). */
+  patch(theme, part) {
+    const entry = this.textures.get(theme);
+    if (this.lost || !entry) return false;
+    const x = Math.round(part.x * entry.scale);
+    const y = Math.round(part.y * entry.scale);
+    if (x < 0 || y < 0 || x + part.canvas.width > entry.width || y + part.canvas.height > entry.height) return false;
+    const gl = this.gl;
+    gl.bindTexture(gl.TEXTURE_2D, entry.texture);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, gl.RGBA, gl.UNSIGNED_BYTE, part.canvas);
+    return true;
   }
 
   /** True when a snapshot for `theme` exists and matches the current page state. */
@@ -201,9 +214,8 @@ export class InkRenderer {
   }
 
   render(frame) {
-    const from = this.sampler(frame.from);
     const to = this.sampler(frame.to);
-    if (!from || !to) return false;
+    if (!to) return false;
 
     const gl = this.gl;
     const { program, uniform } = this.program;
@@ -211,19 +223,14 @@ export class InkRenderer {
     gl.useProgram(program);
     gl.bindVertexArray(this.vao);
 
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, from.texture);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, to.texture);
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this.noise);
 
-    gl.uniform1i(uniform("uFrom"), 0);
     gl.uniform1i(uniform("uTo"), 1);
     gl.uniform1i(uniform("uNoise"), 2);
-    gl.uniform2f(uniform("uFromSize"), from.width, from.height);
     gl.uniform2f(uniform("uToSize"), to.width, to.height);
-    gl.uniform4f(uniform("uFromMap"), from.ratio, from.offsetX, from.offsetY, from.flipY ? 1 : 0);
     gl.uniform4f(uniform("uToMap"), to.ratio, to.offsetX, to.offsetY, to.flipY ? 1 : 0);
     gl.uniform1f(uniform("uCanvasScale"), this.canvasScale);
     gl.uniform2f(uniform("uRes"), this.canvas.width, this.canvas.height);
