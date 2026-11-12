@@ -1,0 +1,49 @@
+# Continuous integration: lint, then run the test suite against SQLite and PostgreSQL.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check .
+      - run: ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database: [sqlite, postgres]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: shop
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app -d shop" --health-interval 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Create read-only role
+        if: matrix.database == 'postgres'
+        run: psql postgresql://app:app@localhost:5432/shop -f docker/init-readonly.sql
+      - name: Run tests
+        env:
+          TEST_DATABASE_URL: ${{ matrix.database == 'postgres' && 'postgresql+psycopg://app:app@localhost:5432/shop' || '' }}
+          TEST_READONLY_DATABASE_URL: ${{ matrix.database == 'postgres' && 'postgresql+psycopg://app_readonly:readonly@localhost:5432/shop' || '' }}
+        run: pytest -q
