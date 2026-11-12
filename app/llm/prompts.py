@@ -25,7 +25,10 @@ Rules:
 - If the question cannot be answered from this schema (data that is not stored, or not about this
   store), set answerable to false, leave sql empty, and say in explanation what data is missing.
 - explanation: one or two plain-English sentences on how the query answers the question,
-  including any assumption you made (e.g. which date range "last quarter" means)."""
+  including any assumption you made (e.g. which date range "last quarter" means).
+- standalone_question: the question rewritten so it makes sense on its own. If earlier turns of
+  the conversation are given and the question refers to them ("that", "same for 2024", "break it
+  down by city"), fill in what it refers to; otherwise repeat the question."""
 
 SQL_SCHEMA = {
     "type": "object",
@@ -33,10 +36,27 @@ SQL_SCHEMA = {
         "answerable": {"type": "boolean"},
         "sql": {"type": "string"},
         "explanation": {"type": "string"},
+        "standalone_question": {"type": "string"},
     },
-    "required": ["answerable", "sql", "explanation"],
+    "required": ["answerable", "sql", "explanation", "standalone_question"],
     "additionalProperties": False,
 }
+
+# Prepended to the user message when the question follows earlier turns of a conversation.
+HISTORY_TEMPLATE = """\
+Earlier in this conversation (oldest first):
+{turns}
+
+The new question may build on these turns. Write one complete query for the new question; reuse
+filters, groupings and definitions from the earlier SQL where the question implies them.
+
+"""
+HISTORY_TURN = """\
+<turn>
+Question: {question}
+SQL: {sql}
+Answer: {answer}
+</turn>"""
 
 # Appended to the user message when a previous attempt failed validation or execution.
 RETRY_TEMPLATE = """
@@ -55,6 +75,8 @@ You explain query results to a business stakeholder in plain language.
 - Format large numbers readably and ratios as percentages. Describe changes in words
   ("down 12%"), not with a bare minus sign.
 - Only state facts that are in the result rows. If the result is empty, say so.
+- Don't add a currency symbol unless the question, a column name or the data itself shows the
+  currency; otherwise write plain numbers.
 - Pick a chart only if it helps: "line" for a trend over time, "bar" for comparing categories,
   "pie" for shares of a whole with at most 6 slices, otherwise "none". x and y must be column names
   from the result (y numeric); use empty strings when chart is "none"."""

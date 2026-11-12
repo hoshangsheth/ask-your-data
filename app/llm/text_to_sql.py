@@ -1,7 +1,7 @@
 """
 The two model calls the agent makes, independent of provider:
 
-    generate_sql()   question (+ previous error, on retry) -> SQLDraft
+    generate_sql()   question (+ earlier turns for follow-ups, + previous error on retry) -> SQLDraft
     summarize()      question + result rows                -> Summary (answer + chart suggestion)
 
 `LLM` is the Protocol the agent depends on. `TextToSQL` implements it on top of any LLMProvider;
@@ -16,6 +16,8 @@ from app.llm.contracts import LLMProvider, Reasoning
 from app.llm.indian_units import inr_words, is_money_column
 from app.llm.prompts import (
     DIALECT_NAMES,
+    HISTORY_TEMPLATE,
+    HISTORY_TURN,
     RETRY_TEMPLATE,
     SQL_SCHEMA,
     SQL_SYSTEM,
@@ -32,6 +34,7 @@ class SQLDraft:
     sql: str
     explanation: str
     usage: dict[str, Any] = field(default_factory=dict)  # model + token counts for this call
+    standalone_question: str = ""  # the question rewritten to stand alone (follow-ups)
 
 
 @dataclass
@@ -47,7 +50,14 @@ class LLM(Protocol):
     """What the agent needs from the model layer."""
 
     def generate_sql(
-        self, *, question: str, schema: str, dialect: str, previous_sql: str | None = None, error: str | None = None
+        self,
+        *,
+        question: str,
+        schema: str,
+        dialect: str,
+        previous_sql: str | None = None,
+        error: str | None = None,
+        history: list[dict[str, str]] | None = None,
     ) -> SQLDraft: ...
 
     def summarize(
@@ -96,10 +106,21 @@ class TextToSQL:
         return {"provider": self.provider.name, "sql_model": self.sql_model, "summary_model": self.summary_model}
 
     def generate_sql(
-        self, *, question: str, schema: str, dialect: str, previous_sql: str | None = None, error: str | None = None
+        self,
+        *,
+        question: str,
+        schema: str,
+        dialect: str,
+        previous_sql: str | None = None,
+        error: str | None = None,
+        history: list[dict[str, str]] | None = None,
     ) -> SQLDraft:
         system = SQL_SYSTEM.format(dialect_name=DIALECT_NAMES.get(dialect, dialect), schema=schema)
-        user = f"Question: {question}"
+        user = ""
+        if history:  # follow-up: show the earlier turns so "that" / "same for 2024" can be resolved
+            turns = "\n".join(HISTORY_TURN.format(**t) for t in history)
+            user = HISTORY_TEMPLATE.format(turns=turns)
+        user += f"Question: {question}"
         if previous_sql is not None:  # retry: show the model its failed query and the error
             user += RETRY_TEMPLATE.format(previous_sql=previous_sql, error=error)
         r = self.provider.complete_json(
@@ -111,7 +132,11 @@ class TextToSQL:
             reasoning=self.sql_reasoning,
         )
         return SQLDraft(
-            answerable=bool(r.data["answerable"]), sql=r.data["sql"], explanation=r.data["explanation"], usage=r.usage()
+            answerable=bool(r.data["answerable"]),
+            sql=r.data["sql"],
+            explanation=r.data["explanation"],
+            usage=r.usage(),
+            standalone_question=str(r.data.get("standalone_question") or "").strip(),
         )
 
     def summarize(

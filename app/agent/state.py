@@ -11,6 +11,8 @@ from typing import Annotated, Any, TypedDict
 
 class AgentState(TypedDict, total=False):
     question: str
+    history: list[dict[str, str]]  # earlier turns of the conversation (follow-up questions)
+    standalone_question: str  # the question rewritten to stand alone (from the SQL step)
     sql: str  # latest SQL (validated/normalised after the validate node)
     explanation: str  # model's explanation of the SQL, or why it is unanswerable
     error: str | None  # last validation/database error; None after a successful step

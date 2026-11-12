@@ -11,7 +11,9 @@ SQLAgent: the text-to-SQL workflow as a LangGraph state machine.
 Usage:
     agent = SQLAgent(llm, source, max_rows=500, max_attempts=3, timeout_ms=5000)
     result = agent.ask("Top 5 products by revenue in 2025")
-    # result: status, answer, sql, explanation, columns, rows, chart, attempts, trace, usage, latency_ms
+    result = agent.ask("And in 2024?", history=[{"question": ..., "sql": ..., "answer": ...}])
+    # result: status, answer, sql, explanation, standalone_question, columns, rows, chart,
+    #         attempts, trace, usage, latency_ms
 
 `source` (app/sources) is the demo store or an uploaded dataset: the agent works the same on both.
 """
@@ -64,21 +66,25 @@ class SQLAgent:
         """Ask the model for SQL (on retry, include the failed SQL and its error)."""
         t = time.perf_counter()
         retry = state.get("error") is not None
+        extra = {"history": state["history"]} if state.get("history") else {}
         draft = self.llm.generate_sql(
             question=state["question"],
             schema=self.schema_text,
             dialect=self.dialect,
             previous_sql=state.get("sql") if retry else None,
             error=state.get("error"),
+            **extra,
         )
         attempts = state.get("attempts", 0) + 1
         tokens = _tokens(draft.usage)
+        standalone = getattr(draft, "standalone_question", "") or state.get("standalone_question", "")
         if not draft.answerable:
             return {
                 "attempts": attempts,
                 "status": "unanswerable",
                 "answer": draft.explanation,
                 "explanation": draft.explanation,
+                "standalone_question": standalone,
                 "sql": "",
                 "trace": _step("generate_sql", t, attempt=attempts, answerable=False, **tokens),
             }
@@ -86,6 +92,7 @@ class SQLAgent:
             "attempts": attempts,
             "sql": draft.sql,
             "explanation": draft.explanation,
+            "standalone_question": standalone,
             "error": None,
             "trace": _step("generate_sql", t, attempt=attempts, retry=retry, **tokens),
         }
@@ -124,8 +131,10 @@ class SQLAgent:
     def _summarize(self, state: AgentState) -> AgentState:
         """Ask the model for a plain-English answer and a chart suggestion."""
         t = time.perf_counter()
+        # For a follow-up ("same for 2024?") the standalone version is what the answer must address.
+        question = state.get("standalone_question") if state.get("history") else None
         s = self.llm.summarize(
-            question=state["question"],
+            question=question or state["question"],
             sql=state["sql"],
             columns=state["columns"],
             rows=state["rows"],
@@ -178,11 +187,16 @@ class SQLAgent:
         return g.compile()
 
     # ---- Public API -------------------------------------------------------------------------
-    def ask(self, question: str) -> dict[str, Any]:
-        """Answer one question. Raises app.llm.LLMServiceError if the provider is unusable."""
+    def ask(self, question: str, history: list[dict[str, str]] | None = None) -> dict[str, Any]:
+        """Answer one question. Raises app.llm.LLMServiceError if the provider is unusable.
+
+        history: earlier turns of the conversation, oldest first, each {"question", "sql",
+        "answer"}; lets follow-ups like "same for 2024" or "break that down by city" work.
+        """
         t = time.perf_counter()
+        start = {"question": question, "history": history or [], "attempts": 0, "error": None, "trace": []}
         try:
-            final = self.graph.invoke({"question": question, "attempts": 0, "error": None, "trace": []})
+            final = self.graph.invoke(start)
         except LLMError as e:  # this question failed at the model; report it as an answer
             final = {"status": "failed", "answer": f"Model error: {e}", "trace": []}
 
@@ -190,6 +204,7 @@ class SQLAgent:
         return {
             "status": final.get("status", "failed"),
             "question": question,
+            "standalone_question": final.get("standalone_question", "") or question,
             "answer": final.get("answer", ""),
             "sql": final.get("sql", ""),
             "explanation": final.get("explanation", ""),
