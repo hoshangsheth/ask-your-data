@@ -1,6 +1,9 @@
 # Not needed by the deployed app (keeps uploads and the function bundle small).
 .venv/
 .env
+.env.local
+.vercel/
+.claude/
 data/
 tests/
 evals/results.json
