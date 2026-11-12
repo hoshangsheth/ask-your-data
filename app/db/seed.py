@@ -20,7 +20,7 @@ import random
 from datetime import date, timedelta
 from decimal import Decimal
 
-from sqlalchemy import Engine, func, select
+from sqlalchemy import Connection, Engine, func, select
 
 from app.core.config import get_settings
 from app.db.engine import make_engines
@@ -362,22 +362,31 @@ def generate(n_customers: int = 2500, n_orders: int = 16000, seed: int = 42) -> 
     return {"customers": cust_rows, "products": prod_rows, "orders": order_rows, "order_items": item_rows}
 
 
-def seed(engine: Engine, force: bool = False, **kwargs) -> dict[str, int]:
-    """Create tables and load data; return row counts. Skips if data exists unless force=True."""
+def seed(bind: Engine | Connection, force: bool = False, **kwargs) -> dict[str, int]:
+    """Create tables and load data; return row counts. Skips if data exists unless force=True.
+
+    Pass an Engine (runs in its own transaction) or a Connection inside a transaction the caller
+    controls (e.g. one holding a Postgres advisory lock). Everything loads or nothing does.
+    """
+    if isinstance(bind, Engine):
+        with bind.begin() as conn:
+            return _seed(conn, force, **kwargs)
+    return _seed(bind, force, **kwargs)
+
+
+def _seed(conn: Connection, force: bool, **kwargs) -> dict[str, int]:
     if force:
-        metadata.drop_all(engine)
-    metadata.create_all(engine)
-    with engine.connect() as conn:
-        existing = conn.execute(select(func.count()).select_from(orders)).scalar_one()
+        metadata.drop_all(conn)
+    metadata.create_all(conn)
+    existing = conn.execute(select(func.count()).select_from(orders)).scalar_one()
     if existing and not force:
         return {}
 
     data = generate(**kwargs)
-    with engine.begin() as conn:  # one transaction: all tables load or none do
-        for table in (customers, products, orders, order_items):
-            rows = data[table.name]
-            for i in range(0, len(rows), 5000):  # batch inserts to keep memory flat
-                conn.execute(table.insert(), rows[i : i + 5000])
+    for table in (customers, products, orders, order_items):
+        rows = data[table.name]
+        for i in range(0, len(rows), 5000):  # batch inserts to keep memory flat
+            conn.execute(table.insert(), rows[i : i + 5000])
     return {name: len(rows) for name, rows in data.items()}
 
 

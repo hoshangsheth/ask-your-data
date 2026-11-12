@@ -12,6 +12,7 @@ Usage:
     result.columns, result.rows, result.truncated, result.elapsed_ms
 """
 
+import re
 import time
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -19,6 +20,8 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import Engine
+
+_SCHEMA = re.compile(r"^[a-z_][a-z0-9_]{0,62}$")
 
 
 class QueryError(Exception):
@@ -44,8 +47,14 @@ def jsonable(value: Any) -> Any:
     return value
 
 
-def run_readonly(engine: Engine, sql: str, *, max_rows: int, timeout_ms: int) -> QueryResult:
-    """Execute one SELECT inside a read-only transaction with a timeout, then roll back."""
+def run_readonly(engine: Engine, sql: str, *, max_rows: int, timeout_ms: int, schema: str | None = None) -> QueryResult:
+    """Execute one SELECT inside a read-only transaction with a timeout, then roll back.
+
+    `schema` (Postgres only) limits name lookup to one schema, e.g. an uploaded dataset's
+    "ds_3f9a1c2b7d10". It must come from our own code, never from user input.
+    """
+    if schema is not None and not _SCHEMA.match(schema):
+        raise ValueError(f"invalid schema name: {schema!r}")
     started = time.perf_counter()
     is_pg = engine.dialect.name == "postgresql"
     deadline = started + timeout_ms / 1000
@@ -61,6 +70,9 @@ def run_readonly(engine: Engine, sql: str, *, max_rows: int, timeout_ms: int) ->
                 dbapi.rollback()
                 cur.execute("SET TRANSACTION READ ONLY")
                 cur.execute(f"SET LOCAL statement_timeout = {int(timeout_ms)}")
+                if schema:
+                    # pg_catalog stays implicitly reachable; the SQL guard blocks system catalogs.
+                    cur.execute(f'SET LOCAL search_path TO "{schema}"')
             else:
                 # SQLite has no statement timeout: abort from the VM progress callback instead.
                 raw.set_progress_handler(lambda: 1 if time.perf_counter() > deadline else 0, 10_000)

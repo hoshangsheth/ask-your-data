@@ -12,10 +12,16 @@ Usage:
 In tests, build one directly and skip the .env file:
     Settings(llm_provider="anthropic", _env_file=None)
 
-Paths: `.env` and relative SQLite paths (sqlite:///./data/shop.db) are resolved against the
-project root, not the current folder, so the app behaves the same wherever it is started from.
+Paths: `.env` is read from the project root. Relative data paths (sqlite:///./data/shop.db,
+data/uploads) are resolved against DATA_ROOT: the project root locally, a temporary folder on
+Vercel (the deployed code folder is read-only there).
+
+Cloud (Vercel): set DATABASE_URL to Postgres (Neon) and connect a Blob store
+(BLOB_READ_WRITE_TOKEN); uploads then go to Postgres + Blob automatically. See docs/DEPLOYMENT.md.
 """
 
+import os
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -24,6 +30,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # D:\Ask Your Data (this file is app/core/config.py).
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# True inside Vercel Functions (Vercel sets VERCEL=1).
+ON_VERCEL = bool(os.environ.get("VERCEL"))
+
+# Where relative data paths live: writable everywhere we run.
+DATA_ROOT = Path(tempfile.gettempdir()) / "ask-your-data" if ON_VERCEL else PROJECT_ROOT
 
 ReasoningLevel = Literal["low", "medium", "high"]
 
@@ -58,8 +70,15 @@ class Settings(BaseSettings):
     query_timeout_ms: int = 5000  # per-query execution time limit
 
     # ---- User uploads ------------------------------------------------------------------------
-    uploads_dir: str = "data/uploads"  # relative paths are under the project root
+    uploads_dir: str = "data/uploads"  # local backend only; relative paths are under DATA_ROOT
     max_upload_mb: int = 50
+    # Browsers send files in parts of this size (Vercel caps a request body at 4.5 MB).
+    upload_part_mb: int = 4
+    # Where upload parts and original files go: "blob" (Vercel Blob), "local", or "auto" (Blob
+    # when BLOB_READ_WRITE_TOKEN is set). Uploaded tables go to Postgres when DATABASE_URL is
+    # Postgres, otherwise to one SQLite file per dataset.
+    upload_storage: Literal["auto", "local", "blob"] = "auto"
+    blob_read_write_token: str = ""  # set by Vercel when a Blob store is connected
 
     # ---- API protection ----------------------------------------------------------------------
     app_api_key: str = ""  # if set, POST /api/ask requires header X-API-Key
