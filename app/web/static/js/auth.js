@@ -34,14 +34,44 @@ function renderAccount() {
   hydrateIcons(el);
 }
 
-function setMe(next) {
+function setMe(next, { animate = false } = {}) {
   const changed = next.signed_in !== me.signed_in || next.email !== me.email;
   me = next;
   renderAccount();
+  if (animate) {
+    const el = $("account");
+    el.classList.remove("acct-enter");
+    void el.offsetWidth; // restart the animation
+    el.classList.add("acct-enter");
+  }
   if (changed) listeners.forEach((fn) => fn(me));
 }
 
+const wait = (ms) => new Promise((r) => window.setTimeout(r, ms));
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Success moment: the form gives way to a drawn checkmark, then the dialog floats away. */
+async function celebrate(signup, email) {
+  const form = $("auth-form");
+  $("auth-success-title").textContent = signup ? "Account created" : "Welcome back";
+  $("auth-success-sub").textContent = signup ? `Signed in as ${email}. Your uploads stay private.` : `Signed in as ${email}`;
+  form.classList.add("is-success");
+  await wait(reducedMotion() ? 500 : 1350);
+  const dialog = $("auth-dialog");
+  dialog.classList.add("is-closing");
+  await wait(reducedMotion() ? 0 : 190);
+  dialog.classList.remove("is-closing");
+  form.classList.remove("is-success");
+}
+
 function setMode(next, reason = "") {
+  // Cross-fade the texts when switching between "sign in" and "create account".
+  const form = $("auth-form");
+  if (next !== mode && $("auth-dialog").open && !reducedMotion()) {
+    form.classList.remove("is-switching");
+    void form.offsetWidth;
+    form.classList.add("is-switching");
+  }
   mode = next;
   const signup = mode === "signup";
   $("auth-title").textContent = signup ? "Create your account" : "Welcome back";
@@ -56,7 +86,10 @@ function setMode(next, reason = "") {
 }
 
 function open(reason = "") {
-  setMode(mode, reason);
+  // Always start on "Sign in" (the last mode may have been "Create account" from an earlier visit).
+  mode = "signin";
+  setMode("signin", reason);
+  $("auth-error").hidden = true;
   $("auth-dialog").showModal();
   $("auth-email").focus();
 }
@@ -84,11 +117,12 @@ async function submit(e) {
   btn.disabled = true;
   $("auth-error").hidden = true;
   try {
-    const next = mode === "signup" ? await signUp(email, password) : await signIn(email, password);
+    const signup = mode === "signup";
+    const next = signup ? await signUp(email, password) : await signIn(email, password);
     $("auth-password").value = "";
-    setMe(next);
-    toast(mode === "signup" ? "Account created - you're signed in" : `Signed in as ${next.email}`);
+    await celebrate(signup, next.email);
     close(true);
+    setMe(next, { animate: true }); // after the dialog: the account row animates in
   } catch (err) {
     $("auth-error").textContent = err instanceof ApiError ? err.message.replace(/^./, (c) => c.toUpperCase()) : "Something went wrong";
     $("auth-error").hidden = false;
@@ -102,7 +136,7 @@ export async function initAuth() {
     if (e.target.closest("#sign-in")) open();
     if (e.target.closest("#sign-out")) {
       try {
-        setMe(await signOut());
+        setMe(await signOut(), { animate: true });
         toast("Signed out");
       } catch (err) {
         toast(`Couldn't sign out: ${err.message}`, { error: true });

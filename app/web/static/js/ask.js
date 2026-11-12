@@ -138,6 +138,7 @@ function statusBadge(status) {
     ok: ["ok", "check", "Answered"],
     unanswerable: ["unanswerable", "info", "Not in this data"],
     failed: ["failed", "alert", "Couldn't answer"],
+    about: ["ok", "database", "About the data"],
   };
   const [cls, ic, text] = map[status] || map.failed;
   return `<span class="badge ${cls}">${icon(ic)}${text}</span>`;
@@ -190,10 +191,10 @@ function renderAnswer(card, r) {
   if (r.trace.length) tabs.push(["steps", "list", "How it worked"]);
 
   card.innerHTML = `
-    <div class="answer-head">${statusBadge(r.status)}<div class="answer-meta">${metaHtml(r)}</div></div>
+    <div class="answer-head">${statusBadge(r.kind === "about" ? "about" : r.status)}<div class="answer-meta">${metaHtml(r)}</div></div>
     ${followUpHtml(r)}
-    <p class="answer-text">${escapeHtml(r.answer)}</p>
-    ${r.explanation && r.status === "ok" ? `<p class="answer-explain">${escapeHtml(r.explanation)}</p>` : ""}
+    <p class="answer-text${r.kind === "about" ? " is-prose" : ""}">${escapeHtml(r.answer)}</p>
+    ${r.explanation && r.status === "ok" && r.kind !== "about" ? `<p class="answer-explain">${escapeHtml(r.explanation)}</p>` : ""}
     ${tabs.length ? `<div class="tabs" role="tablist">${tabs
       .map(([id, ic, text], i) => `<button class="tab ${i === 0 ? "is-active" : ""}" data-tab="${id}" role="tab">${icon(ic)}${text}</button>`)
       .join("")}</div>` : ""}
@@ -431,19 +432,42 @@ function renderWelcome() {
   const demo = ds.kind === "demo";
   $("welcome-title").textContent = demo ? "What would you like to know?" : `Ask about ${ds.name}`;
   $("welcome-text").textContent = demo
-    ? "Ask about sales, customers, products or orders in the demo store (2024–2025), or upload your own data below. Try one of these:"
-    : `${ds.filename} · ${describeSize(ds)}. Try one of these, or ask anything:`;
+    ? "Ask about sales, customers, products or orders in the demo store (2024–2025), or about the data itself (\"What tables are there?\", \"How is revenue defined?\"). Or upload your own data below. Try one of these:"
+    : `${ds.filename} · ${describeSize(ds)}. Try one of these, or ask anything, including what the columns mean:`;
   const tags = demo ? DEMO_TAGS : UPLOAD_TAGS;
-  $("suggestions").innerHTML = ds.suggestions
-    .map((q, i) => {
-      const [ic, tag] = tags[i % tags.length];
-      return `<button class="suggestion" data-q="${escapeHtml(q)}">
-        <span class="s-icon">${icon(ic)}</span>
-        <span><span class="s-tag">${tag}</span><span class="s-text" style="display:block">${escapeHtml(q)}</span></span>
-      </button>`;
+  const pills = [
+    ...ds.suggestions.map((q, i) => [tags[i % tags.length][0], q]),
+    ...ABOUT_QUESTIONS[demo ? "demo" : "upload"].map((q) => ["database", q]), // chat about the data
+  ];
+  $("suggestions").innerHTML = pillRows(pills);
+  $("composer-dataset").textContent = `Asking about: ${ds.name}`;
+}
+
+// Questions about the data itself (answered from the schema, no SQL) mixed into the pills.
+const ABOUT_QUESTIONS = {
+  demo: ["What is this data about?", "How is revenue defined?"],
+  upload: ["What is this data about?", "What does each column mean?"],
+};
+
+/**
+ * Quick questions as two rows of pills drifting in opposite directions (a seamless loop: each
+ * row's pills are repeated once, and the track moves by exactly half its width). Hovering or
+ * focusing a row pauses it; with "reduce motion" the rows are still and scroll sideways.
+ */
+function pillRows(items) {
+  const pill = ([ic, q], hidden) =>
+    `<button class="pill" data-q="${escapeHtml(q)}"${hidden ? ' tabindex="-1" aria-hidden="true"' : ""}>${icon(ic)}<span>${escapeHtml(q)}</span></button>`;
+  const half = Math.ceil(items.length / 2);
+  const rows = items.length > 4 ? [items.slice(0, half), items.slice(half)] : [items];
+  return rows
+    .map((row, r) => {
+      const chars = row.reduce((n, [, q]) => n + q.length, 0);
+      const seconds = Math.max(26, Math.round(chars * 0.32)); // same reading speed for any row length
+      return `<div class="pill-row${r % 2 ? " reverse" : ""}" style="--pill-duration:${seconds}s">
+        <div class="pill-track">${row.map((p) => pill(p, false)).join("")}${row.map((p) => pill(p, true)).join("")}</div>
+      </div>`;
     })
     .join("");
-  $("composer-dataset").textContent = `Asking about: ${ds.name}`;
 }
 
 /** Clear the conversation and show the welcome screen. */
@@ -466,7 +490,7 @@ export function initAsk() {
     toast("Started a new chat");
   });
   $("suggestions").addEventListener("click", (e) => {
-    const b = e.target.closest(".suggestion");
+    const b = e.target.closest(".pill");
     if (b) askQuestion(b.dataset.q);
   });
 

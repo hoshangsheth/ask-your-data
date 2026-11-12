@@ -9,11 +9,12 @@
 
 import { getHealth } from "./api.js";
 import { askQuestion, initAsk, newChat, showSetup } from "./ask.js";
-import { initAuth, onAuthChange } from "./auth.js";
+import { currentUser, initAuth, onAuthChange } from "./auth.js";
 import { redrawAll } from "./charts.js";
 import { loadDashboard } from "./dashboard.js";
 import { loadData } from "./data.js";
 import { currentDataset, initDatasets, onDatasetChange, refreshDatasets, selectDataset } from "./datasets.js";
+import { initHelp } from "./help.js";
 import { hydrateIcons } from "./icons.js";
 import { loadMetrics } from "./metrics.js";
 import { initRecent } from "./recent.js";
@@ -41,7 +42,7 @@ function setMenu(open) {
 }
 
 function showView(name) {
-  if (!VIEWS[name]) name = "ask";
+  if (!VIEWS[name] || (name === "metrics" && !currentUser().is_admin)) name = "ask"; // metrics: owner only
   currentView = name;
   document.querySelectorAll(".view").forEach((v) => v.classList.toggle("is-active", v.id === `view-${name}`));
   document.querySelectorAll(".nav-item").forEach((b) => b.classList.toggle("is-active", b.dataset.view === name));
@@ -85,12 +86,15 @@ async function init() {
 
   // Account first (the dataset list depends on who is signed in), then the datasets.
   await initAuth();
+  const showAdmin = () => ($("nav-metrics").hidden = !currentUser().is_admin);
+  showAdmin();
   await initDatasets();
   onAuthChange(async () => {
+    showAdmin();
     await refreshDatasets(); // uploads are private: the list changes with the account
     selectDataset(currentDataset().id);
     newChat();
-    if (currentView === "metrics") loadMetrics();
+    if (currentView === "metrics") showView(currentUser().is_admin ? "metrics" : "ask");
   });
   onDatasetChange(() => showView(currentView === "ask" ? "ask" : currentView));
   void initUpload();
@@ -102,6 +106,7 @@ async function init() {
   });
   showView(location.hash.slice(1) || "ask");
   void loadPoweredBy();
+  initHelp();
 }
 
 void init();

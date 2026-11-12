@@ -482,3 +482,102 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .fb-sql { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--code-bg); color: var(--code-text); font-family: var(--font-mono); font-size: 12px; overflow-x: auto; }
 @media (max-width: 900px) { .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .metrics-grid { grid-template-columns: 1fr; } .actions-spacer { display: none; } }
+
+/* Answers about the data itself can be a short list: keep the model's line breaks. */
+.answer-text.is-prose { white-space: pre-line; }
+
+/* ===== Theme switch: ink spreading from the click (View Transitions) =====
+   js/theme.js reveals the new theme through a circle growing from the click point (clip-path,
+   animated on the GPU); the old theme stays underneath until covered. */
+:root[data-ink="view-transition"] { view-transition-name: root; }
+::view-transition { pointer-events: none; } /* clicks keep reaching the page mid-transition */
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root), ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
+}
+/* ===== Quick questions: drifting pills (js/ask.js pillRows) ===== */
+.suggestions { display: flex; flex-direction: column; gap: 10px; margin: 0 -8px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
+.pill-row { overflow: hidden; padding: 3px 0; }
+.pill-track { display: flex; gap: 10px; width: max-content; animation: pill-drift var(--pill-duration, 34s) linear infinite; }
+.pill-row.reverse .pill-track { animation-direction: reverse; }
+.pill-row:hover .pill-track, .pill-row:focus-within .pill-track { animation-play-state: paused; }
+@keyframes pill-drift { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 5px)); } }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px; flex: none; white-space: nowrap;
+  padding: 9px 16px 9px 13px; border-radius: 999px; font-size: 13.5px; font-weight: 500;
+  color: var(--text); background: var(--surface); border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.pill svg { width: 15px; height: 15px; color: var(--primary); flex: none; }
+.pill:hover, .pill:focus-visible { transform: translateY(-2px); border-color: var(--primary); background: var(--primary-soft); box-shadow: var(--shadow); }
+@media (prefers-reduced-motion: reduce) {
+  .pill-track { animation: none; }
+  .pill-row { overflow-x: auto; }
+  .pill[aria-hidden="true"] { display: none; }
+}
+
+/* ===== Help button + "How to use" dialog ===== */
+.help-btn { flex: none; margin-right: 8px; }
+.help-btn svg { width: 18px; height: 18px; }
+.help-dialog { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 0; width: min(520px, calc(100vw - 32px));
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-lg); }
+.help-dialog::backdrop { background: rgb(15 23 42 / 0.45); backdrop-filter: blur(3px); }
+.help-body { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 28px 26px 22px; }
+.help-body h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.help-steps { margin: 0; padding-left: 20px; display: grid; gap: 10px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+.help-steps b { color: var(--text); }
+.help-steps li::marker { color: var(--primary); font-weight: 700; }
+.help-keys { font-size: 12.5px; }
+.help-keys kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface-2); }
+.help-body .btn-primary { padding: 11px; font-size: 14px; }
+
+/* Dialogs: rise in, sink out. */
+.help-dialog[open], .auth-dialog[open] { animation: dialog-in 0.32s cubic-bezier(0.2, 0.9, 0.25, 1.05); }
+.help-dialog[open]::backdrop, .auth-dialog[open]::backdrop { animation: backdrop-in 0.3s ease; }
+.help-dialog.is-closing, .auth-dialog.is-closing { animation: dialog-out 0.18s ease forwards; }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(14px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes dialog-out { to { opacity: 0; transform: translateY(8px) scale(0.97); } }
+@keyframes backdrop-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .help-dialog[open], .auth-dialog[open], .help-dialog.is-closing, .auth-dialog.is-closing { animation: none; }
+}
+
+/* ===== Sign-in dialog: success moment and mode switch ===== */
+.auth-form > * { transition: opacity 0.22s ease, transform 0.22s ease; }
+.auth-success {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 24px; text-align: center; opacity: 0; pointer-events: none; transform: scale(0.96);
+}
+.auth-success h2 { font-size: 21px; }
+.auth-success p { font-size: 13.5px; max-width: 280px; }
+.auth-form.is-success > :not(.auth-success) { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+.auth-form.is-success .auth-success { opacity: 1; transform: none; transition-delay: 0.12s; }
+.auth-check { width: 64px; height: 64px; margin-bottom: 6px; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.auth-check circle { stroke: var(--primary); stroke-width: 2.5; stroke-dasharray: 145; stroke-dashoffset: 145; }
+.auth-check path { stroke: var(--primary); stroke-width: 3.5; stroke-dasharray: 32; stroke-dashoffset: 32; }
+.auth-form.is-success .auth-check circle { animation: draw 0.6s 0.15s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+.auth-form.is-success .auth-check path { animation: draw 0.35s 0.65s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+.auth-form.is-success .auth-check { animation: check-pop 0.4s 0.95s ease; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes check-pop { 50% { transform: scale(1.08); } }
+.auth-form.is-switching :is(h2, #auth-reason, #auth-submit, #auth-switch) { animation: swap-in 0.28s ease; }
+@keyframes swap-in { from { opacity: 0; transform: translateY(4px); } }
+
+/* Account row: slides in after signing in or out. */
+.account.acct-enter { animation: acct-in 0.5s cubic-bezier(0.2, 0.9, 0.25, 1.05); }
+.account.acct-enter .acct-avatar { animation: avatar-pop 0.55s 0.1s cubic-bezier(0.2, 0.9, 0.25, 1.3) both; }
+@keyframes acct-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes avatar-pop { from { transform: scale(0.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .auth-check circle, .auth-check path { stroke-dashoffset: 0; animation: none !important; }
+  .auth-form.is-switching *, .account.acct-enter, .account.acct-enter * { animation: none !important; }
+}
+
+/* Hold other animations still while the theme reveal runs (js/theme.js adds the class). */
+html.theme-switching .pill-track { animation-play-state: paused; }

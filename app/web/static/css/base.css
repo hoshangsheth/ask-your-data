@@ -44,3 +44,6 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* The hidden attribute always wins over component display rules (e.g. .nav-item is flex). */
+[hidden] { display: none !important; }

@@ -6,7 +6,7 @@
     Ask         chat-style questions and answers about the selected dataset (js/ask.js)
     Dashboard   demo-store KPIs, or an overview of an uploaded dataset (js/dashboard.js)
     Data        tables and columns of the selected dataset (js/data.js)
-    Metrics     evaluation, live usage, engineering metrics (js/metrics.js)
+    Metrics     evaluation, live usage, engineering metrics (js/metrics.js); admins only
 
   Accounts: guests can ask about the demo store; signing in (js/auth.js) enables private uploads.
 
@@ -61,7 +61,7 @@
       <button class="nav-item is-active" data-view="ask"><span data-icon="chat"></span>Ask</button>
       <button class="nav-item" data-view="dashboard"><span data-icon="chart"></span>Dashboard</button>
       <button class="nav-item" data-view="data"><span data-icon="database"></span>Data</button>
-      <button class="nav-item" data-view="metrics"><span data-icon="gauge"></span>Metrics</button>
+      <button class="nav-item" data-view="metrics" id="nav-metrics" hidden><span data-icon="gauge"></span>Metrics</button>
     </nav>
 
     <section class="side-section" aria-labelledby="datasets-h">
@@ -97,6 +97,7 @@
         <h1 class="page-title" id="page-title">Ask a question</h1>
         <p class="page-sub" id="page-sub">Get answers, charts and the SQL behind them.</p>
       </div>
+      <button class="icon-btn help-btn" id="help-btn" type="button" aria-label="How to use" title="How to use"><span data-icon="help"></span></button>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Dark mode" aria-pressed="false"
               title="Switch theme (T)" data-ink-live>
         <svg class="theme-toggle__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -175,6 +176,25 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <!-- How to use (js/help.js): opens on the first visit and from the "?" button -->
+  <dialog class="help-dialog" id="help-dialog" aria-labelledby="help-title">
+    <div class="help-body">
+      <button type="button" class="icon-btn auth-close" id="help-close" aria-label="Close"><span data-icon="x"></span></button>
+      <span class="auth-mark" data-icon="sparkles"></span>
+      <h2 id="help-title">How to use Ask Your Data</h2>
+      <ol class="help-steps">
+        <li><b>Pick your data.</b> The demo store is ready to go. To use your own file (CSV, Excel, JSON, PDF and more), sign in, then click <i>Upload</i> or drop the file anywhere.</li>
+        <li><b>Ask in plain English.</b> Type a question or tap one of the suggestions, e.g. “Top 5 products by revenue in 2025”.</li>
+        <li><b>Chat about the data itself.</b> Ask what it contains, what a column means or how a metric is defined; no SQL needed.</li>
+        <li><b>Follow up.</b> Say “same for 2024” or “break that down by city”: the chat remembers. <i>New chat</i> starts over.</li>
+        <li><b>Check the answer.</b> Switch between <i>Chart</i>, <i>Table</i>, <i>SQL</i> and <i>How it worked</i>.</li>
+        <li><b>Export and rate.</b> Download CSV, Excel, a chart image or a PDF report, and tell us with 👍 / 👎 if it helped.</li>
+      </ol>
+      <p class="help-keys muted"><kbd>/</kbd> jump to the question box · <kbd>Enter</kbd> ask · <kbd>T</kbd> light / dark</p>
+      <button type="button" class="btn btn-primary" id="help-ok">Got it</button>
+    </div>
+  </dialog>
+
   <!-- Sign in / create account (js/auth.js) -->
   <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
     <form id="auth-form" class="auth-form" novalidate>
@@ -188,6 +208,12 @@
       <p class="auth-error" id="auth-error" role="alert" hidden></p>
       <button type="submit" class="btn btn-primary" id="auth-submit">Sign in</button>
       <p class="auth-switch muted" id="auth-switch"></p>
+      <!-- Shown after a successful sign-in / sign-up, then the dialog floats away. -->
+      <div class="auth-success" id="auth-success" aria-live="polite">
+        <svg class="auth-check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="23"/><path d="M15.5 27.5l7 7 14-15"/></svg>
+        <h2 id="auth-success-title">You're in</h2>
+        <p class="muted" id="auth-success-sub"></p>
+      </div>
     </form>
   </dialog>
 </div>
