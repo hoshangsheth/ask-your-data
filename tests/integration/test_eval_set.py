@@ -11,7 +11,7 @@ from app.db.models import ALLOWED_TABLES
 from app.sql.guard import validate_sql
 from evals.dataset import load_questions, reference_sql
 
-ANSWERABLE = [q for q in load_questions() if not q.get("unanswerable")]
+ANSWERABLE = [q for q in load_questions() if "sql" in q]  # items with reference SQL
 
 
 def test_eval_set_size_and_ids():

@@ -39,6 +39,9 @@ DEFAULT_OUT = Path(__file__).resolve().parents[1] / "metrics" / "eval.json"
 
 def _passes(item: dict, out: dict, ro_engine, dialect: str) -> bool:
     """Score one agent output against its eval item."""
+    if item.get("about"):  # answered from the schema: no SQL, and it names what was asked about
+        text = out["answer"].lower()
+        return out.get("kind") == "about" and not out["sql"] and all(m.lower() in text for m in item["mentions"])
     if item.get("unanswerable"):
         return out["status"] == "unanswerable"
     if out["status"] != "ok":

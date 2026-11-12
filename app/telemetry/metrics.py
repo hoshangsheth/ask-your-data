@@ -96,6 +96,9 @@ def _question_metrics(rows: list[Any], now: datetime) -> dict[str, Any]:
             "decline_rate": _rate(status.get("unanswerable", 0), n),
             "failure_rate": _rate(status.get("failed", 0), n),
             "first_try_rate": _rate(sum(r.attempts == 1 for r in ok), n),
+            # answered from the schema without SQL ("what columns are there?", "what is AOV?")
+            "about_data": sum(bool(getattr(r, "about_data", False)) for r in ok),
+            "about_data_share": _rate(sum(bool(getattr(r, "about_data", False)) for r in ok), n),
             "self_corrected": sum(r.attempts > 1 for r in ok),
             "self_correction_share_of_answers": _rate(sum(r.attempts > 1 for r in ok), len(ok)),
             "avg_attempts": _avg([r.attempts for r in rows if r.attempts]),
@@ -185,7 +188,9 @@ def compute_live_metrics(engine: Engine, now: datetime | None = None) -> dict[st
         ]
     ]
     with engine.connect() as conn:
-        q_rows = conn.execute(select(*q_cols).order_by(questions.c.created_at.desc()).limit(MAX_ROWS)).all()
+        # about_data: answered without SQL (a question about the dataset itself)
+        about = ((questions.c.status == "ok") & (questions.c.sql == "")).label("about_data")
+        q_rows = conn.execute(select(*q_cols, about).order_by(questions.c.created_at.desc()).limit(MAX_ROWS)).all()
         u_rows = conn.execute(select(usage_events.c.data).where(usage_events.c.kind == "upload")).all()
         accounts = conn.execute(select(func.count()).select_from(users)).scalar_one()
     return {

@@ -3,7 +3,8 @@ SQLAgent: the text-to-SQL workflow as a LangGraph state machine.
 
     START -> generate_sql -> validate -> execute -> summarize -> END
                  ^  |           |          |
-                 |  +-> END (question not answerable from this data)
+                 |  +-> END (question not answerable from this data, or a question about the
+                 |           dataset itself answered directly from the schema: no SQL)
                  +------ retry -+----------+   (error fed back to the model, up to max_attempts)
                                 |          |
                                 +-> fail <-+   (attempts exhausted) -> END
@@ -78,7 +79,18 @@ class SQLAgent:
         attempts = state.get("attempts", 0) + 1
         tokens = _tokens(draft.usage)
         standalone = getattr(draft, "standalone_question", "") or state.get("standalone_question", "")
-        if not draft.answerable:
+        if draft.mode == "about":  # about the dataset itself: answered from the schema, no SQL
+            return {
+                "attempts": attempts,
+                "status": "ok",
+                "kind": "about",
+                "answer": draft.reply,
+                "explanation": draft.explanation,
+                "standalone_question": standalone,
+                "sql": "",
+                "trace": _step("generate_sql", t, attempt=attempts, kind="about", **tokens),
+            }
+        if draft.mode == "unanswerable":
             return {
                 "attempts": attempts,
                 "status": "unanswerable",
@@ -159,7 +171,9 @@ class SQLAgent:
 
     # ---- Routing ----------------------------------------------------------------------------
     def _after_generate(self, state: AgentState) -> str:
-        return END if state.get("status") == "unanswerable" else "validate"
+        if state.get("status") == "unanswerable" or state.get("kind") == "about":
+            return END
+        return "validate"
 
     def _retry_or(self, next_node: str):
         """Router factory: go on if the step succeeded, else retry or give up."""
@@ -205,6 +219,7 @@ class SQLAgent:
             "status": final.get("status", "failed"),
             "question": question,
             "standalone_question": final.get("standalone_question", "") or question,
+            "kind": final.get("kind", "query"),  # "about" = answered from the schema, without SQL
             "answer": final.get("answer", ""),
             "sql": final.get("sql", ""),
             "explanation": final.get("explanation", ""),

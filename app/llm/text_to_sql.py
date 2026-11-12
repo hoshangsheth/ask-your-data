@@ -2,6 +2,8 @@
 The two model calls the agent makes, independent of provider:
 
     generate_sql()   question (+ earlier turns for follow-ups, + previous error on retry) -> SQLDraft
+                     The model first decides the kind: a query, a question about the dataset
+                     itself (answered directly from the schema, no SQL), or unanswerable.
     summarize()      question + result rows                -> Summary (answer + chart suggestion)
 
 `LLM` is the Protocol the agent depends on. `TextToSQL` implements it on top of any LLMProvider;
@@ -35,6 +37,15 @@ class SQLDraft:
     explanation: str
     usage: dict[str, Any] = field(default_factory=dict)  # model + token counts for this call
     standalone_question: str = ""  # the question rewritten to stand alone (follow-ups)
+    kind: str = ""  # "query" | "about" | "unanswerable"; empty = derived from `answerable`
+    reply: str = ""  # direct answer for kind "about" (questions about the dataset itself)
+
+    @property
+    def mode(self) -> str:
+        """The effective kind: "query", "about" or "unanswerable"."""
+        if self.kind in ("query", "about", "unanswerable"):
+            return self.kind
+        return "query" if self.answerable else "unanswerable"
 
 
 @dataclass
@@ -131,12 +142,18 @@ class TextToSQL:
             schema_name="sql_draft",
             reasoning=self.sql_reasoning,
         )
+        d = r.data
+        kind = d.get("kind") or ("query" if d.get("answerable") else "unanswerable")  # older shape
+        if kind == "about" and not str(d.get("answer") or "").strip():
+            kind = "query" if str(d.get("sql") or "").strip() else "unanswerable"  # nothing to show
         return SQLDraft(
-            answerable=bool(r.data["answerable"]),
-            sql=r.data["sql"],
-            explanation=r.data["explanation"],
+            answerable=kind != "unanswerable",
+            sql="" if kind == "about" else d.get("sql", ""),
+            explanation=d.get("explanation", ""),
             usage=r.usage(),
-            standalone_question=str(r.data.get("standalone_question") or "").strip(),
+            standalone_question=str(d.get("standalone_question") or "").strip(),
+            kind=kind,
+            reply=str(d.get("answer") or "").strip() if kind == "about" else "",
         )
 
     def summarize(

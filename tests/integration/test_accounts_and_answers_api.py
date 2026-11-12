@@ -117,6 +117,22 @@ def test_conversations_are_per_user(settings):
         assert out["status"] == "ok" and "history" not in llm.calls[2]  # b can't read a's conversation
 
 
+# ---- chatting about the data -------------------------------------------------------------------
+def test_question_about_the_data_is_answered_without_sql(settings):
+    about = SQLDraft(True, "", "From the schema.", kind="about", reply="There are 4 tables: customers, ...")
+    llm = FakeLLM([about, GOOD_DRAFT])
+    with TestClient(create_app(settings, llm)) as c:
+        out = c.post("/api/ask", json={"question": "What tables are there?"}).json()
+        assert out["status"] == "ok" and out["kind"] == "about" and out["sql"] == "" and out["rows"] == []
+        assert out["answer"].startswith("There are 4 tables")
+        assert [call["fn"] for call in llm.calls] == ["generate_sql"]  # one model call, no SQL run
+        # It is part of the conversation: a follow-up can build on it.
+        nxt = c.post(
+            "/api/ask", json={"question": "count customers by region", "conversation_id": out["conversation_id"]}
+        )
+        assert nxt.json()["kind"] == "query" and llm.calls[1]["history"][0]["answer"].startswith("There are 4")
+
+
 # ---- feedback and exports ----------------------------------------------------------------------
 def test_feedback_and_exports(settings):
     with TestClient(create_app(settings, FakeLLM([GOOD_DRAFT]))) as c, TestClient(c.app) as other:
@@ -154,14 +170,20 @@ def test_metrics_and_admin_endpoints(settings):
         c.post("/api/ask", json={"question": "What were refunds?"})
         c.post(f"/api/questions/{qid}/feedback", json={"rating": -1, "note": "wrong grouping"})
 
+        assert c.get("/api/metrics").status_code == 403  # owner-only, not shown to users
+        guest_cookies = dict(c.cookies)
+        sign_up(c, admin)
         body = c.get("/api/metrics").json()
+        c.cookies.clear()
+        for k, v in guest_cookies.items():
+            c.cookies.set(k, v)
         live = body["live"]
         assert live["questions"] >= 2 and live["outcomes"]["answered"] >= 1 and live["outcomes"]["unanswerable"] >= 1
         assert live["latency_ms"]["p50"] is not None and live["feedback"]["not_helpful"] >= 1
         assert {"eval", "quality", "loadtest"} <= body.keys()
 
         assert c.get("/api/metrics/feedback").status_code == 403
-        sign_up(c, admin)
+        c.post("/api/auth/login", json={"email": admin, "password": TEST_PASSWORD})
         items = c.get("/api/metrics/feedback?rating=-1").json()
         assert any(i["id"] == qid and i["feedback_note"] == "wrong grouping" for i in items)
         jsonl = c.get("/api/metrics/eval-candidates").text

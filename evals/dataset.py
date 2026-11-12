@@ -6,6 +6,9 @@ Each line of questions.jsonl is one object:
     {"id": "...", "question": "...", "unanswerable": true}                  agent must decline
     {"id": "...", "turns": ["earlier question", ...], "question": "follow-up", "sql": "..."}
                                                     follow-up: earlier turns are asked first
+    {"id": "...", "question": "...", "about": true, "mentions": ["word", ...]}
+                                                    about the data: answered without SQL, and
+                                                    the answer must mention every listed word
 
 Reference SQL is written for PostgreSQL and transpiled with sqlglot for other databases.
 """
@@ -24,7 +27,9 @@ def load_questions(path: Path = QUESTIONS_FILE) -> list[dict]:
 
 
 def category(item: dict) -> str:
-    """'unanswerable', 'follow_up' or 'single_turn' (reported separately by the eval)."""
+    """'about_data', 'unanswerable', 'follow_up' or 'single_turn' (reported separately)."""
+    if item.get("about"):
+        return "about_data"
     if item.get("unanswerable"):
         return "unanswerable"
     return "follow_up" if item.get("turns") else "single_turn"

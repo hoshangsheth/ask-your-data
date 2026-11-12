@@ -53,6 +53,7 @@ class AskResponse(BaseModel):
     conversation_id: str
     turn: int  # 1 = first question of the conversation
     standalone_question: str  # how a follow-up was understood ("same for 2024" -> full question)
+    kind: Literal["query", "about"] = "query"  # "about": answered from the schema, no SQL or table
     cost_usd: float | None = None  # estimated model cost of this answer
 
 

@@ -13,6 +13,7 @@ class AgentState(TypedDict, total=False):
     question: str
     history: list[dict[str, str]]  # earlier turns of the conversation (follow-up questions)
     standalone_question: str  # the question rewritten to stand alone (from the SQL step)
+    kind: str  # "about" when answered directly from the schema (no SQL); else unset = query
     sql: str  # latest SQL (validated/normalised after the validate node)
     explanation: str  # model's explanation of the SQL, or why it is unanswerable
     error: str | None  # last validation/database error; None after a successful step
