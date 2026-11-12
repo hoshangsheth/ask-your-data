@@ -11,3 +11,8 @@ __pycache__/
 # Generated data and reports
 data/
 evals/results.json
+
+# Coverage output (the summary that matters is metrics/quality.json)
+.coverage
+coverage.json
+htmlcov/

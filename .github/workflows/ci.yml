@@ -46,4 +46,5 @@ jobs:
         env:
           TEST_DATABASE_URL: ${{ matrix.database == 'postgres' && 'postgresql+psycopg://app:app@localhost:5432/shop' || '' }}
           TEST_READONLY_DATABASE_URL: ${{ matrix.database == 'postgres' && 'postgresql+psycopg://app_readonly:readonly@localhost:5432/shop' || '' }}
-        run: pytest -q
+        # Coverage of app/ and evals/ is printed and must stay at 85% or more.
+        run: pytest -q --cov=app --cov=evals --cov-report=term --cov-fail-under=85

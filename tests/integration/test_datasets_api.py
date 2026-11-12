@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from app.api.factory import create_app
 from app.llm import SQLDraft, Summary
 from tests import sample_files as files
-from tests.fakes import FakeLLM
+from tests.fakes import FakeLLM, sign_up
 
 REGION_TOTALS = SQLDraft(True, "SELECT region, SUM(amount) AS total_amount FROM sales GROUP BY region", "Totals.")
 
@@ -22,6 +22,7 @@ def upload(client, data: bytes, filename: str):
 def test_upload_list_schema_ask_delete(settings):
     llm = FakeLLM([REGION_TOTALS], Summary("South leads.", "bar", "region", "total_amount"))
     with TestClient(create_app(settings, llm)) as c:
+        sign_up(c)
         r = upload(c, files.csv(), "sales.csv")
         assert r.status_code == 201, r.text
         ds = r.json()
@@ -48,6 +49,7 @@ def test_upload_list_schema_ask_delete(settings):
 def test_uploaded_dataset_cannot_read_demo_tables(settings):
     sneaky = SQLDraft(True, "SELECT COUNT(*) FROM orders", "x")
     with TestClient(create_app(settings, FakeLLM([sneaky] * 3))) as c:
+        sign_up(c)
         ds = upload(c, files.csv(), "sales.csv").json()
         out = c.post("/api/ask", json={"question": "count orders", "dataset_id": ds["id"]}).json()
         assert out["status"] == "failed" and "unknown table" in out["answer"]
@@ -56,12 +58,14 @@ def test_uploaded_dataset_cannot_read_demo_tables(settings):
 def test_demo_answers_keep_inr(settings):
     demo = SQLDraft(True, "SELECT region, COUNT(*) AS customers FROM customers GROUP BY region", "x")
     with TestClient(create_app(settings, FakeLLM([demo]))) as c:
+        sign_up(c)
         assert c.post("/api/ask", json={"question": "customers by region"}).json()["currency"] == "INR"
 
 
 def test_upload_errors(settings):
     s = settings.model_copy(update={"max_upload_mb": 1})
     with TestClient(create_app(s, FakeLLM([]))) as c:
+        sign_up(c)
         assert upload(c, b"x", "malware.exe").status_code == 415
         assert upload(c, b"", "empty.csv").status_code == 400
         assert upload(c, b"a,b\n" + b"1,2\n" * 400_000, "big.csv").status_code == 413
@@ -73,6 +77,7 @@ def test_upload_errors(settings):
 
 def test_formats_endpoint(settings):
     with TestClient(create_app(settings, FakeLLM([]))) as c:
+        sign_up(c)
         body = c.get("/api/formats").json()
         assert ".xlsx" in body["extensions"] and body["max_upload_mb"] == settings.max_upload_mb
         assert body["part_mb"] == settings.upload_part_mb
@@ -94,6 +99,7 @@ def test_multipart_upload_joins_parts(settings):
     rows = "".join(f"{i},{['North', 'South'][i % 2]},{i * 10}\n" for i in range(150_000))
     data = ("id,region,amount\n" + rows).encode()  # ~2.5 MB -> 3 parts of 1 MB
     with TestClient(create_app(s, FakeLLM([]))) as c:
+        sign_up(c)
         started, done = multipart_upload(c, data, "big sales.csv")
         assert started["parts"] == 3
         assert done.status_code == 201, done.text
@@ -108,6 +114,7 @@ def test_multipart_upload_joins_parts(settings):
 def test_multipart_upload_errors(settings):
     s = settings.model_copy(update={"max_upload_mb": 2, "upload_part_mb": 1})
     with TestClient(create_app(s, FakeLLM([]))) as c:
+        sign_up(c)
         assert c.post("/api/uploads", json={"filename": "x.exe", "size": 10}).status_code == 415
         assert c.post("/api/uploads", json={"filename": "x.csv", "size": 0}).status_code == 400
         assert c.post("/api/uploads", json={"filename": "x.csv", "size": 3 * 1024 * 1024}).status_code == 413
@@ -124,5 +131,6 @@ def test_multipart_upload_errors(settings):
 
 def test_health_reports_storage(settings):
     with TestClient(create_app(settings, FakeLLM([]))) as c:
+        sign_up(c)
         storage = c.get("/api/health").json()["storage"]
         assert storage["files"] == "local" and storage["datasets"] in ("sqlite-files", "postgres")

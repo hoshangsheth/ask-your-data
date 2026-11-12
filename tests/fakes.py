@@ -5,10 +5,22 @@ FakeLLM implements the agent's LLM protocol (app/llm/text_to_sql.py) with script
 so agent and API behaviour can be tested deterministically and for free.
 """
 
+import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
 from app.llm import SQLDraft, Summary
+
+TEST_PASSWORD = "test-password-123"
+
+
+def sign_up(client, email: str | None = None) -> str:
+    """Create an account through the API (the client keeps the session cookie); returns the email."""
+    email = email or f"user-{uuid.uuid4().hex[:10]}@example.test"
+    r = client.post("/api/auth/signup", json={"email": email, "password": TEST_PASSWORD})
+    assert r.status_code == 201, r.text
+    return email
+
 
 # A valid query used by many tests: customer count per region (4 rows).
 GOOD_DRAFT = SQLDraft(
