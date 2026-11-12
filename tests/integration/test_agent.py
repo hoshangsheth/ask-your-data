@@ -6,11 +6,12 @@ questions, and model errors.
 
 from app.agent import SQLAgent
 from app.llm import LLMError, SQLDraft, Summary
+from app.sources import build_demo_source
 from tests.fakes import GOOD_DRAFT, FakeLLM
 
 
 def make_agent(ro_engine, llm):
-    return SQLAgent(llm, ro_engine, max_rows=100, max_attempts=3, timeout_ms=3000)
+    return SQLAgent(llm, build_demo_source(ro_engine), max_rows=100, max_attempts=3, timeout_ms=3000)
 
 
 def test_happy_path(ro_engine):

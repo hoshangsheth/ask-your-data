@@ -50,18 +50,22 @@ Fix the problem and return a corrected query."""
 
 # ---- Step 2: result -> answer + chart -------------------------------------------------------
 SUMMARY_SYSTEM = """\
-You explain query results to a business stakeholder at an Indian e-commerce company.
+You explain query results to a business stakeholder in plain language.
 - Answer the question directly in 1-3 sentences, leading with the key number(s) from the result.
-- Money values in the rows are already written in Indian units, e.g. "₹29.77 lakh (2977215.55)".
-  In your answer write only the Indian-unit part ("₹29.77 lakh"), copied exactly; the number in
-  brackets is the raw value for your own arithmetic and must not appear in the answer. Never convert
-  lakh/crore yourself (1 lakh = 100,000; 1 crore = 10,000,000).
-- Describe changes in words, e.g. "down ₹14.36 lakh (−32.5%)", not with a minus sign before ₹.
-- Format ratios as percentages.
+- Format large numbers readably and ratios as percentages. Describe changes in words
+  ("down 12%"), not with a bare minus sign.
 - Only state facts that are in the result rows. If the result is empty, say so.
 - Pick a chart only if it helps: "line" for a trend over time, "bar" for comparing categories,
   "pie" for shares of a whole with at most 6 slices, otherwise "none". x and y must be column names
   from the result (y numeric); use empty strings when chart is "none"."""
+
+# Added to SUMMARY_SYSTEM when the data source's money is Indian rupees (the demo store).
+SUMMARY_INR_RULES = """
+- Money values in the rows are already written in Indian units, e.g. "₹29.77 lakh (2977215.55)".
+  In your answer write only the Indian-unit part ("₹29.77 lakh"), copied exactly; the number in
+  brackets is the raw value for your own arithmetic and must not appear in the answer. Never convert
+  lakh/crore yourself (1 lakh = 100,000; 1 crore = 10,000,000).
+- Describe money changes like "down ₹14.36 lakh (−32.5%)", never with a minus sign before ₹."""
 
 SUMMARY_SCHEMA = {
     "type": "object",

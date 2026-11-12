@@ -20,6 +20,7 @@ from app.core.config import get_settings
 from app.db.engine import dialect_of, make_engines
 from app.db.executor import run_readonly
 from app.llm import build_llm
+from app.sources import build_demo_source
 from evals.dataset import load_questions, reference_sql
 from evals.scoring import results_match
 
@@ -46,7 +47,11 @@ def main() -> None:
     dialect = dialect_of(ro)
     llm = build_llm(settings)
     agent = SQLAgent(
-        llm, ro, max_rows=settings.max_rows, max_attempts=settings.max_attempts, timeout_ms=settings.query_timeout_ms
+        llm,
+        build_demo_source(ro),
+        max_rows=settings.max_rows,
+        max_attempts=settings.max_attempts,
+        timeout_ms=settings.query_timeout_ms,
     )
 
     items = load_questions()[: args.limit or None]

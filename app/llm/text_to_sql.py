@@ -19,6 +19,7 @@ from app.llm.prompts import (
     RETRY_TEMPLATE,
     SQL_SCHEMA,
     SQL_SYSTEM,
+    SUMMARY_INR_RULES,
     SUMMARY_MAX_ROWS,
     SUMMARY_SCHEMA,
     SUMMARY_SYSTEM,
@@ -50,7 +51,14 @@ class LLM(Protocol):
     ) -> SQLDraft: ...
 
     def summarize(
-        self, *, question: str, sql: str, columns: list[str], rows: list[list[Any]], truncated: bool
+        self,
+        *,
+        question: str,
+        sql: str,
+        columns: list[str],
+        rows: list[list[Any]],
+        truncated: bool,
+        currency: str | None = None,
     ) -> Summary: ...
 
 
@@ -107,19 +115,29 @@ class TextToSQL:
         )
 
     def summarize(
-        self, *, question: str, sql: str, columns: list[str], rows: list[list[Any]], truncated: bool
+        self,
+        *,
+        question: str,
+        sql: str,
+        columns: list[str],
+        rows: list[list[Any]],
+        truncated: bool,
+        currency: str | None = None,
     ) -> Summary:
         shown = rows[:SUMMARY_MAX_ROWS]
         more = truncated or len(rows) > len(shown)
         note = f" (showing first {len(shown)} of more rows)" if more else ""
+        inr = currency == "INR"
+        # Rupee amounts are pre-formatted in lakh/crore (small models convert units unreliably).
+        shown = [_annotate_money(columns, r) for r in shown] if inr else shown
         user = (
             f"Question: {question}\n\nSQL that was run:\n{sql}\n\n"
             f"Result columns: {json.dumps(columns)}\nResult rows{note}:\n"
-            + "\n".join(json.dumps(_annotate_money(columns, r), ensure_ascii=False, default=str) for r in shown)
+            + "\n".join(json.dumps(r, ensure_ascii=False, default=str) for r in shown)
         )
         r = self.provider.complete_json(
             model=self.summary_model,
-            system=SUMMARY_SYSTEM,
+            system=SUMMARY_SYSTEM + (SUMMARY_INR_RULES if inr else ""),
             user=user,
             schema=SUMMARY_SCHEMA,
             schema_name="summary",

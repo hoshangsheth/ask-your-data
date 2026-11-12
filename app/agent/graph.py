@@ -9,24 +9,23 @@ SQLAgent: the text-to-SQL workflow as a LangGraph state machine.
                                 +-> fail <-+   (attempts exhausted) -> END
 
 Usage:
-    agent = SQLAgent(llm, readonly_engine, max_rows=500, max_attempts=3, timeout_ms=5000)
+    agent = SQLAgent(llm, source, max_rows=500, max_attempts=3, timeout_ms=5000)
     result = agent.ask("Top 5 products by revenue in 2025")
     # result: status, answer, sql, explanation, columns, rows, chart, attempts, trace, usage, latency_ms
+
+`source` (app/sources) is the demo store or an uploaded dataset: the agent works the same on both.
 """
 
 import time
 from typing import Any
 
 from langgraph.graph import END, START, StateGraph
-from sqlalchemy import Engine
 
 from app.agent.charts import pick_chart
 from app.agent.state import AgentState
-from app.db.catalog import describe_schema
-from app.db.engine import dialect_of
 from app.db.executor import QueryError, run_readonly
-from app.db.models import ALLOWED_TABLES
 from app.llm import LLM, LLMError
+from app.sources import DataSource
 from app.sql.guard import SQLValidationError, validate_sql
 
 
@@ -47,14 +46,17 @@ def _tokens(usage: dict | None) -> dict:
 
 
 class SQLAgent:
-    def __init__(self, llm: LLM, engine: Engine, *, max_rows: int = 500, max_attempts: int = 3, timeout_ms: int = 5000):
+    def __init__(
+        self, llm: LLM, source: DataSource, *, max_rows: int = 500, max_attempts: int = 3, timeout_ms: int = 5000
+    ):
         self.llm = llm
-        self.engine = engine  # must be the READ-ONLY engine
-        self.dialect = dialect_of(engine)
+        self.source = source
+        self.engine = source.engine  # READ-ONLY engine for this dataset
+        self.dialect = source.dialect
         self.max_rows = max_rows
         self.max_attempts = max_attempts
         self.timeout_ms = timeout_ms
-        self.schema_text = describe_schema(engine)  # built once; identical prompt prefix per question
+        self.schema_text = source.schema_text  # identical prompt prefix for every question
         self.graph = self._build()
 
     # ---- Nodes: each does one thing and returns a partial state update ----------------------
@@ -92,7 +94,9 @@ class SQLAgent:
         """Static safety checks; on success, replace the SQL with its normalised form."""
         t = time.perf_counter()
         try:
-            v = validate_sql(state["sql"], dialect=self.dialect, allowed_tables=ALLOWED_TABLES, max_rows=self.max_rows)
+            v = validate_sql(
+                state["sql"], dialect=self.dialect, allowed_tables=self.source.allowed_tables, max_rows=self.max_rows
+            )
         except SQLValidationError as e:
             return {"error": f"validation: {e}", "trace": _step("validate", t, ok=False, error=str(e))}
         return {"sql": v.sql, "trace": _step("validate", t, ok=True, tables=v.tables, limit_applied=v.limit_applied)}
@@ -120,6 +124,7 @@ class SQLAgent:
             columns=state["columns"],
             rows=state["rows"],
             truncated=state.get("truncated", False),
+            currency=self.source.currency,
         )
         chart = pick_chart(s.chart, s.x, s.y, state["columns"], state["rows"])
         return {
