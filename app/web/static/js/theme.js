@@ -1,44 +1,54 @@
 /**
- * Light/dark theme toggle.
+ * Light/dark theme: the toggle, the saved preference, and change notifications.
  *
- * Default follows the OS. Clicking the toggle forces the opposite of what is showing and saves
- * the choice in localStorage ("ayd-theme"). Listeners (charts) are told so they can redraw.
+ * The switch itself is animated by the ink-bleed transition (js/ink/): ink spreads from where
+ * you click. Without WebGL2 or with "reduce motion" it falls back to a short colour fade.
+ * The chosen theme is saved in localStorage ("ayd-theme"); index.html applies it before first
+ * paint. Press T anywhere (outside text fields) to toggle.
+ *
+ * Exports: initTheme(button, canvas), currentTheme(), cssVar(name), onThemeChange(fn)
  */
 
-import { icon } from "./icons.js";
+import { InkTransition, getTheme } from "./ink/transition.js";
 
 const KEY = "ayd-theme";
 const listeners = new Set();
 
-/** The theme currently showing: "light" or "dark". */
-export function currentTheme() {
-  const forced = document.documentElement.dataset.theme;
-  if (forced) return forced;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
+export const currentTheme = getTheme;
 
 /** Read a CSS variable from the active theme. */
 export const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-/** Run `fn` whenever the theme changes. */
+/** Run `fn(theme)` whenever the theme changes (charts redraw with new colours). */
 export const onThemeChange = (fn) => listeners.add(fn);
 
-function apply(theme, button) {
-  document.documentElement.dataset.theme = theme;
+function save(theme) {
   try {
     localStorage.setItem(KEY, theme);
   } catch {
-    /* storage unavailable: theme still applies for this visit */
+    /* storage unavailable: the theme still applies for this visit */
   }
-  button.innerHTML = icon(theme === "dark" ? "sun" : "moon");
-  listeners.forEach((fn) => fn(theme));
 }
 
-export function initTheme(button) {
-  button.innerHTML = icon(currentTheme() === "dark" ? "sun" : "moon");
-  button.addEventListener("click", () => apply(currentTheme() === "dark" ? "light" : "dark", button));
-  // Follow OS changes while the user hasn't forced a theme.
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-    if (!document.documentElement.dataset.theme) listeners.forEach((fn) => fn(currentTheme()));
+export function initTheme(button, canvas) {
+  const ink = new InkTransition(canvas, button, {
+    onApply: (theme) => {
+      save(theme);
+      button.setAttribute("aria-label", theme === "dark" ? "Light mode" : "Dark mode");
+      listeners.forEach((fn) => fn(theme));
+    },
   });
+  button.setAttribute("aria-pressed", String(getTheme() === "dark"));
+
+  // Keyboard-activated clicks (detail === 0) spread from the button itself.
+  button.addEventListener("click", (e) => ink.toggle(e.detail === 0 ? undefined : { x: e.clientX, y: e.clientY }));
+
+  // "T" toggles, unless the user is typing.
+  window.addEventListener("keydown", (e) => {
+    if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || e.key.toLowerCase() !== "t") return;
+    if (e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable='true']")) return;
+    e.preventDefault();
+    ink.toggle();
+  });
+  return ink;
 }
