@@ -1,10 +1,19 @@
 # Ask Your Data
 
-Ask business questions in plain English — about the built-in demo store or **your own uploaded
-file** — and get back a direct answer, the SQL that produced it, a results table and a chart.
+**Ask business questions in plain English and get the answer, a chart, the table and the SQL behind it.**
+Works on a built-in demo store or on your own uploaded file.
+
+**[Live demo](https://ask-your-data-chi.vercel.app)** · [Evaluation report](EVALUATION_REPORT.md) · [How it works](#how-it-works)
+
+![Ask Your Data answering a follow-up question with a chart](docs/screenshots/follow_up.png)
+
+| Answer accuracy | Answer time | Cost per question | Tests | Load test |
+|---|---|---|---|---|
+| **97.9%** on a 48-question benchmark (100% on follow-ups) | **4.4 s** median | **$0.002** | **191** passing, 87.5% coverage | **64,968** requests, 0.0015% errors |
 
 A LangGraph agent writes the SQL with an LLM, a guard checks it, the database runs it read-only,
-and if anything fails the error goes back to the model to fix (up to 3 attempts). The AI provider
+and if anything fails the error goes back to the model to fix (up to 3 attempts). Questions about the
+data itself ("what does this column mean?") are answered from the schema without SQL. The AI provider
 is a config setting: Gemini by default, Claude or OpenAI with a one-line change.
 
 **Upload your own data** (drag and drop anywhere, up to 50 MB): CSV / TSV / TXT, Excel (.xlsx .xlsm
@@ -15,12 +24,12 @@ becomes a SQL table, and starter questions are suggested for the file.
 
 **Also:** private uploads per account (email sign-in), **follow-up questions** that build on the
 conversation ("same for 2024", "break that down by city"), 👍/👎 feedback on every answer,
-**export** to CSV, Excel, chart PNG or a one-page PDF report, and a **Metrics** page with
-evaluation accuracy, live latency/cost/satisfaction and engineering numbers
-([docs/METRICS.md](docs/METRICS.md)).
+**export** to CSV, Excel, chart PNG or a one-page PDF report, a how-to-use guide, and an animated
+ink-bleed light/dark theme.
 
-<!-- Add a screenshot or GIF of the app here: ![demo](docs/demo.gif) -->
-
+| A single answer, with the SQL one click away | Demo-store dashboard (dark theme) |
+|---|---|
+| ![Answer with table](docs/screenshots/answer.png) | ![Dashboard in dark mode](docs/screenshots/dashboard_dark.png) |
 ## How it works
 
 ```mermaid
