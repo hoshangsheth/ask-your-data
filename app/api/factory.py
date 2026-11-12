@@ -21,7 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import exc as sa_exc
 
 from app.api.container import Services
-from app.api.routes import ask, dashboard, health
+from app.api.routes import ask, dashboard, datasets, health
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, log_event
 from app.db.models import metadata
@@ -66,6 +66,7 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None) -> Fast
     app.include_router(health.router)
     app.include_router(dashboard.router)
     app.include_router(ask.router)
+    app.include_router(datasets.router)
 
     # Make browsers re-check the page and its assets on every load (cheap 304 if unchanged), so a
     # code update is never hidden behind a stale cached file.

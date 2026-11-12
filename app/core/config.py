@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     max_attempts: int = 3  # SQL generation attempts before giving up
     query_timeout_ms: int = 5000  # per-query execution time limit
 
+    # ---- User uploads ------------------------------------------------------------------------
+    uploads_dir: str = "data/uploads"  # relative paths are under the project root
+    max_upload_mb: int = 50
+
     # ---- API protection ----------------------------------------------------------------------
     app_api_key: str = ""  # if set, POST /api/ask requires header X-API-Key
     rate_limit_per_minute: int = 20  # per client IP on POST /api/ask; 0 disables
