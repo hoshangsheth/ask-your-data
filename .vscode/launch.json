@@ -1,0 +1,40 @@
+{
+  // Run and Debug configurations (Ctrl+Shift+D). All use the workspace .venv and .env.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--reload", "--port", "8000"],
+      "envFile": "${workspaceFolder}/.env",
+      "jinja": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Seed demo data (force)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "app.db.seed",
+      "args": ["--force"],
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "Run eval (calls the AI provider)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "evals.run_eval",
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug current test file",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-q"],
+      "justMyCode": false
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  // VS Code suggests installing these when the folder is opened.
+  "recommendations": [
+    "ms-python.python",               // Python language support
+    "ms-python.vscode-pylance",       // type checking, IntelliSense
+    "ms-python.debugpy",              // debugger
+    "charliermarsh.ruff",             // lint + format (matches CI)
+    "ms-azuretools.vscode-containers",// Dockerfile / docker-compose
+    "qwtel.sqlite-viewer",            // browse data/shop.db
+    "mechatroner.rainbow-csv",        // read CSV files (for user uploads)
+    "redhat.vscode-yaml",             // docker-compose, CI workflow
+    "github.vscode-github-actions",   // CI workflow runs
+    "mikestead.dotenv",               // .env syntax highlighting
+    "bierner.markdown-mermaid",       // README diagram preview
+    "tamasfe.even-better-toml"        // pyproject.toml
+  ]
+}

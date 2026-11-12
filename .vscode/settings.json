@@ -1,0 +1,49 @@
+{
+  // Workspace settings shared by everyone who opens this folder.
+
+  // Python: use the project's virtual environment (.venv in this folder).
+  // The Python Environments extension manages interpreters; register this folder as a venv-based
+  // project so it picks .venv automatically. defaultInterpreterPath is the fallback for the
+  // classic Python extension.
+  "python-envs.pythonProjects": [
+    { "path": ".", "envManager": "ms-python.python:venv", "packageManager": "ms-python.python:pip" }
+  ],
+  "python-envs.defaultEnvManager": "ms-python.python:venv",
+  "python.defaultInterpreterPath": "D:\\Ask Your Data\\.venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  "python.envFile": "${workspaceFolder}/.env",
+
+  // Tests: pytest, discovered from pyproject.toml.
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["tests"],
+
+  // Ruff: format and fix imports on save.
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "editor.rulers": [120],
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  // Hide generated folders from the explorer and search.
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true
+  },
+  "search.exclude": {
+    ".venv": true,
+    "data": true
+  },
+
+  // .env holds secrets: show it with the dotenv highlighter.
+  "files.associations": {
+    ".env.example": "dotenv"
+  }
+}
