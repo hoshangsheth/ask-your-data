@@ -69,8 +69,9 @@ so instances that cold-start at the same time don't load the data twice.
   (`RATE_LIMIT_PER_MINUTE`) is kept per function instance, so treat it as a speed bump. Set a
   spending limit on the AI provider's side, or protect the deployment (Vercel Deployment
   Protection, or `APP_API_KEY` for API clients).
-- Uploads are shared by every visitor until sign-in exists (e.g. Clerk or Auth.js): store an
-  `owner_id` and filter dataset queries by it.
+- Uploads are private: uploading needs an account and each dataset is visible only to its owner.
+  Set `ADMIN_EMAILS` (your sign-in email) in the Vercel environment variables to review answers
+  rated "not helpful" on the Metrics page.
 - Neon gives one database owner role. Model SQL is still limited by the SQL guard and the
   read-only transaction; for a third layer, create a read-only role in Neon and set
   `READONLY_DATABASE_URL` (new dataset schemas are granted to it automatically).
