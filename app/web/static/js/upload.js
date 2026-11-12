@@ -10,7 +10,7 @@
  */
 
 import { getFormats, uploadDataset } from "./api.js";
-import { requireSignIn } from "./auth.js";
+import { currentUser, requireSignIn } from "./auth.js";
 import { addDataset, describeSize } from "./datasets.js";
 import { escapeHtml } from "./format.js";
 import { icon } from "./icons.js";
@@ -51,6 +51,7 @@ async function upload(file) {
     toast(`That file is larger than ${formats.max_upload_mb} MB.`, { error: true });
     return;
   }
+  // Drag and drop skips the picker, so check here too.
   if (!(await requireSignIn("Sign in to upload your own data. Your files stay private to your account."))) return;
   uploading = true;
   const row = progressRow(file.name);
@@ -93,7 +94,11 @@ function initDragAndDrop() {
 
 export async function initUpload() {
   const input = $("file-input");
-  const pick = () => input.click();
+  const SIGN_IN_REASON = "Sign in to upload your own data. Your files stay private to your account.";
+  // Guests sign in first; the file picker opens right after (or straight away when signed in).
+  const pick = async () => {
+    if (currentUser().signed_in || (await requireSignIn(SIGN_IN_REASON))) input.click();
+  };
   $("upload-btn").addEventListener("click", pick);
   $("attach-btn").addEventListener("click", pick);
   $("dropzone").addEventListener("click", pick);
