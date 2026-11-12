@@ -1,20 +1,23 @@
 """
-Dataset storage. Local implementation: per dataset, a SQLite file with the tables and a JSON file
-with the metadata, both under data/uploads/ (git-ignored).
+Dataset storage: the DatasetStore interface and its local implementation.
 
     store.save(meta, tables)     write tables + metadata
     store.get(id) / list()       read metadata
     store.readonly_engine(id)    engine that can only read this dataset (used by the agent)
+    store.schema_for(id)         Postgres schema of the dataset's tables (None for SQLite)
     store.delete(id)             remove a dataset
 
-For cloud deployment the same interface would be backed by PostgreSQL (one schema per dataset)
-plus object storage for the original files; see docs/DEPLOYMENT.md.
+LocalDatasetStore (this file): per dataset, a SQLite file with the tables and a JSON file with the
+metadata, both under data/uploads/ (git-ignored).
+PostgresDatasetStore (pg_store.py): one schema per dataset plus a `datasets` table; used when
+DATABASE_URL is Postgres (the cloud deployment).
 """
 
 import json
 import re
 import threading
 from pathlib import Path
+from typing import Protocol
 
 from sqlalchemy import Engine, create_engine
 
@@ -28,6 +31,23 @@ class DatasetNotFound(KeyError):
     pass
 
 
+def check_id(dataset_id: str) -> str:
+    """Return the id if it has the generated shape, else raise DatasetNotFound."""
+    if not _ID.match(dataset_id or ""):
+        raise DatasetNotFound(dataset_id)
+    return dataset_id
+
+
+class DatasetStore(Protocol):
+    def save(self, meta: DatasetMeta, tables: list[CleanTable]) -> None: ...
+    def delete(self, dataset_id: str) -> DatasetMeta: ...
+    def get(self, dataset_id: str) -> DatasetMeta: ...
+    def list(self) -> list[DatasetMeta]: ...
+    def readonly_engine(self, dataset_id: str) -> Engine: ...
+    def schema_for(self, dataset_id: str) -> str | None: ...
+    def dispose(self) -> None: ...
+
+
 class LocalDatasetStore:
     def __init__(self, root: Path):
         self.root = root
@@ -37,9 +57,7 @@ class LocalDatasetStore:
 
     # ---- paths (ids are validated, so they can't escape the folder) ----------------------------
     def _check(self, dataset_id: str) -> str:
-        if not _ID.match(dataset_id or ""):
-            raise DatasetNotFound(dataset_id)
-        return dataset_id
+        return check_id(dataset_id)
 
     def _db_path(self, dataset_id: str) -> Path:
         return self.root / f"{self._check(dataset_id)}.sqlite"
@@ -63,16 +81,17 @@ class LocalDatasetStore:
         # Metadata last: a dataset is only listed once its data is fully written.
         self._meta_path(meta.id).write_text(json.dumps(meta.to_dict(), default=str), encoding="utf-8")
 
-    def delete(self, dataset_id: str) -> None:
+    def delete(self, dataset_id: str) -> DatasetMeta:
+        """Remove a dataset; returns its metadata (e.g. to delete the original file too)."""
+        meta = self.get(dataset_id)
         meta_path = self._meta_path(dataset_id)
-        if not meta_path.exists():
-            raise DatasetNotFound(dataset_id)
         with self._lock:
             engine = self._engines.pop(dataset_id, None)
         if engine is not None:
             engine.dispose()
         meta_path.unlink(missing_ok=True)
         self._db_path(dataset_id).unlink(missing_ok=True)
+        return meta
 
     # ---- read ----------------------------------------------------------------------------------
     def get(self, dataset_id: str) -> DatasetMeta:
@@ -99,6 +118,9 @@ class LocalDatasetStore:
             if dataset_id not in self._engines:
                 self._engines[dataset_id] = create_engine(f"sqlite:///file:{db.as_posix()}?mode=ro&uri=true")
             return self._engines[dataset_id]
+
+    def schema_for(self, dataset_id: str) -> str | None:
+        return None  # each dataset is its own SQLite file
 
     def dispose(self) -> None:
         with self._lock:

@@ -48,6 +48,7 @@ class DatasetMeta:
     size_bytes: int
     tables: list[TableProfile]
     suggestions: list[str] = field(default_factory=list)
+    source_url: str = ""  # original file in object storage (Vercel Blob), if kept
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -96,8 +97,16 @@ def profile_table(table: CleanTable) -> TableProfile:
     return TableProfile(name=table.name, source_name=table.source_name, rows=len(table.frame), columns=cols)
 
 
-def schema_text(meta: DatasetMeta) -> str:
-    """Schema description for the SQL prompt (SQLite dialect)."""
+_DATE_HINTS = {
+    "sqlite": "DATE columns are ISO text 'YYYY-MM-DD' (or 'YYYY-MM-DD HH:MM:SS'): use strftime('%Y-%m', col) "
+    "for months and compare with string literals.",
+    "postgres": "DATE columns are ISO text 'YYYY-MM-DD' (or 'YYYY-MM-DD HH:MM:SS'): cast with col::date "
+    "(or col::timestamp), e.g. to_char(col::date, 'YYYY-MM') for months or date_trunc('month', col::date).",
+}
+
+
+def schema_text(meta: DatasetMeta, dialect: str = "sqlite") -> str:
+    """Schema description for the SQL prompt ("sqlite" or "postgres" dialect)."""
     lines = [f'Dataset "{meta.name}" uploaded by the user (file: {meta.filename}).', ""]
     for t in meta.tables:
         origin = f" (from sheet/table '{t.source_name}')" if t.source_name != t.name else ""
@@ -116,8 +125,7 @@ def schema_text(meta: DatasetMeta) -> str:
             lines.append(f"  {c.name} {c.type} -- {'; '.join(notes)}".rstrip(" -"))
         lines.append("")
     lines.append(
-        "DATE columns are ISO text 'YYYY-MM-DD' (or 'YYYY-MM-DD HH:MM:SS'): use strftime('%Y-%m', col) "
-        "for months and compare with string literals. There are no business definitions for this "
+        _DATE_HINTS.get(dialect, _DATE_HINTS["sqlite"]) + " There are no business definitions for this "
         "dataset: state any assumption (e.g. which column is revenue) in your explanation."
     )
     return "\n".join(lines)

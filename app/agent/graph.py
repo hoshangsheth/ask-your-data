@@ -105,7 +105,13 @@ class SQLAgent:
         """Run the SQL read-only with a timeout."""
         t = time.perf_counter()
         try:
-            r = run_readonly(self.engine, state["sql"], max_rows=self.max_rows, timeout_ms=self.timeout_ms)
+            r = run_readonly(
+                self.engine,
+                state["sql"],
+                max_rows=self.max_rows,
+                timeout_ms=self.timeout_ms,
+                schema=self.source.schema,
+            )
         except QueryError as e:
             return {"error": f"database: {e}", "trace": _step("execute", t, ok=False, error=str(e))}
         return {

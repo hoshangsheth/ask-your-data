@@ -9,7 +9,8 @@
  *   ask(question, datasetId)      POST   /api/ask
  *   listDatasets()                GET    /api/datasets
  *   getFormats()                  GET    /api/formats
- *   uploadDataset(file, onProgress)  POST /api/datasets   (multipart, with upload progress)
+ *   uploadDataset(file, onProgress)  POST /api/uploads, PUT .../parts/{n}, POST .../complete
+ *                                 (file sent in parts, with upload progress)
  *   deleteDataset(id)             DELETE /api/datasets/{id}
  */
 
@@ -54,23 +55,45 @@ export const listDatasets = () => request("/api/datasets");
 export const getFormats = () => request("/api/formats");
 export const deleteDataset = (id) => request(`/api/datasets/${encodeURIComponent(id)}`, { method: "DELETE" });
 
-/**
- * Upload a file. XMLHttpRequest (not fetch) so we can report upload progress.
- * onProgress(fraction 0..1) is called while bytes are sent; resolves with the dataset summary.
- */
-export function uploadDataset(file, onProgress = () => {}) {
+/** PUT one part with XMLHttpRequest (not fetch) so upload progress can be reported. */
+function putPart(url, blob, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/datasets");
+    xhr.open("PUT", url);
     xhr.responseType = "json";
-    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total);
+    xhr.setRequestHeader("Content-Type", "application/octet-stream");
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded);
     xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response);
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
       else reject(new ApiError(errorMessage(xhr.response, xhr.status), xhr.status));
     };
     xhr.onerror = () => reject(new ApiError("Upload failed: can't reach the server.", 0));
-    const form = new FormData();
-    form.append("file", file);
-    xhr.send(form);
+    xhr.send(blob);
   });
+}
+
+/**
+ * Upload a file in parts of a few MB (hosting caps one request at 4.5 MB), then ask the server
+ * to build the dataset. onProgress(fraction 0..1) follows the bytes sent; the last 5% is the
+ * server reading the file. Resolves with the dataset summary.
+ */
+export async function uploadDataset(file, onProgress = () => {}) {
+  const start = await request("/api/uploads", {
+    method: "POST",
+    body: JSON.stringify({ filename: file.name, size: file.size }),
+  });
+  const base = `/api/uploads/${encodeURIComponent(start.upload_id)}`;
+  let sent = 0;
+  for (let i = 0; i < start.parts; i++) {
+    const part = file.slice(i * start.part_bytes, (i + 1) * start.part_bytes);
+    await putPart(`${base}/parts/${i}`, part, (loaded) => onProgress((0.95 * (sent + loaded)) / file.size));
+    sent += part.size;
+  }
+  onProgress(0.95);
+  const dataset = await request(`${base}/complete`, {
+    method: "POST",
+    body: JSON.stringify({ filename: file.name, parts: start.parts }),
+  });
+  onProgress(1);
+  return dataset;
 }

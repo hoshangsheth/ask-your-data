@@ -21,6 +21,7 @@ class DataSource:
     schema_text: str  # schema + definitions sent to the model
     currency: str | None = None  # e.g. "INR": money is pre-formatted in lakh/crore for the summary
     suggestions: list[str] = field(default_factory=list)
+    schema: str | None = None  # Postgres schema holding the tables (uploads in the cloud); None = default
 
     @property
     def dialect(self) -> str:

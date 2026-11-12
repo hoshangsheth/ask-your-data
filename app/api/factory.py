@@ -6,8 +6,8 @@ Usage:
     app = create_app()                              # settings from env/.env, LLM from settings
     app = create_app(Settings(...), llm=FakeLLM())  # tests: custom settings, scripted model
 
-Startup (lifespan): seeds the SQLite demo database if empty (AUTO_SEED=true), otherwise just
-ensures tables exist. Shutdown: closes connection pools.
+Startup (lifespan): creates tables and seeds the demo store if empty (AUTO_SEED=true; SQLite or
+Postgres). Shutdown: closes connection pools.
 """
 
 import mimetypes
@@ -19,11 +19,13 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import exc as sa_exc
+from sqlalchemy import text
 
 from app.api.container import Services
 from app.api.routes import ask, dashboard, datasets, health
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, log_event
+from app.datasets.pg_store import PostgresDatasetStore
 from app.db.models import metadata
 from app.db.seed import seed
 from app.llm import LLM
@@ -38,6 +40,29 @@ mimetypes.add_type("text/css", ".css")
 warnings.filterwarnings("ignore", category=sa_exc.SAWarning, message=".*Decimal objects natively.*")
 
 
+_SEED_LOCK_ID = 727_001  # arbitrary app-wide key for pg_advisory_lock
+
+
+def _prepare_database(services: Services) -> None:
+    """Create tables and load the demo data if the database is empty (AUTO_SEED=true).
+
+    On Postgres several serverless instances can cold-start at once, so seeding runs in one
+    transaction holding an advisory lock: the first instance loads the data, the others wait and
+    then find it there. (A transaction-level lock also works through Neon's connection pooler.)
+    """
+    engine, auto_seed = services.owner_engine, services.settings.auto_seed
+    if engine.dialect.name == "postgresql":
+        with engine.begin() as conn:
+            conn.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": _SEED_LOCK_ID})
+            if isinstance(services.store, PostgresDatasetStore):
+                services.store.create_tables(conn)
+            counts = seed(conn) if auto_seed else metadata.create_all(conn)
+    else:
+        counts = seed(engine) if auto_seed else metadata.create_all(engine)  # seed: no-op if data exists
+    if counts:
+        log_event("seeded", **counts)
+
+
 def create_app(settings: Settings | None = None, llm: LLM | None = None) -> FastAPI:
     settings = settings or get_settings()
     services = Services(settings, llm)
@@ -45,12 +70,7 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None) -> Fast
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         configure_logging()
-        if settings.auto_seed and services.owner_engine.dialect.name == "sqlite":
-            counts = seed(services.owner_engine)  # no-op if data already exists
-            if counts:
-                log_event("seeded", **counts)
-        else:
-            metadata.create_all(services.owner_engine)
+        _prepare_database(services)
         yield
         services.dispose()
 

@@ -53,6 +53,7 @@ class HealthResponse(BaseModel):
     sql_model: str
     summary_model: str
     llm_ready: bool  # an API key for the provider is configured (the UI shows setup steps if not)
+    storage: dict[str, str] = {}  # {"datasets": "postgres" | "sqlite-files", "files": "vercel-blob" | "local"}
 
 
 # ---- /api/schema ----------------------------------------------------------------------------
@@ -95,3 +96,21 @@ class DatasetSummary(BaseModel):
 class FormatsResponse(BaseModel):
     extensions: list[str]
     max_upload_mb: int
+    part_mb: int = 4  # browsers upload files in parts of this size
+
+
+# ---- /api/uploads (multi-part uploads) --------------------------------------------------------
+class UploadStart(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    size: int = Field(ge=0)
+
+
+class UploadStarted(BaseModel):
+    upload_id: str
+    part_bytes: int
+    parts: int
+
+
+class UploadComplete(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    parts: int = Field(ge=1, le=1000)

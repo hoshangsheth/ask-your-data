@@ -13,7 +13,7 @@ from pathlib import Path
 from app.datasets.cleaning import TooLarge, clean_tables
 from app.datasets.formats import SUPPORTED_EXTENSIONS, UnreadableFile, UnsupportedFile, read_tables
 from app.datasets.profile import DatasetMeta, profile_table, suggest_questions
-from app.datasets.store import LocalDatasetStore
+from app.datasets.store import DatasetStore
 
 
 class UploadError(ValueError):
@@ -25,7 +25,7 @@ class UploadError(ValueError):
 
 
 class DatasetService:
-    def __init__(self, store: LocalDatasetStore, max_upload_mb: int = 50):
+    def __init__(self, store: DatasetStore, max_upload_mb: int = 50):
         self.store = store
         self.max_bytes = max_upload_mb * 1024 * 1024
 
@@ -33,7 +33,19 @@ class DatasetService:
     def supported_extensions() -> tuple[str, ...]:
         return SUPPORTED_EXTENSIONS
 
-    def ingest(self, data: bytes, filename: str) -> DatasetMeta:
+    def check_upload(self, filename: str, size: int) -> None:
+        """Cheap checks before a multi-part upload starts (the file itself is checked again later)."""
+        if size <= 0:
+            raise UploadError("the file is empty")
+        if size > self.max_bytes:
+            raise UploadError(f"the file is larger than {self.max_bytes // (1024 * 1024)} MB", status_code=413)
+        if Path(filename or "").suffix.lower() not in SUPPORTED_EXTENSIONS:
+            ext = Path(filename or "").suffix.lower() or filename
+            raise UploadError(
+                f"'{ext}' files are not supported. Supported: {', '.join(SUPPORTED_EXTENSIONS)}", status_code=415
+            )
+
+    def ingest(self, data: bytes, filename: str, source_url: str = "") -> DatasetMeta:
         # 1) Validate size and type before doing any parsing work.
         if not data:
             raise UploadError("the file is empty")
@@ -60,6 +72,7 @@ class DatasetService:
             created_at=datetime.now(UTC).isoformat(timespec="seconds"),
             size_bytes=len(data),
             tables=[profile_table(t) for t in tables],
+            source_url=source_url,
         )
         meta.suggestions = suggest_questions(meta)
         self.store.save(meta, tables)

@@ -25,4 +25,5 @@ def health(services: Services = Depends(get_services)) -> HealthResponse:
         sql_model=sql_model,
         summary_model=summary_model,
         llm_ready=has_credentials(settings),
+        storage=services.storage_info,
     )
