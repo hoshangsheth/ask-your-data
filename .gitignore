@@ -16,3 +16,7 @@ evals/results.json
 .coverage
 coverage.json
 htmlcov/
+
+# Credentials pulled from Vercel (vercel env pull)
+.env*.local
+.vercel/

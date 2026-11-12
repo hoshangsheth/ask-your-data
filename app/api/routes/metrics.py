@@ -1,14 +1,14 @@
 """
-Metrics (the "Metrics" page):
+Metrics for the app's owner (the admin-only "Metrics" page). Not shown to users.
 
     GET /api/metrics                     live usage metrics + the committed offline reports
-                                         (evaluation, tests/coverage, load test). Aggregates only,
-                                         no questions or emails, so it is public.
-    GET /api/metrics/feedback            rated questions with SQL and notes (admins only)
+                                         (evaluation, tests/coverage, load test)
+    GET /api/metrics/feedback            rated questions with SQL and notes
     GET /api/metrics/eval-candidates     questions rated "not helpful", as eval-set JSONL lines
-                                         to review and add to evals/questions.jsonl (admins only)
+                                         to review and add to evals/questions.jsonl
 
-Admins are the emails in ADMIN_EMAILS.
+All three need a signed-in admin: an email listed in ADMIN_EMAILS. Without the UI, the same live
+numbers come from `python -m scripts.metrics_report` against the database.
 """
 
 import json
@@ -33,7 +33,8 @@ def _require_admin(identity: Identity) -> None:
 
 
 @router.get("/api/metrics")
-def metrics(services: Services = Depends(get_services)) -> dict[str, Any]:
+def metrics(services: Services = Depends(get_services), identity: Identity = Depends(get_identity)) -> dict[str, Any]:
+    _require_admin(identity)
     return {"live": compute_live_metrics(services.owner_engine), **load_reports()}
 
 
