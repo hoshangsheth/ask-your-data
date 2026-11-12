@@ -36,13 +36,27 @@ export const isMoneyColumn = (col) => /revenue|sales|gmv|value|profit|amount|cos
 /** Heuristic: does this column hold a ratio between 0 and 1? */
 export const isRatioColumn = (col) => /rate|share|margin|ratio|growth|change|pct|percent/i.test(col);
 
-/** Format one cell for display in the results table. */
-export function formatCell(value, col) {
+/** International number formatting for uploaded data (currency unknown): 12,345.67 */
+export const plainNum = (v) => (v == null ? "–" : Number(v).toLocaleString("en", { maximumFractionDigits: 2 }));
+
+/** Compact axis labels for uploaded data: 1.2K, 3.4M, 5.6B. */
+export const compactNum = (v) =>
+  v == null ? "–" : Number(v).toLocaleString("en", { notation: "compact", maximumFractionDigits: 1 });
+
+/**
+ * Format one cell for display in the results table.
+ * currency "INR" (demo store): money in rupees with Indian grouping; otherwise plain numbers.
+ */
+export function formatCell(value, col, currency = null) {
   if (value == null) return "–";
   if (typeof value !== "number") return String(value);
-  if (isMoneyColumn(col)) return inr(value, { compact: false });
-  if (isRatioColumn(col) && Math.abs(value) <= 1.5) return pct(value, 2);
-  return num(value);
+  if (currency === "INR") {
+    if (isMoneyColumn(col)) return inr(value, { compact: false });
+    if (isRatioColumn(col) && Math.abs(value) <= 1.5) return pct(value, 2);
+    return num(value);
+  }
+  if (isRatioColumn(col) && Math.abs(value) <= 1.5 && !Number.isInteger(value)) return pct(value, 2);
+  return plainNum(value);
 }
 
 /** Light SQL syntax highlighting (keywords, strings, numbers). Input must be escaped first. */

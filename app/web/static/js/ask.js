@@ -1,37 +1,25 @@
 /**
- * Ask view: chat-style question and answer thread.
+ * Ask view: chat-style question and answer thread about the selected dataset.
  *
  * Flow: user types (or clicks a suggestion) -> question bubble + live "working" card ->
- * POST /api/ask -> answer card with tabs (Chart / Table / SQL / How it worked) and actions
- * (copy SQL, download CSV, ask again). Errors render as friendly cards with a retry button.
+ * POST /api/ask (with the dataset id) -> answer card with tabs (Chart / Table / SQL /
+ * How it worked) and actions (copy SQL, download CSV, ask again). Errors render as friendly
+ * cards with a retry button. "New chat" (or switching dataset) clears the thread.
  *
- * Exports: initAsk(health), askQuestion(text), showSetup(health)
+ * Exports: initAsk(), askQuestion(text), newChat(), showSetup(health)
  */
 
 import { ApiError, ask } from "./api.js";
 import { drawChart } from "./charts.js";
-import {
-  escapeHtml,
-  formatCell,
-  highlightSql,
-  isMoneyColumn,
-  isRatioColumn,
-  label,
-  num,
-  toCsv,
-} from "./format.js";
+import { currentDataset, describeSize, onDatasetChange } from "./datasets.js";
+import { escapeHtml, formatCell, highlightSql, isMoneyColumn, isRatioColumn, label, num, toCsv } from "./format.js";
 import { hydrateIcons, icon } from "./icons.js";
 import { remember } from "./recent.js";
+import { toast } from "./toast.js";
 
-// Starter questions shown on the welcome screen.
-const SUGGESTIONS = [
-  { icon: "trend", tag: "Trends", text: "Which region's revenue dropped last quarter?" },
-  { icon: "bag", tag: "Products", text: "Top 5 products by revenue in 2025" },
-  { icon: "chart", tag: "Growth", text: "Show monthly revenue for 2025" },
-  { icon: "card", tag: "Payments", text: "What is the cancellation rate for each payment method?" },
-  { icon: "undo", tag: "Returns", text: "Which category has the highest return rate?" },
-  { icon: "users", tag: "Customers", text: "How many active customers did we have in 2025?" },
-];
+// Icons and tags for starter questions (demo store); uploads cycle through generic ones.
+const DEMO_TAGS = [["trend", "Trends"], ["bag", "Products"], ["chart", "Growth"], ["card", "Payments"], ["undo", "Returns"], ["users", "Customers"]];
+const UPLOAD_TAGS = [["chart", "Breakdown"], ["trend", "Ranking"], ["clock", "Over time"], ["list", "Common values"], ["sparkles", "Averages"], ["table", "Size"]];
 
 // Shown while waiting. The server answers in one response, so these advance on a timer
 // to show what is happening; the real per-step timings appear in "How it worked".
@@ -160,12 +148,12 @@ function metaHtml(r) {
   return parts.map((p) => `<span style="display:inline-flex;gap:4px;align-items:center">${p}</span>`).join("");
 }
 
-function tableHtml(columns, rows) {
+function tableHtml(columns, rows, currency) {
   const numeric = columns.map((_, i) => rows.length > 0 && rows.every((r) => r[i] == null || typeof r[i] === "number"));
   const head = columns.map((c, i) => `<th class="${numeric[i] ? "num" : ""}">${escapeHtml(label(c))}</th>`).join("");
   const body = rows
     .slice(0, 200)
-    .map((r) => `<tr>${r.map((v, i) => `<td class="${numeric[i] ? "num" : ""}">${escapeHtml(formatCell(v, columns[i]))}</td>`).join("")}</tr>`)
+    .map((r) => `<tr>${r.map((v, i) => `<td class="${numeric[i] ? "num" : ""}">${escapeHtml(formatCell(v, columns[i], currency))}</td>`).join("")}</tr>`)
     .join("");
   return `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
@@ -206,7 +194,7 @@ function renderAnswer(card, r) {
       .map(([id, ic, text], i) => `<button class="tab ${i === 0 ? "is-active" : ""}" data-tab="${id}" role="tab">${icon(ic)}${text}</button>`)
       .join("")}</div>` : ""}
     ${r.chart ? `<div class="tab-panel" data-panel="chart"><div class="chart-box"><canvas></canvas></div></div>` : ""}
-    ${hasTable ? `<div class="tab-panel" data-panel="table">${tableHtml(r.columns, r.rows)}
+    ${hasTable ? `<div class="tab-panel" data-panel="table">${tableHtml(r.columns, r.rows, r.currency)}
         ${r.truncated ? `<p class="table-note">Showing the first ${num(r.rows.length)} rows.</p>` : ""}</div>` : ""}
     ${r.sql ? `<div class="tab-panel" data-panel="sql"><div class="sql-block">
         <button class="btn" data-action="copy">${icon("copy")}Copy</button>
@@ -232,8 +220,9 @@ function renderAnswer(card, r) {
       labels,
       values: r.rows.map((row) => row[yi]),
       label: label(r.chart.y),
-      money: isMoneyColumn(r.chart.y),
+      money: r.currency === "INR" && isMoneyColumn(r.chart.y),
       ratio: isRatioColumn(r.chart.y),
+      compact: r.currency !== "INR", // uploaded data: 1.2K / 3.4M axis labels
       horizontal: r.chart.type === "bar" && longLabels,
     });
   }
@@ -272,14 +261,6 @@ function renderError(card, question, err) {
 
 /* ---------- Actions ---------- */
 
-export function toast(message) {
-  const t = $("toast");
-  t.textContent = message;
-  t.classList.add("show");
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove("show"), 1800);
-}
-
 async function copyText(text, done) {
   try {
     await navigator.clipboard.writeText(text);
@@ -300,11 +281,12 @@ function downloadCsv(r) {
 
 /* ---------- Public ---------- */
 
-/** Ask a question and render the exchange in the thread. */
+/** Ask a question about the selected dataset and render the exchange in the thread. */
 export async function askQuestion(text) {
   const question = text.trim();
   if (question.length < 3 || busy) return;
   busy = true;
+  document.documentElement.dataset.busy = "1"; // pauses theme snapshots while the thread updates
   $("send-btn").disabled = true;
   $("welcome").hidden = true;
   remember(question);
@@ -315,7 +297,7 @@ export async function askQuestion(text) {
   scrollToBottom();
 
   try {
-    const result = await ask(question);
+    const result = await ask(question, currentDataset().id);
     stop();
     renderAnswer(card, result);
   } catch (err) {
@@ -323,19 +305,51 @@ export async function askQuestion(text) {
     renderError(card, question, err);
   } finally {
     busy = false;
+    delete document.documentElement.dataset.busy;
     $("send-btn").disabled = false;
     scrollToBottom();
   }
 }
 
+/** Welcome screen for the selected dataset: title, description, starter questions. */
+function renderWelcome() {
+  const ds = currentDataset();
+  const demo = ds.kind === "demo";
+  $("welcome-title").textContent = demo ? "What would you like to know?" : `Ask about ${ds.name}`;
+  $("welcome-text").textContent = demo
+    ? "Ask about sales, customers, products or orders in the demo store (2024–2025), or upload your own data below. Try one of these:"
+    : `${ds.filename} · ${describeSize(ds)}. Try one of these, or ask anything:`;
+  const tags = demo ? DEMO_TAGS : UPLOAD_TAGS;
+  $("suggestions").innerHTML = ds.suggestions
+    .map((q, i) => {
+      const [ic, tag] = tags[i % tags.length];
+      return `<button class="suggestion" data-q="${escapeHtml(q)}">
+        <span class="s-icon">${icon(ic)}</span>
+        <span><span class="s-tag">${tag}</span><span class="s-text" style="display:block">${escapeHtml(q)}</span></span>
+      </button>`;
+    })
+    .join("");
+  $("composer-dataset").textContent = `Asking about: ${ds.name}`;
+}
+
+/** Clear the conversation and show the welcome screen. */
+export function newChat() {
+  if (busy) return;
+  $("thread").querySelector(".thread-inner")?.remove();
+  renderWelcome();
+  $("welcome").hidden = false;
+  $("thread").scrollTop = 0;
+  $("question").value = "";
+  $("question").focus({ preventScroll: true });
+}
+
 export function initAsk() {
-  // Suggestions.
-  $("suggestions").innerHTML = SUGGESTIONS.map(
-    (s) => `<button class="suggestion" data-q="${escapeHtml(s.text)}">
-      <span class="s-icon">${icon(s.icon)}</span>
-      <span><span class="s-tag">${s.tag}</span><span class="s-text" style="display:block">${escapeHtml(s.text)}</span></span>
-    </button>`,
-  ).join("");
+  renderWelcome();
+  onDatasetChange(() => newChat()); // a conversation is about one dataset
+  $("new-chat").addEventListener("click", () => {
+    newChat();
+    toast("Started a new chat");
+  });
   $("suggestions").addEventListener("click", (e) => {
     const b = e.target.closest(".suggestion");
     if (b) askQuestion(b.dataset.q);

@@ -29,14 +29,41 @@
 .btn:hover { background: var(--surface-2); color: var(--text); }
 .btn svg { width: 15px; height: 15px; }
 
-.status-pill {
-  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;
-  padding: 8px 12px; border-radius: 10px; background: var(--surface-2);
-  font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+/* "Powered by Gemini": quiet footer line with a gradient sparkle. */
+.powered-by {
+  display: flex; align-items: center; gap: 7px; padding: 6px 10px;
+  font-size: 12px; color: var(--muted); letter-spacing: 0.01em; white-space: nowrap;
 }
-.status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
-.status-pill.ok .dot { background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
-.status-pill.warn .dot { background: var(--warning); box-shadow: 0 0 0 3px var(--warning-soft); }
+.powered-by .pb-mark { color: #4f8cff; }
+.powered-by .pb-mark svg { width: 13px; height: 13px; }
+.powered-by.needs-key { color: var(--warning); }
+.powered-by.needs-key .pb-mark { color: var(--warning); }
+
+/* New chat: the primary action in the sidebar. */
+.new-chat-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 14px; border-radius: 11px; border: 0;
+  background: var(--gradient); color: #fff; font-weight: 600; font-size: 14px;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.28);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.new-chat-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(79, 70, 229, 0.36); }
+.new-chat-btn svg { width: 16px; height: 16px; }
+
+/* Theme toggle (ink transition). z-index puts it above the ink overlay (1000); it is hidden
+   in snapshots via data-ink-live. No colour transitions: the ink hands it its new colours. */
+.theme-toggle {
+  position: relative; z-index: 1001; flex: none;
+  display: grid; place-items: center; width: 42px; height: 42px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  cursor: pointer; transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.theme-toggle:hover { transform: rotate(-12deg) scale(1.04); border-color: var(--text-2); }
+.theme-toggle:active { transform: scale(0.94); }
+.theme-toggle__icon { overflow: visible; }
+.theme-toggle__body { fill: currentColor; }
+.theme-toggle__rays { stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 
 .badge {
   display: inline-flex; align-items: center; gap: 5px;
@@ -67,6 +94,42 @@
 .recent-list svg { margin-top: 2px; color: var(--muted); flex: none; }
 .recent-list svg { width: 14px; height: 14px; }
 .recent-empty { font-size: 13px; color: var(--muted); padding: 0 10px; }
+.side-head .link-btn { display: inline-flex; align-items: center; gap: 4px; }
+.side-head .link-btn svg { width: 13px; height: 13px; }
+
+/* Dataset list ("Your data"). */
+.dataset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow-y: auto; }
+.ds-item { position: relative; display: flex; align-items: center; border-radius: 10px; }
+.ds-item:hover { background: var(--surface-2); }
+.ds-item.is-active { background: var(--primary-soft); }
+.ds-select {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border: 0; background: none; text-align: left; color: var(--text-2);
+}
+.ds-icon {
+  width: 30px; height: 30px; border-radius: 9px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface-2); color: var(--text-2);
+}
+.ds-item.is-active .ds-icon { background: var(--primary); color: var(--primary-ink); }
+.ds-icon svg { width: 15px; height: 15px; }
+.ds-text { min-width: 0; display: flex; flex-direction: column; }
+.ds-name { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ds-meta { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ds-delete {
+  flex: none; width: 28px; height: 28px; margin-right: 6px; border: 0; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; color: var(--muted); opacity: 0; transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+.ds-item:hover .ds-delete, .ds-delete:focus-visible { opacity: 1; }
+.ds-delete:hover { color: var(--danger); background: var(--danger-soft); }
+.ds-delete svg { width: 14px; height: 14px; }
+@media (hover: none) { .ds-delete { opacity: 1; } }
+
+/* Upload in progress. */
+.ds-item.is-uploading .ds-icon { background: var(--primary-soft); color: var(--primary); }
+.ds-progress { display: block; height: 4px; margin-top: 5px; border-radius: 4px; background: var(--surface-2); overflow: hidden; width: 160px; max-width: 100%; }
+.ds-progress span { display: block; height: 100%; width: 0; background: var(--gradient); transition: width 0.2s; }
 
 /* ===== Welcome & suggestions ===== */
 .welcome { text-align: center; padding: 28px 0 8px; }
@@ -96,7 +159,7 @@
 /* ===== Setup banner (no API key) ===== */
 .setup-banner {
   margin-bottom: 8px; border-radius: var(--radius);
-  background: var(--warning-soft); border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+  background: var(--warning-soft); border: 1px solid var(--warning-border);
 }
 .setup-banner summary {
   display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; list-style: none;
@@ -121,7 +184,7 @@
 .composer { padding: 10px 0 18px; background: linear-gradient(to bottom, transparent, var(--bg) 30%); }
 .composer-box {
   display: flex; align-items: flex-end; gap: 10px;
-  padding: 10px 10px 10px 18px; border-radius: var(--radius-lg);
+  padding: 10px 10px 10px 8px; border-radius: var(--radius-lg);
   background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-lg);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -139,6 +202,66 @@
 .send-btn:hover { transform: translateY(-1px); }
 .send-btn:disabled { opacity: 0.5; cursor: progress; transform: none; }
 .composer-hint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.attach-btn {
+  width: 38px; height: 38px; margin-bottom: 2px; border: 0; border-radius: 10px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; color: var(--muted); transition: background 0.15s, color 0.15s;
+}
+.attach-btn:hover { background: var(--surface-2); color: var(--primary); }
+.attach-btn svg { width: 18px; height: 18px; }
+
+/* ===== Upload: dropzone on the welcome screen, overlay while dragging a file ===== */
+.dropzone {
+  width: 100%; margin-top: 18px; padding: 18px; border-radius: var(--radius);
+  border: 1.5px dashed var(--border); background: transparent; color: var(--text-2);
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 14px;
+  text-align: left; align-items: center; transition: border-color 0.15s, background 0.15s;
+}
+.dropzone:hover { border-color: var(--primary); background: var(--primary-soft); }
+.dz-icon {
+  grid-row: 1 / span 2; width: 40px; height: 40px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--primary-soft); color: var(--primary);
+}
+.dz-title { font-weight: 600; color: var(--text); }
+.dz-sub { font-size: 13px; color: var(--muted); }
+
+.drop-overlay {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  background: rgba(12, 14, 26, 0.55); padding: 24px;
+}
+.drop-overlay[hidden] { display: none; }
+.drop-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 36px 44px; border-radius: var(--radius-lg); border: 2px dashed var(--primary);
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-lg);
+}
+.drop-card svg { width: 32px; height: 32px; color: var(--primary); }
+.drop-card span:last-child { font-size: 13px; color: var(--muted); }
+
+/* Dashboard for an uploaded dataset: invitation to ask. */
+.overview-cta { display: flex; align-items: center; gap: 16px; }
+.overview-cta > div { flex: 1; }
+.overview-cta h3 { font-size: 15px; margin-bottom: 4px; }
+.overview-cta .btn { text-decoration: none; }
+
+/* ===== Ink theme transition ===== */
+.ink-canvas {
+  position: fixed; inset: 0; z-index: 1000; width: 100%; height: 100%;
+  pointer-events: none; visibility: hidden;
+}
+.ink-canvas.is-active { visibility: visible; }
+
+/* CSS fallback (no WebGL2, reduced motion, or snapshots not ready): applied only during a flip. */
+html.theme-fade, html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
+  transition:
+    background-color var(--theme-fade, 0.45s) ease,
+    border-color var(--theme-fade, 0.45s) ease,
+    color var(--theme-fade, 0.45s) ease,
+    fill var(--theme-fade, 0.45s) ease,
+    stroke var(--theme-fade, 0.45s) ease,
+    box-shadow var(--theme-fade, 0.45s) ease !important;
+}
 
 /* ===== Messages ===== */
 .thread-inner { display: flex; flex-direction: column; gap: 22px; }
@@ -276,6 +399,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   transition: opacity 0.2s, transform 0.2s;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.is-error { background: var(--danger); color: #fff; max-width: min(560px, 92vw); text-align: center; }
 
 @media (max-width: 600px) {
   .composer-hint { display: none; } /* keyboard shortcuts don't apply on phones */

@@ -1,9 +1,10 @@
 /**
- * Entry point: wires the shell (navigation, mobile menu, theme, status pill) and starts each view.
+ * Entry point: wires the shell (navigation, mobile menu, theme, "Powered by") and starts each
+ * feature module.
  *
  * Views are sections with id "view-<name>"; navigation buttons carry data-view="<name>".
  * The current view is kept in the URL hash (#ask, #dashboard, #data) so refresh and the browser
- * back button work.
+ * back button work. Every view follows the selected dataset (js/datasets.js).
  */
 
 import { getHealth } from "./api.js";
@@ -11,17 +12,25 @@ import { askQuestion, initAsk, showSetup } from "./ask.js";
 import { redrawAll } from "./charts.js";
 import { loadDashboard } from "./dashboard.js";
 import { loadData } from "./data.js";
+import { currentDataset, initDatasets, onDatasetChange } from "./datasets.js";
 import { hydrateIcons } from "./icons.js";
 import { initRecent } from "./recent.js";
 import { initTheme, onThemeChange } from "./theme.js";
+import { initUpload } from "./upload.js";
 
 const VIEWS = {
-  ask: { title: "Ask a question", sub: "Get answers, charts and the SQL behind them.", load: null },
-  dashboard: { title: "Dashboard", sub: "Key numbers for the demo store, 2024–2025.", load: loadDashboard },
-  data: { title: "Your data", sub: "The tables and columns the assistant can use.", load: loadData },
+  ask: { title: "Ask a question", sub: () => "Get answers, charts and the SQL behind them.", load: null },
+  dashboard: {
+    title: "Dashboard",
+    sub: (ds) => (ds.kind === "demo" ? "Key numbers for the demo store, 2024–2025." : `Overview of ${ds.name}.`),
+    load: loadDashboard,
+  },
+  data: { title: "Your data", sub: (ds) => `Tables and columns in ${ds.name}.`, load: loadData },
 };
+const PROVIDER_NAMES = { gemini: "Gemini", anthropic: "Claude", openai: "OpenAI" };
 
 const $ = (id) => document.getElementById(id);
+let currentView = "ask";
 
 function setMenu(open) {
   $("sidebar").classList.toggle("is-open", open);
@@ -30,54 +39,59 @@ function setMenu(open) {
 
 function showView(name) {
   if (!VIEWS[name]) name = "ask";
+  currentView = name;
   document.querySelectorAll(".view").forEach((v) => v.classList.toggle("is-active", v.id === `view-${name}`));
   document.querySelectorAll(".nav-item").forEach((b) => b.classList.toggle("is-active", b.dataset.view === name));
   $("page-title").textContent = VIEWS[name].title;
-  $("page-sub").textContent = VIEWS[name].sub;
+  $("page-sub").textContent = VIEWS[name].sub(currentDataset());
   if (location.hash !== `#${name}`) history.replaceState(null, "", `#${name}`);
   VIEWS[name].load?.();
   setMenu(false);
   if (name === "ask") $("question").focus({ preventScroll: true });
 }
 
-async function loadStatus() {
-  const pill = $("status-pill");
+/** "Powered by Gemini" in the sidebar footer; model details in the tooltip. */
+async function loadPoweredBy() {
+  const el = $("powered-by");
   try {
     const h = await getHealth();
-    const provider = { gemini: "Gemini", anthropic: "Claude", openai: "OpenAI" }[h.llm_provider] || h.llm_provider;
-    pill.classList.add(h.llm_ready ? "ok" : "warn");
-    $("status-text").textContent = h.llm_ready ? `${provider} · ${h.sql_model}` : `${provider} · API key needed`;
-    pill.title = `SQL model: ${h.sql_model}\nAnswer model: ${h.summary_model}\nDatabase: ${h.database}`;
+    const provider = PROVIDER_NAMES[h.llm_provider] || h.llm_provider;
+    el.classList.toggle("needs-key", !h.llm_ready);
+    $("powered-text").textContent = h.llm_ready ? `Powered by ${provider}` : `${provider} · API key needed`;
+    el.title = `Answers by ${provider}\nSQL model: ${h.sql_model}\nAnswer model: ${h.summary_model}`;
     showSetup(h);
   } catch {
-    pill.classList.add("warn");
-    $("status-text").textContent = "Server unreachable";
+    el.classList.add("needs-key");
+    $("powered-text").textContent = "Server unreachable";
   }
 }
 
-function init() {
+async function init() {
   hydrateIcons();
 
-  // Navigation.
+  // Navigation and mobile menu.
   document.querySelectorAll(".nav-item").forEach((b) => b.addEventListener("click", () => showView(b.dataset.view)));
   window.addEventListener("hashchange", () => showView(location.hash.slice(1)));
-
-  // Mobile menu.
   $("menu-btn").addEventListener("click", () => setMenu(true));
   $("scrim").addEventListener("click", () => setMenu(false));
+  $("new-chat").addEventListener("click", () => showView("ask"));
 
-  // Theme (charts redraw with the new colours).
-  initTheme($("theme-toggle"));
+  // Theme: ink transition from the toggle; charts redraw with the new colours.
+  initTheme($("theme-toggle"), $("ink-canvas"));
   onThemeChange(() => redrawAll());
 
-  // Views.
+  // Data: load the dataset list first so every view starts on the right dataset.
+  await initDatasets();
+  onDatasetChange(() => showView(currentView === "ask" ? "ask" : currentView));
+  void initUpload();
+
   initAsk();
   initRecent((q) => {
     showView("ask");
     askQuestion(q);
   });
   showView(location.hash.slice(1) || "ask");
-  loadStatus();
+  void loadPoweredBy();
 }
 
-init();
+void init();

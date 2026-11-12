@@ -1,14 +1,72 @@
 /**
- * Dashboard view: KPI cards and three charts from GET /api/kpis.
- * Loaded once, the first time the view is opened (or on start if it is the first view).
+ * Dashboard view.
+ *   Demo store:       KPI cards and three charts from GET /api/kpis (loaded once).
+ *   Uploaded dataset: an overview (tables, rows, columns, file) with a shortcut to ask questions,
+ *                     since fixed KPIs only make sense for a known schema.
+ *
+ * Exports: loadDashboard()  (called when the view opens and when the dataset changes)
  */
 
 import { getKpis } from "./api.js";
 import { drawChart } from "./charts.js";
-import { escapeHtml, inr, num, pct } from "./format.js";
+import { currentDataset } from "./datasets.js";
+import { escapeHtml, inr, num, pct, plainNum } from "./format.js";
 import { icon } from "./icons.js";
 
 let loaded = false;
+const $ = (id) => document.getElementById(id);
+
+function uploadOverview(ds) {
+  const rows = ds.tables.reduce((n, t) => n + t.rows, 0);
+  const cols = ds.tables.reduce((n, t) => n + t.columns, 0);
+  const sizeKb = ds.size_bytes / 1024;
+  const size = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(sizeKb))} KB`;
+  $("kpi-grid").innerHTML = [
+    kpiCard({ ic: "table", labelText: "Tables", value: plainNum(ds.tables.length), sub: ds.tables.map((t) => t.name).join(", ") }),
+    kpiCard({ ic: "list", labelText: "Rows", value: plainNum(rows), sub: "Across all tables" }),
+    kpiCard({ ic: "database", labelText: "Columns", value: plainNum(cols), sub: "Cleaned and typed on upload" }),
+    kpiCard({ ic: "file", labelText: "Source file", value: escapeHtml(ds.file_format.toUpperCase()), sub: `${escapeHtml(ds.filename)} · ${size}` }),
+  ].join("");
+  $("chart-grid").innerHTML = `
+    <div class="card chart-card wide overview-cta">
+      <span class="kpi-icon">${icon("sparkles")}</span>
+      <div><h3>Charts for your data come from your questions</h3>
+      <p class="muted">Ask something like “${escapeHtml(ds.suggestions[0] ?? "What are the totals by category?")}” and the answer includes a chart, table and the SQL behind it.</p></div>
+      <a class="btn" href="#ask">${icon("chat")}Ask a question</a>
+    </div>`;
+}
+
+const DEMO_CHARTS = `
+  <div class="card chart-card wide">
+    <div class="card-head"><h3>Monthly revenue</h3><span class="muted" id="trend-note"></span></div>
+    <div class="chart-box tall"><canvas id="chart-monthly"></canvas></div>
+  </div>
+  <div class="card chart-card">
+    <div class="card-head"><h3>Revenue by region</h3></div>
+    <div class="chart-box"><canvas id="chart-region"></canvas></div>
+  </div>
+  <div class="card chart-card">
+    <div class="card-head"><h3>Revenue by category</h3></div>
+    <div class="chart-box"><canvas id="chart-category"></canvas></div>
+  </div>`;
+
+/** Render the dashboard for the selected dataset. */
+export async function loadDashboard() {
+  const ds = currentDataset();
+  if (ds.kind !== "demo") {
+    loaded = false; // demo charts must be rebuilt when switching back
+    uploadOverview(ds);
+    return;
+  }
+  if (loaded) return;
+  $("chart-grid").innerHTML = DEMO_CHARTS;
+  await loadDemoKpis();
+}
+
+async function loadDemoKpis() {
+  await loadDemoKpisInner();
+}
+
 
 function kpiCard({ ic, labelText, value, sub = "", delta = null }) {
   const d = delta == null ? "" : `<span class="delta ${delta >= 0 ? "up" : "down"}">${delta >= 0 ? "▲" : "▼"} ${pct(Math.abs(delta))}</span>`;
@@ -23,8 +81,7 @@ function skeletonCards(n) {
   return Array.from({ length: n }, () => `<div class="card kpi"><div class="skeleton" style="width:40%"></div><div class="skeleton" style="height:26px;width:70%"></div></div>`).join("");
 }
 
-export async function loadDashboard() {
-  if (loaded) return;
+async function loadDemoKpisInner() {
   loaded = true;
   const grid = document.getElementById("kpi-grid");
   grid.innerHTML = skeletonCards(6);

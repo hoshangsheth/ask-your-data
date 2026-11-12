@@ -3,10 +3,12 @@
   Ask Your Data - single-page UI served at "/" by app/api/factory.py.
 
   Views (switched by js/main.js, no page reloads):
-    Ask         chat-style questions and answers (js/ask.js)
-    Dashboard   KPI cards and charts (js/dashboard.js)
-    Data        tables and column descriptions (js/data.js)
+    Ask         chat-style questions and answers about the selected dataset (js/ask.js)
+    Dashboard   demo-store KPIs, or an overview of an uploaded dataset (js/dashboard.js)
+    Data        tables and columns of the selected dataset (js/data.js)
 
+  Sidebar: new chat, dataset switcher + uploads (js/datasets.js, js/upload.js), recent questions.
+  Theme: the ink-bleed transition (js/ink/), triggered by the toggle in the top bar.
   Styles: css/tokens.css (colours, light/dark) -> base.css -> layout.css -> components.css
 -->
 <html lang="en">
@@ -14,7 +16,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ask Your Data</title>
-  <meta name="description" content="Ask business questions in plain English and get answers, charts and the SQL behind them.">
+  <meta name="description" content="Ask questions about your own data in plain English and get answers, charts and the SQL behind them.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M9 21V14M16 21V10M23 21v-5' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,17 +25,24 @@
   <link rel="stylesheet" href="/static/css/base.css">
   <link rel="stylesheet" href="/static/css/layout.css">
   <link rel="stylesheet" href="/static/css/components.css">
-  <!-- Apply the saved theme before first paint to avoid a light/dark flash. -->
+  <!-- Resolve the theme before first paint (saved choice, else the OS setting) to avoid a flash. -->
   <script>
-    try { const t = localStorage.getItem("ayd-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("ayd-theme"); } catch (e) {}
+      if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.dataset.theme = t;
+    })();
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MorphSVGPlugin.min.js" defer></script>
   <script type="module" src="/static/js/main.js"></script>
 </head>
 <body>
 <div class="app">
 
-  <!-- ===== Sidebar: brand, navigation, recent questions, status ===== -->
+  <!-- ===== Sidebar ===== -->
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true" data-icon="logo"></span>
@@ -43,28 +52,34 @@
       </div>
     </div>
 
+    <button class="new-chat-btn" id="new-chat"><span data-icon="plus"></span>New chat</button>
+
     <nav class="nav" aria-label="Main">
       <button class="nav-item is-active" data-view="ask"><span data-icon="chat"></span>Ask</button>
       <button class="nav-item" data-view="dashboard"><span data-icon="chart"></span>Dashboard</button>
       <button class="nav-item" data-view="data"><span data-icon="database"></span>Data</button>
     </nav>
 
-    <div class="recent">
-      <div class="recent-head">
-        <span>Recent questions</span>
+    <section class="side-section" aria-labelledby="datasets-h">
+      <div class="side-head">
+        <span id="datasets-h">Your data</span>
+        <button class="link-btn" id="upload-btn"><span data-icon="upload"></span>Upload</button>
+      </div>
+      <ul class="dataset-list" id="dataset-list"></ul>
+      <input type="file" id="file-input" hidden>
+    </section>
+
+    <section class="side-section recent" aria-labelledby="recent-h">
+      <div class="side-head">
+        <span id="recent-h">Recent questions</span>
         <button class="link-btn" id="clear-recent" hidden>Clear</button>
       </div>
       <ul class="recent-list" id="recent-list"></ul>
       <p class="recent-empty" id="recent-empty">Your questions will appear here.</p>
-    </div>
+    </section>
 
-    <div class="sidebar-foot">
-      <div class="status-pill" id="status-pill" title="AI model in use">
-        <span class="dot"></span><span id="status-text">Connecting…</span>
-      </div>
-      <button class="icon-btn" id="theme-toggle" aria-label="Switch light/dark theme" title="Switch theme">
-        <span data-icon="moon"></span>
-      </button>
+    <div class="powered-by" id="powered-by" title="AI model in use">
+      <span data-icon="gemini" class="pb-mark"></span><span id="powered-text">Connecting…</span>
     </div>
   </aside>
 
@@ -72,10 +87,22 @@
   <main class="main">
     <header class="topbar">
       <button class="icon-btn menu-btn" id="menu-btn" aria-label="Open menu"><span data-icon="menu"></span></button>
-      <div>
+      <div class="topbar-text">
         <h1 class="page-title" id="page-title">Ask a question</h1>
         <p class="page-sub" id="page-sub">Get answers, charts and the SQL behind them.</p>
       </div>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Dark mode" aria-pressed="false"
+              title="Switch theme (T)" data-ink-live>
+        <svg class="theme-toggle__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path class="theme-toggle__body" d="M12 7a5 5 0 1 1 0 10a5 5 0 1 1 0-10z" />
+          <g class="theme-toggle__rays">
+            <line x1="12" y1="1.5" x2="12" y2="3.5" /><line x1="12" y1="20.5" x2="12" y2="22.5" />
+            <line x1="1.5" y1="12" x2="3.5" y2="12" /><line x1="20.5" y1="12" x2="22.5" y2="12" />
+            <line x1="4.58" y1="4.58" x2="6" y2="6" /><line x1="18" y1="18" x2="19.42" y2="19.42" />
+            <line x1="4.58" y1="19.42" x2="6" y2="18" /><line x1="18" y1="6" x2="19.42" y2="4.58" />
+          </g>
+        </svg>
+      </button>
     </header>
 
     <!-- Ask view -->
@@ -84,28 +111,31 @@
         <details class="setup-banner" id="setup-banner" hidden></details>
         <div class="welcome" id="welcome">
           <div class="welcome-art" data-icon="sparkles" aria-hidden="true"></div>
-          <h2>What would you like to know?</h2>
-          <p>Ask about sales, customers, products or orders from the demo store (2024–2025).
-             Try one of these to start:</p>
+          <h2 id="welcome-title">What would you like to know?</h2>
+          <p id="welcome-text"></p>
           <div class="suggestions" id="suggestions"></div>
+          <button class="dropzone" id="dropzone" type="button">
+            <span class="dz-icon" data-icon="upload"></span>
+            <span class="dz-title">Ask about your own data</span>
+            <span class="dz-sub" id="dz-sub">Drop a file here or click to browse</span>
+          </button>
         </div>
       </div>
 
       <form class="composer" id="composer" autocomplete="off">
         <div class="composer-box">
-          <textarea id="question" rows="1" maxlength="500"
-                    placeholder="Ask a question about your data…"
-                    aria-label="Your question"></textarea>
+          <button class="attach-btn" id="attach-btn" type="button" aria-label="Upload a data file" title="Upload a data file"><span data-icon="paperclip"></span></button>
+          <textarea id="question" rows="1" maxlength="500" placeholder="Ask a question about your data…" aria-label="Your question"></textarea>
           <button class="send-btn" id="send-btn" type="submit" aria-label="Ask"><span data-icon="send"></span></button>
         </div>
-        <div class="composer-hint"><kbd>Enter</kbd> to ask · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line · <kbd>/</kbd> to focus</div>
+        <div class="composer-hint"><span id="composer-dataset"></span> · <kbd>Enter</kbd> to ask · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line</div>
       </form>
     </section>
 
     <!-- Dashboard view -->
     <section class="view" id="view-dashboard">
       <div class="kpi-grid" id="kpi-grid"></div>
-      <div class="chart-grid">
+      <div class="chart-grid" id="chart-grid">
         <div class="card chart-card wide">
           <div class="card-head"><h3>Monthly revenue</h3><span class="muted" id="trend-note"></span></div>
           <div class="chart-box tall"><canvas id="chart-monthly"></canvas></div>
@@ -123,17 +153,18 @@
 
     <!-- Data view -->
     <section class="view" id="view-data">
-      <div class="data-intro card">
-        <span data-icon="info"></span>
-        <p>This is the data the assistant can query. It's a synthetic Indian e-commerce store with
-           planted patterns (festive spikes, an East-region slump in Q4 2025) so there's something to discover.</p>
-      </div>
+      <div class="data-intro card" id="data-intro"></div>
       <div class="table-cards" id="table-cards"></div>
     </section>
   </main>
 
   <div class="scrim" id="scrim" hidden></div>
+  <div class="drop-overlay" id="drop-overlay" hidden>
+    <div class="drop-card"><span data-icon="upload"></span><strong>Drop your file to upload</strong><span id="drop-formats"></span></div>
+  </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
+<!-- Ink overlay for the theme transition (excluded from its own snapshots). -->
+<canvas class="ink-canvas" id="ink-canvas" aria-hidden="true" data-html2canvas-ignore></canvas>
 </body>
 </html>

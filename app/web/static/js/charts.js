@@ -7,15 +7,17 @@
  * a theme change.
  */
 
-import { inr, num, pct } from "./format.js";
+import { compactNum, inr, num, pct } from "./format.js";
 import { cssVar } from "./theme.js";
 
 const PALETTE = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#14b8a6", "#f97316"];
 const charts = new Map(); // canvas -> { chart, spec }
 
+/** spec.money = rupees (demo store), spec.ratio = 0..1, spec.compact = 1.2K / 3.4M (uploads). */
 function formatter(spec) {
   if (spec.money) return (v) => inr(v);
   if (spec.ratio) return (v) => pct(v);
+  if (spec.compact) return (v) => compactNum(v);
   return (v) => num(v);
 }
 

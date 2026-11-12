@@ -15,7 +15,7 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
   padding: 20px 16px 16px;
   background: var(--bg-elev);
   border-right: 1px solid var(--border);
@@ -34,22 +34,25 @@
 
 .nav { display: flex; flex-direction: column; gap: 2px; }
 
-.recent { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
-.recent-head {
+/* Sidebar sections ("Your data", "Recent questions") with a small uppercase heading. */
+.side-section { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.side-section.recent { flex: 1; }
+.side-head {
   display: flex; justify-content: space-between; align-items: center;
   padding: 0 10px; font-size: 12px; font-weight: 600; color: var(--muted);
   text-transform: uppercase; letter-spacing: 0.06em;
 }
 
-.sidebar-foot { display: flex; align-items: center; gap: 8px; }
-
 /* ---- Main column ---- */
 .main { display: flex; flex-direction: column; min-width: 0; height: 100%; overflow: hidden; }
 
+/* No z-index/transform here: the top bar must not create a stacking context, so the theme
+   toggle inside it can sit above the full-screen ink overlay during the transition. */
 .topbar {
   display: flex; align-items: center; gap: 12px;
   padding: 22px 32px 14px;
 }
+.topbar-text { flex: 1; min-width: 0; }
 .page-title { font-size: 22px; font-weight: 700; }
 .page-sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
 .topbar .menu-btn { display: none; } /* shown only on small screens (below) */
