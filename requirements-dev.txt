@@ -5,3 +5,5 @@ pytest==9.2.0
 httpx==0.28.1
 ruff==0.17.4
 pytest-cov==7.0.0
+playwright==1.58.0   # browser end-to-end tests (evaluation/ui_e2e.py); then: playwright install chromium
+psutil==7.2.2        # CPU / memory sampling in load tests (evaluation/)

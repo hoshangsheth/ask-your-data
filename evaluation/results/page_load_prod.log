@@ -1,0 +1,108 @@
+first visit 1 {'ttfb': 54, 'dcl': 1786, 'load': 1787, 'fcp': 700, 'ready_ms': 2767}
+first visit 2 {'ttfb': 56, 'dcl': 20958, 'load': 20959, 'fcp': 988, 'ready_ms': 21678}
+first visit 3 {'ttfb': 38, 'dcl': 1818, 'load': 1819, 'fcp': 840, 'ready_ms': 2539}
+first visit 4 {'ttfb': 36, 'dcl': 1787, 'load': 1787, 'fcp': 820, 'ready_ms': 2444}
+first visit 5 {'ttfb': 37, 'dcl': 1636, 'load': 1636, 'fcp': 664, 'ready_ms': 2292}
+repeat visit 1 {'ttfb': 33, 'dcl': 1987, 'load': 1987, 'fcp': 928, 'ready_ms': 2583}
+repeat visit 2 {'ttfb': 13, 'dcl': 1539, 'load': 1539, 'fcp': 508, 'ready_ms': 2136}
+repeat visit 3 {'ttfb': 22, 'dcl': 1694, 'load': 1694, 'fcp': 716, 'ready_ms': 2291}
+{
+ "first_visit": {
+  "ttfb": {
+   "median": 38,
+   "min": 36,
+   "max": 56
+  },
+  "fcp": {
+   "median": 820,
+   "min": 664,
+   "max": 988
+  },
+  "dcl": {
+   "median": 1787,
+   "min": 1636,
+   "max": 20958
+  },
+  "load": {
+   "median": 1787,
+   "min": 1636,
+   "max": 20959
+  },
+  "ready_ms": {
+   "median": 2539,
+   "min": 2292,
+   "max": 21678
+  }
+ },
+ "repeat_visit": {
+  "ttfb": {
+   "median": 22,
+   "min": 13,
+   "max": 33
+  },
+  "fcp": {
+   "median": 716,
+   "min": 508,
+   "max": 928
+  },
+  "dcl": {
+   "median": 1694,
+   "min": 1539,
+   "max": 1987
+  },
+  "load": {
+   "median": 1694,
+   "min": 1539,
+   "max": 1987
+  },
+  "ready_ms": {
+   "median": 2291,
+   "min": 2136,
+   "max": 2583
+  }
+ },
+ "slowest_resources_first_visit": [
+  {
+   "name": "https://ask-your-data-chi.vercel.app/api/datasets",
+   "host": "ask-your-data-chi.vercel.app",
+   "ms": 541,
+   "kb": 1,
+   "blocking": "non-blocking"
+  },
+  {
+   "name": "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",
+   "host": "cdnjs.cloudflare.com",
+   "ms": 417,
+   "kb": 59,
+   "blocking": "non-blocking"
+  },
+  {
+   "name": "https://ask-your-data-chi.vercel.app/api/auth/me",
+   "host": "ask-your-data-chi.vercel.app",
+   "ms": 361,
+   "kb": 0,
+   "blocking": "non-blocking"
+  },
+  {
+   "name": "https://ask-your-data-chi.vercel.app/static/js/upload.js",
+   "host": "ask-your-data-chi.vercel.app",
+   "ms": 305,
+   "kb": 2,
+   "blocking": "non-blocking"
+  },
+  {
+   "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",
+   "host": "cdn.jsdelivr.net",
+   "ms": 304,
+   "kb": 25,
+   "blocking": "non-blocking"
+  },
+  {
+   "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MorphSVGPlugin.min.js",
+   "host": "cdn.jsdelivr.net",
+   "ms": 301,
+   "kb": 7,
+   "blocking": "non-blocking"
+  }
+ ]
+}

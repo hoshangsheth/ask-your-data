@@ -1,0 +1,43 @@
+{"event": "seeded", "customers": 2500, "products": 96, "orders": 15779, "order_items": 26702}
+D:\Ask Your Data\.venv\Lib\site-packages\google\genai\types.py:18270: SyntaxWarning: invalid escape sequence '\/'
+  description="""Output only. The original name of the uploaded file, taken from the `Content-Disposition` header on upload. Between 1 and 255 characters. Control characters and the characters `<>:"|?*\/` are not accepted.""",
+D:\Ask Your Data\.venv\Lib\site-packages\google\genai\types.py:18308: SyntaxWarning: invalid escape sequence '\/'
+  """Output only. The original name of the uploaded file, taken from the `Content-Disposition` header on upload. Between 1 and 255 characters. Control characters and the characters `<>:"|?*\/` are not accepted."""
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 12, "latency_ms": 4552, "turn": 1, "cost_usd": 0.0023179, "input_tokens": 2360, "output_tokens": 281}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 5, "latency_ms": 3972, "turn": 2, "cost_usd": 0.00266405, "input_tokens": 2460, "output_tokens": 348}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 10, "latency_ms": 4508, "turn": 3, "cost_usd": 0.002842, "input_tokens": 2901, "output_tokens": 315}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 2567, "turn": 4, "cost_usd": 0.0021525, "input_tokens": 2280, "output_tokens": 118}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 9359, "turn": 5, "cost_usd": 0.00204675, "input_tokens": 2139, "output_tokens": 118}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "unanswerable", "attempts": 1, "rows": 0, "latency_ms": 2585, "turn": 6, "cost_usd": 0.001737, "input_tokens": 1941, "output_tokens": 75}
+{"event": "feedback", "question_id": "a3a38ae63263422e921b84e57168a35a", "rating": 1}
+{"event": "export", "question_id": "a3a38ae63263422e921b84e57168a35a", "format": "csv", "rows": 5}
+{"event": "export", "question_id": "a3a38ae63263422e921b84e57168a35a", "format": "xlsx", "rows": 5}
+{"event": "export", "question_id": "a3a38ae63263422e921b84e57168a35a", "format": "pdf", "rows": 5}
+{"event": "signup", "user_id": "3893af438955"}
+{"event": "upload", "dataset_id": "783d7994733f", "format": "csv", "size_bytes": 196, "tables": 1, "rows": 6, "processing_ms": 92}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "783d7994733f", "status": "ok", "attempts": 1, "rows": 4, "latency_ms": 3522, "turn": 1, "cost_usd": 0.0012694, "input_tokens": 1184, "output_tokens": 163}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "783d7994733f", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 2874, "turn": 2, "cost_usd": 0.00133875, "input_tokens": 1035, "output_tokens": 150}

@@ -1,0 +1,426 @@
+{
+  "generated_at": "2026-11-12T18:29:35+00:00",
+  "target": "http://127.0.0.1:8010",
+  "browser": "Chromium (Playwright 1.58)",
+  "checks_total": 27,
+  "checks_passed": 27,
+  "success_rate": 1.0,
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "server_5xx": [],
+  "http_4xx": [
+    "401 POST http://127.0.0.1:8010/api/auth/login"
+  ],
+  "measurements": {
+    "page_load": [
+      {
+        "cold": true,
+        "ready_ms": 623,
+        "ttfb": 42,
+        "dcl": 518,
+        "load": 518,
+        "fcp": 320,
+        "transfer_kb": 12
+      },
+      {
+        "cold": false,
+        "ready_ms": 231,
+        "ttfb": 5,
+        "dcl": 169,
+        "load": 169,
+        "fcp": 108,
+        "transfer_kb": 12
+      },
+      {
+        "cold": false,
+        "ready_ms": 237,
+        "ttfb": 5,
+        "dcl": 166,
+        "load": 166,
+        "fcp": 112,
+        "transfer_kb": 12
+      },
+      {
+        "cold": false,
+        "ready_ms": 206,
+        "ttfb": 4,
+        "dcl": 149,
+        "load": 150,
+        "fcp": 108,
+        "transfer_kb": 12
+      },
+      {
+        "cold": false,
+        "ready_ms": 218,
+        "ttfb": 8,
+        "dcl": 157,
+        "load": 158,
+        "fcp": 116,
+        "transfer_kb": 12
+      }
+    ],
+    "theme_toggles": [
+      {
+        "flipped": true,
+        "animated": true
+      },
+      {
+        "flipped": true,
+        "animated": true
+      },
+      {
+        "flipped": true,
+        "animated": true
+      },
+      {
+        "flipped": true,
+        "animated": true
+      },
+      {
+        "flipped": true,
+        "animated": true
+      },
+      {
+        "flipped": true,
+        "animated": true
+      },
+      {
+        "flipped": true,
+        "animated": true
+      },
+      {
+        "flipped": true,
+        "animated": true
+      },
+      {
+        "flipped": true,
+        "animated": true
+      },
+      {
+        "flipped": true,
+        "animated": true
+      }
+    ],
+    "theme_transition_frames": {
+      "chromium_headless": {
+        "idle": {
+          "frames": 73,
+          "avg_frame_ms": 16.7,
+          "max_frame_ms": 16.8,
+          "frames_over_34ms": 0,
+          "smooth_share": 1.0
+        },
+        "during_switch": {
+          "frames": 40,
+          "avg_frame_ms": 30.4,
+          "max_frame_ms": 99.9,
+          "frames_over_34ms": 9,
+          "smooth_share": 0.775
+        }
+      },
+      "edge_gpu": {
+        "idle": {
+          "frames": 72,
+          "avg_frame_ms": 16.7,
+          "max_frame_ms": 16.9,
+          "frames_over_34ms": 0,
+          "smooth_share": 1.0
+        },
+        "during_switch": {
+          "frames": 29,
+          "avg_frame_ms": 41.4,
+          "max_frame_ms": 150,
+          "frames_over_34ms": 8,
+          "smooth_share": 0.724
+        }
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "Page loads (5 loads, cold + warm)",
+      "pass": true,
+      "ms": 1609,
+      "detail": {
+        "cold_ready_ms": 623,
+        "warm_ready_ms_median": 224.5,
+        "fcp_ms": 320
+      },
+      "error": null
+    },
+    {
+      "name": "How-to-use popup on first visit, dismiss, reopen",
+      "pass": true,
+      "ms": 4792,
+      "detail": {
+        "steps": 6
+      },
+      "error": null
+    },
+    {
+      "name": "Quick-question pills drift and pause on hover",
+      "pass": true,
+      "ms": 1562,
+      "detail": {
+        "pills_incl_loop_copies": 16,
+        "rows": 2,
+        "px_per_s": 26.8
+      },
+      "error": null
+    },
+    {
+      "name": "Theme toggle animates every time (10 toggles + scroll)",
+      "pass": true,
+      "ms": 10107,
+      "detail": {
+        "animated_toggles": 10,
+        "attempts": 10
+      },
+      "error": null
+    },
+    {
+      "name": "Theme toggle survives rapid clicking",
+      "pass": true,
+      "ms": 6530,
+      "detail": {
+        "clicks": 5,
+        "final_theme_correct": true
+      },
+      "error": null
+    },
+    {
+      "name": "Tap a pill -> answered",
+      "pass": true,
+      "ms": 6866,
+      "detail": {
+        "question": "Show monthly revenue for 2025"
+      },
+      "error": null
+    },
+    {
+      "name": "Ask a data question -> chart/table/SQL",
+      "pass": true,
+      "ms": 4574,
+      "detail": {
+        "badge": "Answered",
+        "answer": "The top product by revenue in 2025 was the Desi Student Laptop at \u20b91.46 crore, followed by the Urban Ultrabook 14 at \u20b91.40 crore and the Desi 2-in-1 Laptop at \u20b91.26 crore. Rounding out the top five were the Lotus Student Laptop at \u20b993.82 lakh and the Sapphire Gaming Laptop 15 at \u20b986.50 lakh.",
+        "tabs": [
+          "Chart",
+          "Table \u00b7 5",
+          "SQL",
+          "How it worked"
+        ],
+        "followup": "Follow-up \u00b7 understood as \u201cWhat are the top 5 products by revenue in 2025?\u201d",
+        "meta": "4.0s 2,808 tokens"
+      },
+      "error": null
+    },
+    {
+      "name": "Follow-up uses conversation context",
+      "pass": true,
+      "ms": 5046,
+      "detail": {
+        "badge": "Answered",
+        "answer": "In 2025, the top product by revenue was the Desi Student Laptop at \u20b91.46 crore, followed closely by the Urban Ultrabook 14 at \u20b91.40 crore and the Desi 2-in-1 Laptop at \u20b91.26 crore.",
+        "tabs": [
+          "Chart",
+          "Table \u00b7 10",
+          "SQL",
+          "How it worked"
+        ],
+        "followup": "Follow-up \u00b7 understood as \u201cWhat are the top 10 products by revenue in 2025?\u201d",
+        "meta": "4.5s 3,216 tokens"
+      },
+      "error": null
+    },
+    {
+      "name": "Chat about the data (no SQL)",
+      "pass": true,
+      "ms": 3167,
+      "detail": {
+        "badge": "About the data",
+        "answer": "This dataset contains e-commerce sales and customer data across India for 2024 and 2025. It tracks customer profiles, product catalog details across various categories, order headers with lifecycle statuses and channels, and line-item purchases including quantities, prices, and discounts.",
+        "tabs": [
+          "How it worked"
+        ],
+        "followup": "Follow-up",
+        "meta": "2.6s 2,398 tokens"
+      },
+      "error": null
+    },
+    {
+      "name": "Ask what a metric means (no SQL)",
+      "pass": true,
+      "ms": 9654,
+      "detail": {
+        "badge": "About the data",
+        "answer": "Revenue (also referred to as sales or GMV) is defined as the sum of line revenue: `quantity * unit_price * (1 - discount)` from `order_items`. It only includes orders with a status of 'delivered' or 'shipped'; cancelled and returned orders are excluded.",
+        "tabs": [
+          "How it worked"
+        ],
+        "followup": "Follow-up \u00b7 understood as \u201cHow is revenue defined in this dataset?\u201d",
+        "meta": "9.4s 2,257 tokens"
+      },
+      "error": null
+    },
+    {
+      "name": "Off-topic question is declined",
+      "pass": true,
+      "ms": 3019,
+      "detail": {
+        "badge": "Not in this data",
+        "answer": "The database only contains e-commerce sales, customer profiles, product catalog, and order information. Weather data is not tracked in this dataset.",
+        "tabs": [
+          "How it worked"
+        ],
+        "followup": "Follow-up",
+        "meta": "2.6s 2,016 tokens"
+      },
+      "error": null
+    },
+    {
+      "name": "Rate an answer helpful",
+      "pass": true,
+      "ms": 888,
+      "detail": {},
+      "error": null
+    },
+    {
+      "name": "Export CSV",
+      "pass": true,
+      "ms": 446,
+      "detail": {
+        "bytes": 214,
+        "file": "Top_5_products_by_revenue_in_2025.csv"
+      },
+      "error": null
+    },
+    {
+      "name": "Export XLSX",
+      "pass": true,
+      "ms": 295,
+      "detail": {
+        "bytes": 5748,
+        "file": "Top_5_products_by_revenue_in_2025.xlsx"
+      },
+      "error": null
+    },
+    {
+      "name": "Export PDF",
+      "pass": true,
+      "ms": 303,
+      "detail": {
+        "bytes": 10672,
+        "file": "Top_5_products_by_revenue_in_2025.pdf"
+      },
+      "error": null
+    },
+    {
+      "name": "Export PNG",
+      "pass": true,
+      "ms": 217,
+      "detail": {
+        "bytes": 18046,
+        "file": "Top_5_products_by_revenue_in_2025.png"
+      },
+      "error": null
+    },
+    {
+      "name": "Upload asks guests to sign in",
+      "pass": true,
+      "ms": 82,
+      "detail": {
+        "reason": "Sign in to upload your own data. Your files stay private to your account."
+      },
+      "error": null
+    },
+    {
+      "name": "Sign up -> success animation -> signed in",
+      "pass": true,
+      "ms": 2818,
+      "detail": {
+        "title": "Account created"
+      },
+      "error": null
+    },
+    {
+      "name": "Upload a CSV (multi-part) -> selected",
+      "pass": true,
+      "ms": 590,
+      "detail": {
+        "dataset": "sales_sample"
+      },
+      "error": null
+    },
+    {
+      "name": "Ask about the upload (query + about)",
+      "pass": true,
+      "ms": 7294,
+      "detail": {
+        "query": "The total sales amount is led by the South region with 5,600, followed by the North with 2,150, the West with 1,750, and the East with 800.",
+        "about": "The `sales_sample` table contains four columns:\n- `region`: The geographic sales area (e.g., East, North, South, West).\n- `order_date`: The date when the order occurred (format YYYY-MM-DD).\n- `amount`: The total monetary value of the sale in Rupees (\u20b9).\n- `units`: The number of items sold in that or"
+      },
+      "error": null
+    },
+    {
+      "name": "Sign out hides private upload",
+      "pass": true,
+      "ms": 1258,
+      "detail": {},
+      "error": null
+    },
+    {
+      "name": "Sign in again -> upload visible",
+      "pass": true,
+      "ms": 3427,
+      "detail": {
+        "datasets_visible": 2
+      },
+      "error": null
+    },
+    {
+      "name": "Wrong password shows an error",
+      "pass": true,
+      "ms": 1918,
+      "detail": {
+        "message": "Wrong email or password"
+      },
+      "error": null
+    },
+    {
+      "name": "Dashboard view renders KPIs",
+      "pass": true,
+      "ms": 128,
+      "detail": {
+        "kpis": 6
+      },
+      "error": null
+    },
+    {
+      "name": "Data view renders",
+      "pass": true,
+      "ms": 1576,
+      "detail": {
+        "text": "This is the built-in demo: a synthetic Indian e-commerce store with planted patt"
+      },
+      "error": null
+    },
+    {
+      "name": "Metrics page hidden from normal users",
+      "pass": true,
+      "ms": 6,
+      "detail": {},
+      "error": null
+    },
+    {
+      "name": "Mobile layout (375 px): no overflow, menu opens",
+      "pass": true,
+      "ms": 1328,
+      "detail": {
+        "horizontal_overflow_px": 0
+      },
+      "error": null
+    }
+  ]
+}

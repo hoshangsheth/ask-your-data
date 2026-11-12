@@ -1,0 +1,30 @@
+........................................................................ [ 37%]
+........................................................................ [ 75%]
+...............................................                          [100%]
+============================== warnings summary ===============================
+tests/integration/test_api.py::test_missing_gemini_key_without_injected_llm
+  D:\Ask Your Data\.venv\Lib\site-packages\google\genai\types.py:18270: SyntaxWarning: invalid escape sequence '\/'
+    description="""Output only. The original name of the uploaded file, taken from the `Content-Disposition` header on upload. Between 1 and 255 characters. Control characters and the characters `<>:"|?*\/` are not accepted.""",
+
+tests/integration/test_api.py::test_missing_gemini_key_without_injected_llm
+  D:\Ask Your Data\.venv\Lib\site-packages\google\genai\types.py:18308: SyntaxWarning: invalid escape sequence '\/'
+    """Output only. The original name of the uploaded file, taken from the `Content-Disposition` header on upload. Between 1 and 255 characters. Control characters and the characters `<>:"|?*\/` are not accepted."""
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.12.10-final-0 _______________
+
+Coverage JSON written to file C:\Users\DELL\AppData\Local\Temp\tmp6k9kqk1o\coverage.json
+191 passed, 2 warnings in 49.38s
+{
+  "generated_at": "2026-11-12T18:18:53+00:00",
+  "python": "3.12.10",
+  "tests_total": 191,
+  "tests_passed": 191,
+  "tests_failed": 0,
+  "tests_skipped": 0,
+  "duration_ms": 54990,
+  "coverage": 0.8746,
+  "statements": 2783,
+  "statements_covered": 2434
+}

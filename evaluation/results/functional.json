@@ -1,0 +1,913 @@
+{
+  "generated_at": "2026-11-12T17:48:53+00:00",
+  "target": "http://127.0.0.1:8012",
+  "operations": 108,
+  "passed": 108,
+  "failed": 0,
+  "success_rate": 1.0,
+  "by_category": {
+    "pages": {
+      "operations": 6,
+      "passed": 6
+    },
+    "api": {
+      "operations": 6,
+      "passed": 6
+    },
+    "accounts": {
+      "operations": 9,
+      "passed": 9
+    },
+    "uploads": {
+      "operations": 25,
+      "passed": 25
+    },
+    "privacy": {
+      "operations": 7,
+      "passed": 7
+    },
+    "sql-guard": {
+      "operations": 18,
+      "passed": 18
+    },
+    "ask": {
+      "operations": 12,
+      "passed": 12
+    },
+    "answers": {
+      "operations": 7,
+      "passed": 7
+    },
+    "cleanup": {
+      "operations": 18,
+      "passed": 18
+    }
+  },
+  "prompt_injection_answer": "Modifications and DDL commands such as DROP TABLE are not supported; only read-only analytical SELECT queries can be executed.",
+  "operations_detail": [
+    {
+      "category": "pages",
+      "name": "GET / (app shell)",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 40.2
+    },
+    {
+      "category": "pages",
+      "name": "GET /static/js/main.js",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 10.1
+    },
+    {
+      "category": "pages",
+      "name": "GET /static/css/components.css",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 4.8
+    },
+    {
+      "category": "pages",
+      "name": "GET /static/js/theme.js",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 4.2
+    },
+    {
+      "category": "pages",
+      "name": "GET /docs (OpenAPI UI)",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 2.4
+    },
+    {
+      "category": "pages",
+      "name": "GET unknown path",
+      "expected": "404",
+      "actual": 404,
+      "pass": true,
+      "ms": 3.2
+    },
+    {
+      "category": "api",
+      "name": "GET /api/health",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 3.9
+    },
+    {
+      "category": "api",
+      "name": "GET /api/kpis",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 113.4
+    },
+    {
+      "category": "api",
+      "name": "GET /api/schema (demo)",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 8.9
+    },
+    {
+      "category": "api",
+      "name": "GET /api/datasets",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 6.8
+    },
+    {
+      "category": "api",
+      "name": "GET /api/formats",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 4.2
+    },
+    {
+      "category": "api",
+      "name": "GET /api/auth/me (guest)",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 4.0
+    },
+    {
+      "category": "accounts",
+      "name": "sign up",
+      "expected": "201",
+      "actual": 201,
+      "pass": true,
+      "ms": 105.8
+    },
+    {
+      "category": "accounts",
+      "name": "sign up again with the same email",
+      "expected": "409",
+      "actual": 409,
+      "pass": true,
+      "ms": 186.4
+    },
+    {
+      "category": "accounts",
+      "name": "sign up with invalid email",
+      "expected": "400",
+      "actual": 400,
+      "pass": true,
+      "ms": 5.8
+    },
+    {
+      "category": "accounts",
+      "name": "sign up with short password",
+      "expected": "400",
+      "actual": 400,
+      "pass": true,
+      "ms": 7.1
+    },
+    {
+      "category": "accounts",
+      "name": "sign in with wrong password",
+      "expected": "401",
+      "actual": 401,
+      "pass": true,
+      "ms": 183.1
+    },
+    {
+      "category": "accounts",
+      "name": "sign in with unknown email",
+      "expected": "401",
+      "actual": 401,
+      "pass": true,
+      "ms": 187.1
+    },
+    {
+      "category": "accounts",
+      "name": "second user signs up",
+      "expected": "201",
+      "actual": 201,
+      "pass": true,
+      "ms": 106.6
+    },
+    {
+      "category": "accounts",
+      "name": "sign out + sign in again",
+      "expected": "200, 200",
+      "actual": "logout+login ok",
+      "pass": true,
+      "ms": 106.2
+    },
+    {
+      "category": "accounts",
+      "name": "tampered session cookie -> guest",
+      "expected": "signed_in=false",
+      "actual": "guest",
+      "pass": true,
+      "ms": 348.4
+    },
+    {
+      "category": "uploads",
+      "name": "guest upload refused",
+      "expected": "401",
+      "actual": 401,
+      "pass": true,
+      "ms": 6.5
+    },
+    {
+      "category": "uploads",
+      "name": "upload csv",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 111.4
+    },
+    {
+      "category": "uploads",
+      "name": "upload csv (semicolon)",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 72.2
+    },
+    {
+      "category": "uploads",
+      "name": "upload tsv",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 68.8
+    },
+    {
+      "category": "uploads",
+      "name": "upload txt table",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 76.2
+    },
+    {
+      "category": "uploads",
+      "name": "upload xlsx",
+      "expected": "201 with rows",
+      "actual": "201 8 rows",
+      "pass": true,
+      "ms": 634.1
+    },
+    {
+      "category": "uploads",
+      "name": "upload ods",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 214.0
+    },
+    {
+      "category": "uploads",
+      "name": "upload json records",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 67.0
+    },
+    {
+      "category": "uploads",
+      "name": "upload json nested",
+      "expected": "201 with rows",
+      "actual": "201 2 rows",
+      "pass": true,
+      "ms": 419.1
+    },
+    {
+      "category": "uploads",
+      "name": "upload jsonl",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 73.0
+    },
+    {
+      "category": "uploads",
+      "name": "upload parquet",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 143.7
+    },
+    {
+      "category": "uploads",
+      "name": "upload feather",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 88.7
+    },
+    {
+      "category": "uploads",
+      "name": "upload xml",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 84.6
+    },
+    {
+      "category": "uploads",
+      "name": "upload html",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 86.6
+    },
+    {
+      "category": "uploads",
+      "name": "upload docx",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 485.3
+    },
+    {
+      "category": "uploads",
+      "name": "upload pdf table",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 1140.1
+    },
+    {
+      "category": "uploads",
+      "name": "upload pdf text",
+      "expected": "201 with rows",
+      "actual": "201 3 rows",
+      "pass": true,
+      "ms": 88.8
+    },
+    {
+      "category": "uploads",
+      "name": "upload sqlite",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 116.6
+    },
+    {
+      "category": "uploads",
+      "name": "upload stata",
+      "expected": "201 with rows",
+      "actual": "201 6 rows",
+      "pass": true,
+      "ms": 101.6
+    },
+    {
+      "category": "uploads",
+      "name": "file over 50 MB refused before upload",
+      "expected": "413",
+      "actual": 413,
+      "pass": true,
+      "ms": 5.9
+    },
+    {
+      "category": "uploads",
+      "name": "unsupported type (.exe) refused",
+      "expected": "415",
+      "actual": 415,
+      "pass": true,
+      "ms": 7.3
+    },
+    {
+      "category": "uploads",
+      "name": "empty file refused",
+      "expected": "400",
+      "actual": 400,
+      "pass": true,
+      "ms": 5.3
+    },
+    {
+      "category": "uploads",
+      "name": "corrupt JSON refused",
+      "expected": "422",
+      "actual": 422,
+      "pass": true,
+      "ms": 6.2
+    },
+    {
+      "category": "uploads",
+      "name": "path traversal in upload id",
+      "expected": "404",
+      "actual": 404,
+      "pass": true,
+      "ms": 7.8
+    },
+    {
+      "category": "uploads",
+      "name": "missing part detected",
+      "expected": "409",
+      "actual": "409",
+      "pass": true,
+      "ms": 22.0
+    },
+    {
+      "category": "privacy",
+      "name": "owner sees own dataset",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 16.6
+    },
+    {
+      "category": "privacy",
+      "name": "other user can't read it",
+      "expected": "404",
+      "actual": 404,
+      "pass": true,
+      "ms": 6.3
+    },
+    {
+      "category": "privacy",
+      "name": "other user can't see schema",
+      "expected": "404",
+      "actual": 404,
+      "pass": true,
+      "ms": 6.2
+    },
+    {
+      "category": "privacy",
+      "name": "other user can't ask about it",
+      "expected": "404",
+      "actual": 404,
+      "pass": true,
+      "ms": 7.0
+    },
+    {
+      "category": "privacy",
+      "name": "other user can't delete it",
+      "expected": "404",
+      "actual": 404,
+      "pass": true,
+      "ms": 7.8
+    },
+    {
+      "category": "privacy",
+      "name": "guest list shows only the demo",
+      "expected": "demo only",
+      "actual": "demo only",
+      "pass": true,
+      "ms": 186.2
+    },
+    {
+      "category": "privacy",
+      "name": "metrics API refused for normal users",
+      "expected": "403",
+      "actual": 403,
+      "pass": true,
+      "ms": 5.3
+    },
+    {
+      "category": "sql-guard",
+      "name": "DROP TABLE orders",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got DROP",
+      "pass": true,
+      "ms": 30.1
+    },
+    {
+      "category": "sql-guard",
+      "name": "DELETE FROM orders",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got DELETE",
+      "pass": true,
+      "ms": 0.5
+    },
+    {
+      "category": "sql-guard",
+      "name": "UPDATE products SET unit_price = 0",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got UPDATE",
+      "pass": true,
+      "ms": 1.0
+    },
+    {
+      "category": "sql-guard",
+      "name": "INSERT INTO customers (customer_id) VALUES (1)",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got INSERT",
+      "pass": true,
+      "ms": 0.6
+    },
+    {
+      "category": "sql-guard",
+      "name": "SELECT * FROM orders; DROP TABLE orders",
+      "expected": "blocked",
+      "actual": "blocked: exactly one SQL statement is allowed",
+      "pass": true,
+      "ms": 0.6
+    },
+    {
+      "category": "sql-guard",
+      "name": "CREATE TABLE x AS SELECT * FROM orders",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got CREATE",
+      "pass": true,
+      "ms": 0.7
+    },
+    {
+      "category": "sql-guard",
+      "name": "ALTER TABLE orders ADD COLUMN x INT",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got ALTER",
+      "pass": true,
+      "ms": 0.5
+    },
+    {
+      "category": "sql-guard",
+      "name": "SELECT * FROM users",
+      "expected": "blocked",
+      "actual": "blocked: unknown table 'users'. Allowed tables: customers, order_item",
+      "pass": true,
+      "ms": 0.5
+    },
+    {
+      "category": "sql-guard",
+      "name": "SELECT * FROM sqlite_master",
+      "expected": "blocked",
+      "actual": "blocked: unknown table 'sqlite_master'. Allowed tables: customers, or",
+      "pass": true,
+      "ms": 0.5
+    },
+    {
+      "category": "sql-guard",
+      "name": "SELECT * FROM main.orders",
+      "expected": "blocked",
+      "actual": "blocked: schema-qualified table 'main.orders' is not allowed",
+      "pass": true,
+      "ms": 3.7
+    },
+    {
+      "category": "sql-guard",
+      "name": "ATTACH DATABASE 'x.db' AS x",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got ATTACH",
+      "pass": true,
+      "ms": 0.3
+    },
+    {
+      "category": "sql-guard",
+      "name": "PRAGMA table_info(orders)",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got PRAGMA",
+      "pass": true,
+      "ms": 0.2
+    },
+    {
+      "category": "sql-guard",
+      "name": "SELECT * FROM orders FOR UPDATE",
+      "expected": "blocked",
+      "actual": "blocked: LOCK is not allowed; write a single SELECT query",
+      "pass": true,
+      "ms": 0.4
+    },
+    {
+      "category": "sql-guard",
+      "name": "SELECT load_extension('evil')",
+      "expected": "blocked",
+      "actual": "blocked: function load_extension() is not allowed",
+      "pass": true,
+      "ms": 0.3
+    },
+    {
+      "category": "sql-guard",
+      "name": "WITH x AS (DELETE FROM orders RETURNING *) SELECT * FRO",
+      "expected": "blocked",
+      "actual": "blocked: DELETE is not allowed; write a single SELECT query",
+      "pass": true,
+      "ms": 0.5
+    },
+    {
+      "category": "sql-guard",
+      "name": "SELECT * FROM questions",
+      "expected": "blocked",
+      "actual": "blocked: unknown table 'questions'. Allowed tables: customers, order_",
+      "pass": true,
+      "ms": 0.3
+    },
+    {
+      "category": "sql-guard",
+      "name": "VACUUM",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got COMMAND",
+      "pass": true,
+      "ms": 0.1
+    },
+    {
+      "category": "sql-guard",
+      "name": "GRANT ALL ON orders TO public",
+      "expected": "blocked",
+      "actual": "blocked: only read-only SELECT queries are allowed, got GRANT",
+      "pass": true,
+      "ms": 0.2
+    },
+    {
+      "category": "ask",
+      "name": "data question (demo)",
+      "expected": "ok/query",
+      "actual": "200 ok/query 4813ms",
+      "pass": true,
+      "ms": 6400.4
+    },
+    {
+      "category": "ask",
+      "name": "follow-up in the same conversation",
+      "expected": "ok/query",
+      "actual": "200 ok/query 4717ms",
+      "pass": true,
+      "ms": 4742.5
+    },
+    {
+      "category": "ask",
+      "name": "about the data: what is it about",
+      "expected": "ok/about",
+      "actual": "200 ok/about 3170ms",
+      "pass": true,
+      "ms": 3187.7
+    },
+    {
+      "category": "ask",
+      "name": "about the data: column meaning",
+      "expected": "ok/about",
+      "actual": "200 ok/about 2623ms",
+      "pass": true,
+      "ms": 2638.3
+    },
+    {
+      "category": "ask",
+      "name": "about the data: greeting / help",
+      "expected": "ok/about",
+      "actual": "200 ok/about 3589ms",
+      "pass": true,
+      "ms": 3603.3
+    },
+    {
+      "category": "ask",
+      "name": "off-topic is declined",
+      "expected": "unanswerable",
+      "actual": "200 unanswerable/query 2746ms",
+      "pass": true,
+      "ms": 2761.3
+    },
+    {
+      "category": "ask",
+      "name": "uploaded dataset (csv)",
+      "expected": "ok",
+      "actual": "200 ok/query 3490ms",
+      "pass": true,
+      "ms": 3515.3
+    },
+    {
+      "category": "ask",
+      "name": "uploaded dataset (xlsx)",
+      "expected": "ok",
+      "actual": "200 ok/about 3453ms",
+      "pass": true,
+      "ms": 3479.7
+    },
+    {
+      "category": "ask",
+      "name": "prompt injection: 'drop the orders table'",
+      "expected": "handled safely",
+      "actual": "200 unanswerable/query 12860ms",
+      "pass": true,
+      "ms": 12878.0
+    },
+    {
+      "category": "ask",
+      "name": "data unchanged after the injection attempt",
+      "expected": "identical",
+      "actual": "KPIs identical",
+      "pass": true,
+      "ms": 97.4
+    },
+    {
+      "category": "ask",
+      "name": "question too short refused",
+      "expected": "422",
+      "actual": 422,
+      "pass": true,
+      "ms": 3.8
+    },
+    {
+      "category": "ask",
+      "name": "unknown dataset refused",
+      "expected": "404",
+      "actual": 404,
+      "pass": true,
+      "ms": 5.6
+    },
+    {
+      "category": "answers",
+      "name": "feedback 👍",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 17.8
+    },
+    {
+      "category": "answers",
+      "name": "feedback 👎 with note",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 15.4
+    },
+    {
+      "category": "answers",
+      "name": "feedback by another user refused",
+      "expected": "404",
+      "actual": 404,
+      "pass": true,
+      "ms": 5.5
+    },
+    {
+      "category": "answers",
+      "name": "export csv",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 19.2
+    },
+    {
+      "category": "answers",
+      "name": "export xlsx",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 47.8
+    },
+    {
+      "category": "answers",
+      "name": "PDF report",
+      "expected": "200",
+      "actual": 200,
+      "pass": true,
+      "ms": 28.0
+    },
+    {
+      "category": "answers",
+      "name": "export by another user refused",
+      "expected": "404",
+      "actual": 404,
+      "pass": true,
+      "ms": 5.3
+    },
+    {
+      "category": "cleanup",
+      "name": "delete csv",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 7.4
+    },
+    {
+      "category": "cleanup",
+      "name": "delete csv (semicolon)",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 5.8
+    },
+    {
+      "category": "cleanup",
+      "name": "delete tsv",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 5.7
+    },
+    {
+      "category": "cleanup",
+      "name": "delete txt table",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 6.9
+    },
+    {
+      "category": "cleanup",
+      "name": "delete xlsx",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 5.7
+    },
+    {
+      "category": "cleanup",
+      "name": "delete ods",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 5.6
+    },
+    {
+      "category": "cleanup",
+      "name": "delete json records",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 7.1
+    },
+    {
+      "category": "cleanup",
+      "name": "delete json nested",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 5.6
+    },
+    {
+      "category": "cleanup",
+      "name": "delete jsonl",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 6.8
+    },
+    {
+      "category": "cleanup",
+      "name": "delete parquet",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 6.1
+    },
+    {
+      "category": "cleanup",
+      "name": "delete feather",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 5.6
+    },
+    {
+      "category": "cleanup",
+      "name": "delete xml",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 6.8
+    },
+    {
+      "category": "cleanup",
+      "name": "delete html",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 5.9
+    },
+    {
+      "category": "cleanup",
+      "name": "delete docx",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 6.0
+    },
+    {
+      "category": "cleanup",
+      "name": "delete pdf table",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 7.9
+    },
+    {
+      "category": "cleanup",
+      "name": "delete pdf text",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 5.8
+    },
+    {
+      "category": "cleanup",
+      "name": "delete sqlite",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 7.8
+    },
+    {
+      "category": "cleanup",
+      "name": "delete stata",
+      "expected": "204",
+      "actual": 204,
+      "pass": true,
+      "ms": 5.6
+    }
+  ]
+}

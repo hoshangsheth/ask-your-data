@@ -1,0 +1,21 @@
+baseline /api/health                  n=1618  avg=3.5 p95=5.0 ms
+baseline /api/datasets                n=1036  avg=5.5 p95=6.9 ms
+baseline /api/schema?dataset=demo     n=973   avg=5.9 p95=7.3 ms
+baseline /api/kpis                    n=51    avg=113.0 p95=134.1 ms
+baseline /                            n=1076  avg=5.2 p95=7.3 ms
+baseline /static/js/ask.js            n=1231  avg=4.6 p95=6.4 ms
+baseline /static/css/components.css   n=1311  avg=4.3 p95=5.8 ms
+-- scenario: mixed (health, datasets, schema, dashboard KPIs)
+c=1    rps=32.1    p50=5.9      p95=109.1    p99=115.3    err=0.00% cpu=84.7% rss=202.4MB
+c=5    rps=63.9    p50=16.9     p95=277.4    p99=336.9    err=0.00% cpu=253.3% rss=218.2MB
+c=10   rps=65.1    p50=47.3     p95=528.7    p99=700.9    err=0.00% cpu=279.4% rss=234.4MB
+c=25   rps=63.0    p50=265.8    p95=1059.4   p99=1465.4   err=0.00% cpu=267.7% rss=250.6MB
+c=50   rps=65.7    p50=661.7    p95=1378.2   p99=1672.8   err=0.00% cpu=283.3% rss=255.4MB
+c=100  rps=50.3    p50=1541.3   p95=5213.8   p99=8227.1   err=0.00% cpu=212.3% rss=258.1MB  <- breaking point
+-- scenario: light (without the dashboard KPIs)
+c=1    rps=189.5   p50=5.2      p95=7.2      p99=8.5      err=0.00% cpu=73.3% rss=241.0MB
+c=5    rps=227.1   p50=21.5     p95=33.3     p99=44.2     err=0.00% cpu=94.9% rss=227.3MB
+c=10   rps=245.4   p50=40.8     p95=52.9     p99=62.7     err=0.00% cpu=98.8% rss=228.4MB
+c=25   rps=175.4   p50=102.9    p95=384.3    p99=740.0    err=0.04% cpu=74.8% rss=214.7MB
+c=50   rps=90.5    p50=377.4    p95=1531.8   p99=2386.5   err=0.00% cpu=56.3% rss=222.5MB
+c=100  rps=52.4    p50=1171.0   p95=5419.5   p99=7064.1   err=0.00% cpu=43.0% rss=226.5MB  <- breaking point

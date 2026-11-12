@@ -1,0 +1,101 @@
+D:\Ask Your Data\.venv\Lib\site-packages\google\genai\types.py:18270: SyntaxWarning: invalid escape sequence '\/'
+  description="""Output only. The original name of the uploaded file, taken from the `Content-Disposition` header on upload. Between 1 and 255 characters. Control characters and the characters `<>:"|?*\/` are not accepted.""",
+D:\Ask Your Data\.venv\Lib\site-packages\google\genai\types.py:18308: SyntaxWarning: invalid escape sequence '\/'
+  """Output only. The original name of the uploaded file, taken from the `Content-Disposition` header on upload. Between 1 and 255 characters. Control characters and the characters `<>:"|?*\/` are not accepted."""
+PASS  total_revenue                  attempts=1 4546 ms
+PASS  region_drop_q4                 attempts=1 6480 ms
+PASS  top5_products_2025             attempts=1 4329 ms
+PASS  monthly_revenue_2025           attempts=1 4196 ms
+PASS  orders_2024                    attempts=1 3651 ms
+PASS  cancel_rate_by_payment         attempts=1 5389 ms
+PASS  highest_cancel_payment         attempts=1 4307 ms
+PASS  aov_by_channel_2025            attempts=1 6534 ms
+PASS  customers_by_region            attempts=1 3993 ms
+PASS  margin_by_category_2025        attempts=1 5423 ms
+PASS  revenue_by_payment_2025        attempts=1 14376 ms
+PASS  signups_2025                   attempts=1 4656 ms
+PASS  top3_cities                    attempts=1 3687 ms
+PASS  avg_discount_nov_2025          attempts=1 4331 ms
+PASS  festive_growth                 attempts=1 6774 ms
+PASS  active_customers_2025          attempts=1 10602 ms
+PASS  most_units_category_2025       attempts=1 4645 ms
+PASS  revenue_by_segment             attempts=1 3880 ms
+PASS  loyal_customers                attempts=1 8700 ms
+PASS  returned_2025                  attempts=1 3197 ms
+PASS  units_per_order                attempts=1 3701 ms
+FAIL  quarterly_revenue_2025         attempts=1 4536 ms
+PASS  best_month_2024                attempts=1 4080 ms
+PASS  maharashtra_2025               attempts=1 5834 ms
+PASS  top_subcategory_profit         attempts=1 4154 ms
+PASS  upi_share_2025                 attempts=1 4621 ms
+PASS  app_share_revenue_2025         attempts=1 5156 ms
+PASS  signups_by_month_2025          attempts=1 4501 ms
+PASS  revenue_per_active_2025        attempts=1 5513 ms
+PASS  unanswerable_bounce            attempts=1 4719 ms
+PASS  unanswerable_staff             attempts=1 2594 ms
+PASS  fu_category_same_2024          attempts=1 4943 ms
+PASS  fu_south_by_city               attempts=1 9736 ms
+PASS  fu_top10_products              attempts=1 21462 ms
+PASS  fu_monthly_to_quarterly        attempts=1 3764 ms
+PASS  fu_west_customers_by_state     attempts=1 3247 ms
+PASS  fu_cancel_rate_top_payment     attempts=1 4652 ms
+PASS  fu_segment_app_only            attempts=1 4479 ms
+PASS  fu_returns_2024                attempts=1 3590 ms
+PASS  fu_aov_channel_2024            attempts=1 4417 ms
+PASS  fu_three_turns_top_region      attempts=1 4616 ms
+PASS  about_tables                   attempts=1 3058 ms
+PASS  about_revenue_definition       attempts=1 3174 ms
+PASS  about_order_fields             attempts=1 2908 ms
+PASS  about_return_rate              attempts=1 2230 ms
+PASS  about_capabilities             attempts=1 2987 ms
+PASS  about_dataset_summary          attempts=1 3500 ms
+PASS  about_explain_previous         attempts=1 2541 ms
+{
+  "provider": "gemini",
+  "sql_model": "gemini-3.8-flash",
+  "summary_model": "gemini-3.5-flash-lite",
+  "run_at": "2026-11-12T18:16:37+00:00",
+  "database": "sqlite",
+  "questions": 48,
+  "passed": 47,
+  "execution_accuracy": 0.9792,
+  "first_try_accuracy": 0.9792,
+  "self_corrected": 0,
+  "by_category": {
+    "single_turn": {
+      "questions": 29,
+      "passed": 28,
+      "accuracy": 0.9655
+    },
+    "unanswerable": {
+      "questions": 2,
+      "passed": 2,
+      "accuracy": 1.0
+    },
+    "follow_up": {
+      "questions": 10,
+      "passed": 10,
+      "accuracy": 1.0
+    },
+    "about_data": {
+      "questions": 7,
+      "passed": 7,
+      "accuracy": 1.0
+    }
+  },
+  "median_latency_ms": 4417,
+  "p95_latency_ms": 10602,
+  "model_calls": 60,
+  "avg_input_tokens": 2048,
+  "avg_output_tokens": 242,
+  "avg_cost_usd": 0.002136,
+  "total_cost_usd": 0.1281,
+  "total_seconds": 301.9
+}
+== evaluation set ==
+
+== concurrent users ==
+{"users": 1, "questions": 2, "answered": 2, "http_errors": 0, "success_rate": 1.0, "wall_seconds": 10.9, "questions_per_minute": 11.0, "latency_ms": {"avg": 5284, "p50": 4403, "p95": 6165, "max": 6165}, "avg_step_ms": {"generate_sql": 3390, "validate": 17, "execute": 22, "summarize": 1047}, "avg_cost_usd": 0.002291}
+{"users": 3, "questions": 6, "answered": 6, "http_errors": 0, "success_rate": 1.0, "wall_seconds": 10.5, "questions_per_minute": 34.4, "latency_ms": {"avg": 4418, "p50": 4171, "p95": 5228, "max": 5228}, "avg_step_ms": {"generate_sql": 3128, "validate": 6, "execute": 22, "summarize": 1084}, "avg_cost_usd": 0.002315}
+{"users": 5, "questions": 10, "answered": 10, "http_errors": 0, "success_rate": 1.0, "wall_seconds": 15.0, "questions_per_minute": 40.0, "latency_ms": {"avg": 5109, "p50": 4586, "p95": 8455, "max": 8455}, "avg_step_ms": {"generate_sql": 3567, "validate": 4, "execute": 24, "summarize": 1163}, "avg_cost_usd": 0.002246}
+{"users": 8, "questions": 16, "answered": 16, "http_errors": 0, "success_rate": 1.0, "wall_seconds": 23.6, "questions_per_minute": 40.7, "latency_ms": {"avg": 6291, "p50": 4926, "p95": 18175, "max": 18175}, "avg_step_ms": {"generate_sql": 4744, "validate": 4, "execute": 17, "summarize": 1084}, "avg_cost_usd": 0.002222}

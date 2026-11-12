@@ -1,0 +1,12 @@
+baseline /api/health                  n=24    avg=237.1 p95=284.3 ms
+baseline /api/datasets                n=20    avg=296.3 p95=309.3 ms
+baseline /api/schema?dataset=demo     n=22    avg=264.9 p95=282.3 ms
+baseline /api/kpis                    n=12    avg=500.2 p95=1064.9 ms
+baseline /                            n=26    avg=224.9 p95=254.7 ms
+baseline /static/js/ask.js            n=24    avg=240.4 p95=247.9 ms
+baseline /static/css/components.css   n=19    avg=313.7 p95=453.9 ms
+c=1    rps=3.3     p50=277.5    p95=438.6    p99=439.6    err=0.00% cpu=-% rss=-MB
+c=5    rps=15.8    p50=282.8    p95=480.9    p99=496.9    err=0.00% cpu=-% rss=-MB
+c=10   rps=28.6    p50=291.8    p95=611.3    p99=670.3    err=0.00% cpu=-% rss=-MB
+c=25   rps=43.6    p50=316.0    p95=1590.0   p99=1680.4   err=0.00% cpu=-% rss=-MB
+c=50   rps=25.1    p50=385.5    p95=2685.3   p99=10930.2  err=0.00% cpu=-% rss=-MB  <- breaking point

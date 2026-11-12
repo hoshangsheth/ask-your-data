@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-11-12T18:09:07+00:00",
+  "minutes": 10.0,
+  "concurrency": 5,
+  "requests": 36131,
+  "errors": 0,
+  "error_rate": 0.0,
+  "rps": 60.2,
+  "avg_ms": 83.0,
+  "p50_ms": 17.1,
+  "p95_ms": 301.1,
+  "p99_ms": 378.6,
+  "max_ms": 721.2,
+  "resources": {
+    "server_cpu_pct_avg": 254.8,
+    "server_cpu_pct_max": 368.8,
+    "server_rss_mb_avg": 213.4,
+    "server_rss_mb_max": 218.8,
+    "machine_cpu_pct_avg": 95.1
+  },
+  "memory_mb_first_10pct": 214.4,
+  "memory_mb_last_10pct": 212.5,
+  "memory_growth_mb": -1.9,
+  "memory_samples": 1192,
+  "server_still_running": true
+}
+minute  1: 3532 req, p95 305.9 ms, errors 0
+minute  2: 3601 req, p95 303.7 ms, errors 0
+minute  3: 3764 req, p95 291.1 ms, errors 0
+minute  4: 3605 req, p95 303.6 ms, errors 0
+minute  5: 3692 req, p95 290.4 ms, errors 0
+minute  6: 3667 req, p95 295.3 ms, errors 0
+minute  7: 3628 req, p95 300.2 ms, errors 0
+minute  8: 3417 req, p95 331.8 ms, errors 0
+minute  9: 3640 req, p95 296.0 ms, errors 0
+minute 10: 3585 req, p95 302.9 ms, errors 0

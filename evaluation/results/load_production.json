@@ -1,0 +1,371 @@
+{
+  "generated_at": "2026-11-12T17:56:53+00:00",
+  "target": "https://ask-your-data-chi.vercel.app",
+  "note": "read-only GETs, no AI calls; client in India, deployment in Washington DC (iad1)",
+  "baseline": {
+    "/api/health": {
+      "requests": 24,
+      "avg_ms": 237.1,
+      "p50_ms": 222.7,
+      "p95_ms": 284.3,
+      "p99_ms": 391.8,
+      "error_rate": 0.0
+    },
+    "/api/datasets": {
+      "requests": 20,
+      "avg_ms": 296.3,
+      "p50_ms": 288.0,
+      "p95_ms": 309.3,
+      "p99_ms": 422.0,
+      "error_rate": 0.0
+    },
+    "/api/schema?dataset=demo": {
+      "requests": 22,
+      "avg_ms": 264.9,
+      "p50_ms": 263.9,
+      "p95_ms": 282.3,
+      "p99_ms": 326.2,
+      "error_rate": 0.0
+    },
+    "/api/kpis": {
+      "requests": 12,
+      "avg_ms": 500.2,
+      "p50_ms": 438.0,
+      "p95_ms": 1064.9,
+      "p99_ms": 1064.9,
+      "error_rate": 0.0
+    },
+    "/": {
+      "requests": 26,
+      "avg_ms": 224.9,
+      "p50_ms": 221.7,
+      "p95_ms": 254.7,
+      "p99_ms": 255.3,
+      "error_rate": 0.0
+    },
+    "/static/js/ask.js": {
+      "requests": 24,
+      "avg_ms": 240.4,
+      "p50_ms": 236.4,
+      "p95_ms": 247.9,
+      "p99_ms": 406.3,
+      "error_rate": 0.0
+    },
+    "/static/css/components.css": {
+      "requests": 19,
+      "avg_ms": 313.7,
+      "p50_ms": 237.1,
+      "p95_ms": 453.9,
+      "p99_ms": 453.9,
+      "error_rate": 0.0
+    }
+  },
+  "steps": [
+    {
+      "concurrency": 1,
+      "seconds": 9.9,
+      "requests": 33,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 3.3,
+      "avg_ms": 300.9,
+      "p50_ms": 277.5,
+      "p95_ms": 438.6,
+      "p99_ms": 439.6,
+      "max_ms": 439.6,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 9,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 0.9,
+          "avg_ms": 230.7,
+          "p50_ms": 229.2,
+          "p95_ms": 246.7,
+          "p99_ms": 246.7,
+          "max_ms": 246.7
+        },
+        "/api/datasets": {
+          "requests": 8,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 0.8,
+          "avg_ms": 285.9,
+          "p50_ms": 283.4,
+          "p95_ms": 302.3,
+          "p99_ms": 302.3,
+          "max_ms": 302.3
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 8,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 0.8,
+          "avg_ms": 265.9,
+          "p50_ms": 250.9,
+          "p95_ms": 297.7,
+          "p99_ms": 297.7,
+          "max_ms": 297.7
+        },
+        "/api/kpis": {
+          "requests": 8,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 0.8,
+          "avg_ms": 430.0,
+          "p50_ms": 428.6,
+          "p95_ms": 439.6,
+          "p99_ms": 439.6,
+          "max_ms": 439.6
+        }
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 5,
+      "seconds": 10.1,
+      "requests": 159,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 15.8,
+      "avg_ms": 310.3,
+      "p50_ms": 282.8,
+      "p95_ms": 480.9,
+      "p99_ms": 496.9,
+      "max_ms": 509.5,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 40,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 4.0,
+          "avg_ms": 225.7,
+          "p50_ms": 219.8,
+          "p95_ms": 250.2,
+          "p99_ms": 342.5,
+          "max_ms": 342.5
+        },
+        "/api/datasets": {
+          "requests": 39,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 3.9,
+          "avg_ms": 293.3,
+          "p50_ms": 288.0,
+          "p95_ms": 346.7,
+          "p99_ms": 351.7,
+          "max_ms": 351.7
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 40,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 4.0,
+          "avg_ms": 269.1,
+          "p50_ms": 264.1,
+          "p95_ms": 306.1,
+          "p99_ms": 399.5,
+          "max_ms": 399.5
+        },
+        "/api/kpis": {
+          "requests": 40,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 4.0,
+          "avg_ms": 452.9,
+          "p50_ms": 450.9,
+          "p95_ms": 492.5,
+          "p99_ms": 509.5,
+          "max_ms": 509.5
+        }
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 10,
+      "seconds": 9.7,
+      "requests": 276,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 28.6,
+      "avg_ms": 342.2,
+      "p50_ms": 291.8,
+      "p95_ms": 611.3,
+      "p99_ms": 670.3,
+      "max_ms": 757.9,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 68,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 7.0,
+          "avg_ms": 231.8,
+          "p50_ms": 224.6,
+          "p95_ms": 282.3,
+          "p99_ms": 333.9,
+          "max_ms": 333.9
+        },
+        "/api/datasets": {
+          "requests": 70,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 7.2,
+          "avg_ms": 318.7,
+          "p50_ms": 305.2,
+          "p95_ms": 398.1,
+          "p99_ms": 436.7,
+          "max_ms": 436.7
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 69,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 7.1,
+          "avg_ms": 271.1,
+          "p50_ms": 265.8,
+          "p95_ms": 318.5,
+          "p99_ms": 337.6,
+          "max_ms": 337.6
+        },
+        "/api/kpis": {
+          "requests": 69,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 7.1,
+          "avg_ms": 545.8,
+          "p50_ms": 528.6,
+          "p95_ms": 668.2,
+          "p99_ms": 757.9,
+          "max_ms": 757.9
+        }
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 25,
+      "seconds": 10.2,
+      "requests": 447,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 43.6,
+      "avg_ms": 556.6,
+      "p50_ms": 316.0,
+      "p95_ms": 1590.0,
+      "p99_ms": 1680.4,
+      "max_ms": 1759.8,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 104,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 10.1,
+          "avg_ms": 228.0,
+          "p50_ms": 221.5,
+          "p95_ms": 297.6,
+          "p99_ms": 314.7,
+          "max_ms": 367.6
+        },
+        "/api/datasets": {
+          "requests": 110,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 10.7,
+          "avg_ms": 331.1,
+          "p50_ms": 325.8,
+          "p95_ms": 400.8,
+          "p99_ms": 437.2,
+          "max_ms": 437.2
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 114,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 11.1,
+          "avg_ms": 304.5,
+          "p50_ms": 299.0,
+          "p95_ms": 397.6,
+          "p99_ms": 452.7,
+          "max_ms": 589.8
+        },
+        "/api/kpis": {
+          "requests": 119,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 11.6,
+          "avg_ms": 1293.8,
+          "p50_ms": 1422.5,
+          "p95_ms": 1679.6,
+          "p99_ms": 1748.6,
+          "max_ms": 1759.8
+        }
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 50,
+      "seconds": 20.0,
+      "requests": 501,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 25.1,
+      "avg_ms": 1133.0,
+      "p50_ms": 385.5,
+      "p95_ms": 2685.3,
+      "p99_ms": 10930.2,
+      "max_ms": 19969.5,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 111,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 5.6,
+          "avg_ms": 652.1,
+          "p50_ms": 225.4,
+          "p95_ms": 402.5,
+          "p99_ms": 9238.2,
+          "max_ms": 19786.8
+        },
+        "/api/datasets": {
+          "requests": 123,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 6.2,
+          "avg_ms": 963.4,
+          "p50_ms": 396.2,
+          "p95_ms": 546.7,
+          "p99_ms": 19862.2,
+          "max_ms": 19969.5
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 129,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 6.5,
+          "avg_ms": 358.4,
+          "p50_ms": 342.2,
+          "p95_ms": 485.0,
+          "p99_ms": 497.7,
+          "max_ms": 501.5
+        },
+        "/api/kpis": {
+          "requests": 138,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 6.9,
+          "avg_ms": 2394.9,
+          "p50_ms": 2486.5,
+          "p95_ms": 2735.8,
+          "p99_ms": 10930.2,
+          "max_ms": 11097.0
+        }
+      },
+      "breaking_point": true
+    }
+  ],
+  "max_stable": {
+    "concurrency": 25,
+    "rps": 43.6,
+    "p95_ms": 1590.0,
+    "error_rate": 0.0
+  }
+}

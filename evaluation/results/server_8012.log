@@ -1,0 +1,63 @@
+{"event": "seeded", "customers": 2500, "products": 96, "orders": 15779, "order_items": 26702}
+{"event": "signup", "user_id": "68514a9c4b2b"}
+{"event": "signup", "user_id": "c9406af26107"}
+{"event": "upload", "dataset_id": "88ddaff60cef", "format": "csv", "size_bytes": 196, "tables": 1, "rows": 6, "processing_ms": 77}
+{"event": "upload", "dataset_id": "7102ebd79570", "format": "csv", "size_bytes": 188, "tables": 1, "rows": 6, "processing_ms": 44}
+{"event": "upload", "dataset_id": "af293c4a19ed", "format": "tsv", "size_bytes": 188, "tables": 1, "rows": 6, "processing_ms": 37}
+{"event": "upload", "dataset_id": "2554b3de60ba", "format": "txt", "size_bytes": 188, "tables": 1, "rows": 6, "processing_ms": 48}
+{"event": "upload", "dataset_id": "1cfbd50003e5", "format": "xlsx", "size_bytes": 5592, "tables": 2, "rows": 8, "processing_ms": 81}
+{"event": "upload", "dataset_id": "704fd23f17a5", "format": "ods", "size_bytes": 1766, "tables": 1, "rows": 6, "processing_ms": 118}
+{"event": "upload", "dataset_id": "9cdb6b5594c4", "format": "json", "size_bytes": 465, "tables": 1, "rows": 6, "processing_ms": 39}
+{"event": "upload", "dataset_id": "63a681057428", "format": "json", "size_bytes": 155, "tables": 1, "rows": 2, "processing_ms": 388}
+{"event": "upload", "dataset_id": "70f5f075b47a", "format": "jsonl", "size_bytes": 464, "tables": 1, "rows": 6, "processing_ms": 42}
+{"event": "upload", "dataset_id": "8cb5e0d2267b", "format": "parquet", "size_bytes": 2969, "tables": 1, "rows": 6, "processing_ms": 93}
+{"event": "upload", "dataset_id": "ce48c2898210", "format": "feather", "size_bytes": 3042, "tables": 1, "rows": 6, "processing_ms": 51}
+{"event": "upload", "dataset_id": "f6f8c4e0fa34", "format": "xml", "size_bytes": 823, "tables": 1, "rows": 6, "processing_ms": 46}
+{"event": "upload", "dataset_id": "646b3934c144", "format": "html", "size_bytes": 885, "tables": 1, "rows": 6, "processing_ms": 54}
+{"event": "upload", "dataset_id": "78b7a61fabdd", "format": "docx", "size_bytes": 36886, "tables": 1, "rows": 6, "processing_ms": 241}
+{"event": "upload", "dataset_id": "4983fbdd66b3", "format": "pdf", "size_bytes": 1265, "tables": 1, "rows": 6, "processing_ms": 174}
+{"event": "upload", "dataset_id": "4659caf3dac0", "format": "pdf", "size_bytes": 1039, "tables": 1, "rows": 3, "processing_ms": 55}
+{"event": "upload", "dataset_id": "91a245872834", "format": "sqlite", "size_bytes": 8192, "tables": 1, "rows": 6, "processing_ms": 51}
+{"event": "upload", "dataset_id": "d4f2204754ff", "format": "dta", "size_bytes": 1050, "tables": 1, "rows": 6, "processing_ms": 55}
+D:\Ask Your Data\.venv\Lib\site-packages\google\genai\types.py:18270: SyntaxWarning: invalid escape sequence '\/'
+  description="""Output only. The original name of the uploaded file, taken from the `Content-Disposition` header on upload. Between 1 and 255 characters. Control characters and the characters `<>:"|?*\/` are not accepted.""",
+D:\Ask Your Data\.venv\Lib\site-packages\google\genai\types.py:18308: SyntaxWarning: invalid escape sequence '\/'
+  """Output only. The original name of the uploaded file, taken from the `Content-Disposition` header on upload. Between 1 and 255 characters. Control characters and the characters `<>:"|?*\/` are not accepted."""
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 1, "latency_ms": 4813, "turn": 1, "cost_usd": 0.0020069, "input_tokens": 1990, "output_tokens": 220}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 1, "latency_ms": 4717, "turn": 2, "cost_usd": 0.0021189, "input_tokens": 2191, "output_tokens": 205}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 3170, "turn": 1, "cost_usd": 0.0017205, "input_tokens": 1469, "output_tokens": 165}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 2623, "turn": 1, "cost_usd": 0.00150375, "input_tokens": 1470, "output_tokens": 107}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 3589, "turn": 1, "cost_usd": 0.00175125, "input_tokens": 1470, "output_tokens": 173}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "unanswerable", "attempts": 1, "rows": 0, "latency_ms": 2746, "turn": 1, "cost_usd": 0.00142575, "input_tokens": 1476, "output_tokens": 85}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash-lite:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "88ddaff60cef", "status": "ok", "attempts": 1, "rows": 4, "latency_ms": 3490, "turn": 1, "cost_usd": 0.0012793, "input_tokens": 1176, "output_tokens": 170}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "1cfbd50003e5", "status": "ok", "attempts": 1, "rows": 0, "latency_ms": 3453, "turn": 1, "cost_usd": 0.00103875, "input_tokens": 925, "output_tokens": 92}
+AFC is enabled with max remote calls: 10.
+HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+{"event": "ask", "provider": "gemini", "dataset_id": "demo", "status": "unanswerable", "attempts": 1, "rows": 0, "latency_ms": 12860, "turn": 1, "cost_usd": 0.00214125, "input_tokens": 1475, "output_tokens": 276}
+{"event": "feedback", "question_id": "63fb107a7a4e4c8abba3b75bf0e5d0c1", "rating": 1}
+{"event": "feedback", "question_id": "63fb107a7a4e4c8abba3b75bf0e5d0c1", "rating": -1}
+{"event": "export", "question_id": "63fb107a7a4e4c8abba3b75bf0e5d0c1", "format": "csv", "rows": 1}
+{"event": "export", "question_id": "63fb107a7a4e4c8abba3b75bf0e5d0c1", "format": "xlsx", "rows": 1}
+{"event": "export", "question_id": "63fb107a7a4e4c8abba3b75bf0e5d0c1", "format": "pdf", "rows": 1}

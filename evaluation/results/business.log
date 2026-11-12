@@ -1,0 +1,55 @@
+{
+  "measured": {
+    "eval_accuracy": 0.9792,
+    "eval_questions": 48,
+    "answer_latency_p50_s": 4.417,
+    "answer_latency_p95_s": 10.602,
+    "model_cost_usd_per_question": 0.002136,
+    "functional_success_rate": 1.0,
+    "ui_success_rate": 1.0,
+    "upload_100k_rows_seconds": 2.65,
+    "single_user_questions_per_minute": 11.0,
+    "eight_user_questions_per_minute": 40.7
+  },
+  "scenarios": {
+    "low": {
+      "time_saved_per_question_pct": 94.3,
+      "minutes_saved_per_question": 9.4,
+      "manual_cost_inr_per_question": 66.7,
+      "app_cost_inr_per_question": 3.51,
+      "cost_reduction_pct": 94.7,
+      "questions_per_month": 200,
+      "self_serve_share": 0.588,
+      "analyst_hours_saved_per_month": 18.5,
+      "net_saving_inr_per_month": 7421.0,
+      "model_cost_inr_per_month": 36.0,
+      "file_load_time_saved_pct": 89.6
+    },
+    "mid": {
+      "time_saved_per_question_pct": 94.6,
+      "minutes_saved_per_question": 18.9,
+      "manual_cost_inr_per_question": 233.3,
+      "app_cost_inr_per_question": 11.85,
+      "cost_reduction_pct": 94.9,
+      "questions_per_month": 1000,
+      "self_serve_share": 0.783,
+      "analyst_hours_saved_per_month": 247.1,
+      "net_saving_inr_per_month": 173504.0,
+      "model_cost_inr_per_month": 179.0,
+      "file_load_time_saved_pct": 96.5
+    },
+    "high": {
+      "time_saved_per_question_pct": 95.4,
+      "minutes_saved_per_question": 42.9,
+      "manual_cost_inr_per_question": 900.0,
+      "app_cost_inr_per_question": 40.18,
+      "cost_reduction_pct": 95.5,
+      "questions_per_month": 5000,
+      "self_serve_share": 0.93,
+      "analyst_hours_saved_per_month": 3327.7,
+      "net_saving_inr_per_month": 3999197.0,
+      "model_cost_inr_per_month": 897.0,
+      "file_load_time_saved_pct": 98.3
+    }
+  }
+}

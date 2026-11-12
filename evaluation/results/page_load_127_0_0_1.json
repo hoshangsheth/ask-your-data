@@ -1,0 +1,516 @@
+{
+  "generated_at": "2026-11-12T18:24:38+00:00",
+  "target": "http://127.0.0.1:8016",
+  "first_visit": {
+    "ttfb": {
+      "median": 5,
+      "min": 4,
+      "max": 137
+    },
+    "fcp": {
+      "median": 244,
+      "min": 232,
+      "max": 420
+    },
+    "dcl": {
+      "median": 440,
+      "min": 419,
+      "max": 628
+    },
+    "load": {
+      "median": 440,
+      "min": 420,
+      "max": 628
+    },
+    "ready_ms": {
+      "median": 531,
+      "min": 511,
+      "max": 738
+    }
+  },
+  "repeat_visit": {
+    "ttfb": {
+      "median": 4,
+      "min": 4,
+      "max": 5
+    },
+    "fcp": {
+      "median": 104,
+      "min": 80,
+      "max": 112
+    },
+    "dcl": {
+      "median": 135,
+      "min": 123,
+      "max": 138
+    },
+    "load": {
+      "median": 135,
+      "min": 123,
+      "max": 139
+    },
+    "ready_ms": {
+      "median": 186,
+      "min": 175,
+      "max": 188
+    }
+  },
+  "slowest_resources_first_visit": [
+    {
+      "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",
+      "host": "cdn.jsdelivr.net",
+      "ms": 218,
+      "kb": 29,
+      "blocking": "non-blocking"
+    },
+    {
+      "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MorphSVGPlugin.min.js",
+      "host": "cdn.jsdelivr.net",
+      "ms": 217,
+      "kb": 8,
+      "blocking": "non-blocking"
+    },
+    {
+      "name": "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",
+      "host": "cdnjs.cloudflare.com",
+      "ms": 142,
+      "kb": 59,
+      "blocking": "non-blocking"
+    },
+    {
+      "name": "https://fonts.googleapis.com/css2",
+      "host": "fonts.googleapis.com",
+      "ms": 118,
+      "kb": 1,
+      "blocking": "blocking"
+    },
+    {
+      "name": "http://127.0.0.1:8016/static/js/help.js",
+      "host": "127.0.0.1:8016",
+      "ms": 106,
+      "kb": 2,
+      "blocking": "non-blocking"
+    },
+    {
+      "name": "http://127.0.0.1:8016/static/js/icons.js",
+      "host": "127.0.0.1:8016",
+      "ms": 106,
+      "kb": 6,
+      "blocking": "non-blocking"
+    }
+  ],
+  "runs": {
+    "first_visit": [
+      {
+        "ttfb": 137,
+        "dcl": 628,
+        "load": 628,
+        "fcp": 420,
+        "ready_ms": 738,
+        "slowest": [
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 218,
+            "kb": 29,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MorphSVGPlugin.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 217,
+            "kb": 8,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",
+            "host": "cdnjs.cloudflare.com",
+            "ms": 142,
+            "kb": 59,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://fonts.googleapis.com/css2",
+            "host": "fonts.googleapis.com",
+            "ms": 118,
+            "kb": 1,
+            "blocking": "blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/help.js",
+            "host": "127.0.0.1:8016",
+            "ms": 106,
+            "kb": 2,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/icons.js",
+            "host": "127.0.0.1:8016",
+            "ms": 106,
+            "kb": 6,
+            "blocking": "non-blocking"
+          }
+        ]
+      },
+      {
+        "ttfb": 6,
+        "dcl": 440,
+        "load": 440,
+        "fcp": 252,
+        "ready_ms": 532,
+        "slowest": [
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 202,
+            "kb": 29,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MorphSVGPlugin.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 198,
+            "kb": 8,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",
+            "host": "cdnjs.cloudflare.com",
+            "ms": 131,
+            "kb": 59,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/theme.js",
+            "host": "127.0.0.1:8016",
+            "ms": 117,
+            "kb": 6,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/upload.js",
+            "host": "127.0.0.1:8016",
+            "ms": 116,
+            "kb": 5,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://fonts.googleapis.com/css2",
+            "host": "fonts.googleapis.com",
+            "ms": 106,
+            "kb": 1,
+            "blocking": "blocking"
+          }
+        ]
+      },
+      {
+        "ttfb": 4,
+        "dcl": 419,
+        "load": 420,
+        "fcp": 244,
+        "ready_ms": 511,
+        "slowest": [
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 206,
+            "kb": 29,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MorphSVGPlugin.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 206,
+            "kb": 8,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",
+            "host": "cdnjs.cloudflare.com",
+            "ms": 135,
+            "kb": 59,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/upload.js",
+            "host": "127.0.0.1:8016",
+            "ms": 119,
+            "kb": 5,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/theme.js",
+            "host": "127.0.0.1:8016",
+            "ms": 117,
+            "kb": 6,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/recent.js",
+            "host": "127.0.0.1:8016",
+            "ms": 113,
+            "kb": 2,
+            "blocking": "non-blocking"
+          }
+        ]
+      },
+      {
+        "ttfb": 5,
+        "dcl": 425,
+        "load": 425,
+        "fcp": 232,
+        "ready_ms": 512,
+        "slowest": [
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MorphSVGPlugin.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 191,
+            "kb": 8,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 189,
+            "kb": 29,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",
+            "host": "cdnjs.cloudflare.com",
+            "ms": 124,
+            "kb": 59,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/upload.js",
+            "host": "127.0.0.1:8016",
+            "ms": 121,
+            "kb": 5,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/metrics.js",
+            "host": "127.0.0.1:8016",
+            "ms": 116,
+            "kb": 10,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/recent.js",
+            "host": "127.0.0.1:8016",
+            "ms": 116,
+            "kb": 2,
+            "blocking": "non-blocking"
+          }
+        ]
+      },
+      {
+        "ttfb": 4,
+        "dcl": 441,
+        "load": 442,
+        "fcp": 244,
+        "ready_ms": 531,
+        "slowest": [
+          {
+            "name": "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js",
+            "host": "cdnjs.cloudflare.com",
+            "ms": 210,
+            "kb": 59,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 193,
+            "kb": 29,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MorphSVGPlugin.min.js",
+            "host": "cdn.jsdelivr.net",
+            "ms": 186,
+            "kb": 8,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/theme.js",
+            "host": "127.0.0.1:8016",
+            "ms": 113,
+            "kb": 6,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/upload.js",
+            "host": "127.0.0.1:8016",
+            "ms": 112,
+            "kb": 5,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "https://fonts.googleapis.com/css2",
+            "host": "fonts.googleapis.com",
+            "ms": 103,
+            "kb": 1,
+            "blocking": "blocking"
+          }
+        ]
+      }
+    ],
+    "repeat_visit": [
+      {
+        "ttfb": 4,
+        "dcl": 135,
+        "load": 135,
+        "fcp": 104,
+        "ready_ms": 186,
+        "slowest": [
+          {
+            "name": "http://127.0.0.1:8016/static/js/metrics.js",
+            "host": "127.0.0.1:8016",
+            "ms": 66,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/recent.js",
+            "host": "127.0.0.1:8016",
+            "ms": 66,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/help.js",
+            "host": "127.0.0.1:8016",
+            "ms": 65,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/upload.js",
+            "host": "127.0.0.1:8016",
+            "ms": 65,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/icons.js",
+            "host": "127.0.0.1:8016",
+            "ms": 48,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/theme.js",
+            "host": "127.0.0.1:8016",
+            "ms": 46,
+            "kb": 0,
+            "blocking": "non-blocking"
+          }
+        ]
+      },
+      {
+        "ttfb": 5,
+        "dcl": 138,
+        "load": 139,
+        "fcp": 112,
+        "ready_ms": 188,
+        "slowest": [
+          {
+            "name": "http://127.0.0.1:8016/static/js/help.js",
+            "host": "127.0.0.1:8016",
+            "ms": 66,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/metrics.js",
+            "host": "127.0.0.1:8016",
+            "ms": 59,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/upload.js",
+            "host": "127.0.0.1:8016",
+            "ms": 54,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/recent.js",
+            "host": "127.0.0.1:8016",
+            "ms": 53,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/theme.js",
+            "host": "127.0.0.1:8016",
+            "ms": 49,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/datasets.js",
+            "host": "127.0.0.1:8016",
+            "ms": 44,
+            "kb": 0,
+            "blocking": "non-blocking"
+          }
+        ]
+      },
+      {
+        "ttfb": 4,
+        "dcl": 123,
+        "load": 123,
+        "fcp": 80,
+        "ready_ms": 175,
+        "slowest": [
+          {
+            "name": "http://127.0.0.1:8016/static/js/upload.js",
+            "host": "127.0.0.1:8016",
+            "ms": 56,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/theme.js",
+            "host": "127.0.0.1:8016",
+            "ms": 54,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/icons.js",
+            "host": "127.0.0.1:8016",
+            "ms": 53,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/recent.js",
+            "host": "127.0.0.1:8016",
+            "ms": 52,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/metrics.js",
+            "host": "127.0.0.1:8016",
+            "ms": 49,
+            "kb": 0,
+            "blocking": "non-blocking"
+          },
+          {
+            "name": "http://127.0.0.1:8016/static/js/help.js",
+            "host": "127.0.0.1:8016",
+            "ms": 43,
+            "kb": 0,
+            "blocking": "non-blocking"
+          }
+        ]
+      }
+    ]
+  }
+}

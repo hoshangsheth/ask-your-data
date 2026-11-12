@@ -1,0 +1,8 @@
+demo store: {'rows': {'customers': 2500, 'products': 96, 'orders': 15779, 'order_items': 26702}, 'total_rows': 45077, 'seed_seconds': 0.87}
+dashboard KPIs: {'n': 20, 'avg_ms': 103.49, 'p50_ms': 102.5, 'p95_ms': 112.56, 'max_ms': 113.52}
+analytical queries: {'queries': 39, 'median_of_p50_ms': 9.99, 'p95_of_p50_ms': 27.36, 'slowest': 'top_subcategory_profit', 'slowest_p50_ms': 48.93, 'under_50ms': 39, 'under_100ms': 39}
+sql guard: {'queries': 39, 'avg_us': 2964.6, 'max_us': 8084.0}
+ingest: {'format': 'csv', 'rows': 10000, 'mb': 0.41, 'seconds': 0.31, 'rows_per_s': 32334, 'mb_per_s': 1.32}
+ingest: {'format': 'csv', 'rows': 100000, 'mb': 4.17, 'seconds': 2.65, 'rows_per_s': 37745, 'mb_per_s': 1.58}
+ingest: {'format': 'csv', 'rows': 500000, 'mb': 21.29, 'seconds': 13.03, 'rows_per_s': 38362, 'mb_per_s': 1.63}
+ingest: {'format': 'xlsx', 'rows': 50000, 'mb': 1.46, 'seconds': 9.09, 'rows_per_s': 5498, 'mb_per_s': 0.16}

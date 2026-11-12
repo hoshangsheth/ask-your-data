@@ -1,0 +1,827 @@
+{
+  "generated_at": "2026-11-12T17:52:38+00:00",
+  "target": "local uvicorn, 1 process, SQLite",
+  "server_startup_s": 8.7,
+  "idle_resources": {
+    "server_cpu_pct_avg": 0.0,
+    "server_cpu_pct_max": 0.0,
+    "server_rss_mb_avg": 197.3,
+    "server_rss_mb_max": 197.3,
+    "machine_cpu_pct_avg": 30.6
+  },
+  "baseline": {
+    "/api/health": {
+      "requests": 1618,
+      "avg_ms": 3.5,
+      "p50_ms": 3.1,
+      "p95_ms": 5.0,
+      "p99_ms": 5.6,
+      "error_rate": 0.0
+    },
+    "/api/datasets": {
+      "requests": 1036,
+      "avg_ms": 5.5,
+      "p50_ms": 5.1,
+      "p95_ms": 6.9,
+      "p99_ms": 7.6,
+      "error_rate": 0.0
+    },
+    "/api/schema?dataset=demo": {
+      "requests": 973,
+      "avg_ms": 5.9,
+      "p50_ms": 5.5,
+      "p95_ms": 7.3,
+      "p99_ms": 8.1,
+      "error_rate": 0.0
+    },
+    "/api/kpis": {
+      "requests": 51,
+      "avg_ms": 113.0,
+      "p50_ms": 110.9,
+      "p95_ms": 134.1,
+      "p99_ms": 139.5,
+      "error_rate": 0.0
+    },
+    "/": {
+      "requests": 1076,
+      "avg_ms": 5.2,
+      "p50_ms": 4.8,
+      "p95_ms": 7.3,
+      "p99_ms": 8.8,
+      "error_rate": 0.0
+    },
+    "/static/js/ask.js": {
+      "requests": 1231,
+      "avg_ms": 4.6,
+      "p50_ms": 4.3,
+      "p95_ms": 6.4,
+      "p99_ms": 7.2,
+      "error_rate": 0.0
+    },
+    "/static/css/components.css": {
+      "requests": 1311,
+      "avg_ms": 4.3,
+      "p50_ms": 4.0,
+      "p95_ms": 5.8,
+      "p99_ms": 6.3,
+      "error_rate": 0.0
+    }
+  },
+  "steps": [
+    {
+      "concurrency": 1,
+      "seconds": 15.1,
+      "requests": 484,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 32.1,
+      "avg_ms": 30.5,
+      "p50_ms": 5.9,
+      "p95_ms": 109.1,
+      "p99_ms": 115.3,
+      "max_ms": 143.0,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 121,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 8.0,
+          "avg_ms": 3.7,
+          "p50_ms": 3.3,
+          "p95_ms": 5.2,
+          "p99_ms": 5.5,
+          "max_ms": 6.0
+        },
+        "/api/datasets": {
+          "requests": 121,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 8.0,
+          "avg_ms": 6.5,
+          "p50_ms": 6.2,
+          "p95_ms": 8.1,
+          "p99_ms": 8.5,
+          "max_ms": 8.9
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 121,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 8.0,
+          "avg_ms": 6.0,
+          "p50_ms": 5.6,
+          "p95_ms": 7.5,
+          "p99_ms": 7.9,
+          "max_ms": 8.7
+        },
+        "/api/kpis": {
+          "requests": 121,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 8.0,
+          "avg_ms": 105.7,
+          "p50_ms": 105.2,
+          "p95_ms": 114.5,
+          "p99_ms": 117.5,
+          "max_ms": 143.0
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 84.7,
+        "server_cpu_pct_max": 100.0,
+        "server_rss_mb_avg": 201.5,
+        "server_rss_mb_max": 202.4,
+        "machine_cpu_pct_avg": 44.5
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 5,
+      "seconds": 15.1,
+      "requests": 965,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 63.9,
+      "avg_ms": 76.6,
+      "p50_ms": 16.9,
+      "p95_ms": 277.4,
+      "p99_ms": 336.9,
+      "max_ms": 367.2,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 240,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 15.9,
+          "avg_ms": 10.5,
+          "p50_ms": 9.0,
+          "p95_ms": 16.8,
+          "p99_ms": 40.1,
+          "max_ms": 106.6
+        },
+        "/api/datasets": {
+          "requests": 241,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.0,
+          "avg_ms": 20.0,
+          "p50_ms": 16.6,
+          "p95_ms": 32.8,
+          "p99_ms": 131.1,
+          "max_ms": 159.9
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 242,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.0,
+          "avg_ms": 19.1,
+          "p50_ms": 16.3,
+          "p95_ms": 29.9,
+          "p99_ms": 131.0,
+          "max_ms": 156.7
+        },
+        "/api/kpis": {
+          "requests": 242,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.0,
+          "avg_ms": 256.1,
+          "p50_ms": 250.6,
+          "p95_ms": 330.5,
+          "p99_ms": 358.4,
+          "max_ms": 367.2
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 253.3,
+        "server_cpu_pct_max": 331.2,
+        "server_rss_mb_avg": 214.6,
+        "server_rss_mb_max": 218.2,
+        "machine_cpu_pct_avg": 92.4
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 10,
+      "seconds": 15.1,
+      "requests": 981,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 65.1,
+      "avg_ms": 151.7,
+      "p50_ms": 47.3,
+      "p95_ms": 528.7,
+      "p99_ms": 700.9,
+      "max_ms": 889.3,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 242,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.1,
+          "avg_ms": 25.2,
+          "p50_ms": 19.3,
+          "p95_ms": 57.8,
+          "p99_ms": 135.4,
+          "max_ms": 167.9
+        },
+        "/api/datasets": {
+          "requests": 245,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.3,
+          "avg_ms": 51.0,
+          "p50_ms": 45.8,
+          "p95_ms": 107.8,
+          "p99_ms": 152.2,
+          "max_ms": 198.1
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 246,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.3,
+          "avg_ms": 51.2,
+          "p50_ms": 44.7,
+          "p95_ms": 98.0,
+          "p99_ms": 183.7,
+          "max_ms": 225.7
+        },
+        "/api/kpis": {
+          "requests": 248,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.5,
+          "avg_ms": 474.4,
+          "p50_ms": 460.9,
+          "p95_ms": 623.4,
+          "p99_ms": 877.1,
+          "max_ms": 889.3
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 279.4,
+        "server_cpu_pct_max": 356.2,
+        "server_rss_mb_avg": 228.6,
+        "server_rss_mb_max": 234.4,
+        "machine_cpu_pct_avg": 95.5
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 25,
+      "seconds": 15.1,
+      "requests": 949,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 63.0,
+      "avg_ms": 391.3,
+      "p50_ms": 265.8,
+      "p95_ms": 1059.4,
+      "p99_ms": 1465.4,
+      "max_ms": 2053.3,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 236,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 15.7,
+          "avg_ms": 193.3,
+          "p50_ms": 129.5,
+          "p95_ms": 548.1,
+          "p99_ms": 1104.4,
+          "max_ms": 1469.5
+        },
+        "/api/datasets": {
+          "requests": 238,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 15.8,
+          "avg_ms": 291.5,
+          "p50_ms": 237.8,
+          "p95_ms": 696.4,
+          "p99_ms": 1458.6,
+          "max_ms": 1906.3
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 238,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 15.8,
+          "avg_ms": 313.0,
+          "p50_ms": 247.9,
+          "p95_ms": 785.8,
+          "p99_ms": 1224.0,
+          "max_ms": 2053.3
+        },
+        "/api/kpis": {
+          "requests": 237,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 15.7,
+          "avg_ms": 767.3,
+          "p50_ms": 791.1,
+          "p95_ms": 1252.6,
+          "p99_ms": 1652.2,
+          "max_ms": 2017.2
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 267.7,
+        "server_cpu_pct_max": 337.5,
+        "server_rss_mb_avg": 239.9,
+        "server_rss_mb_max": 250.6,
+        "machine_cpu_pct_avg": 97.7
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 50,
+      "seconds": 15.4,
+      "requests": 1008,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 65.7,
+      "avg_ms": 750.1,
+      "p50_ms": 661.7,
+      "p95_ms": 1378.2,
+      "p99_ms": 1672.8,
+      "max_ms": 2307.8,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 250,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.3,
+          "avg_ms": 501.2,
+          "p50_ms": 522.5,
+          "p95_ms": 710.6,
+          "p99_ms": 742.8,
+          "max_ms": 851.9
+        },
+        "/api/datasets": {
+          "requests": 254,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.5,
+          "avg_ms": 629.9,
+          "p50_ms": 615.6,
+          "p95_ms": 946.9,
+          "p99_ms": 1274.7,
+          "max_ms": 1522.4
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 251,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.3,
+          "avg_ms": 660.2,
+          "p50_ms": 632.9,
+          "p95_ms": 1036.5,
+          "p99_ms": 1239.6,
+          "max_ms": 1378.2
+        },
+        "/api/kpis": {
+          "requests": 253,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 16.5,
+          "avg_ms": 1205.7,
+          "p50_ms": 1194.8,
+          "p95_ms": 1620.9,
+          "p99_ms": 1906.2,
+          "max_ms": 2307.8
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 283.3,
+        "server_cpu_pct_max": 333.7,
+        "server_rss_mb_avg": 248.5,
+        "server_rss_mb_max": 255.4,
+        "machine_cpu_pct_avg": 95.0
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 100,
+      "seconds": 16.0,
+      "requests": 806,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 50.3,
+      "avg_ms": 1914.6,
+      "p50_ms": 1541.3,
+      "p95_ms": 5213.8,
+      "p99_ms": 8227.1,
+      "max_ms": 12079.2,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 199,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 12.4,
+          "avg_ms": 1820.9,
+          "p50_ms": 1186.2,
+          "p95_ms": 5924.5,
+          "p99_ms": 10685.6,
+          "max_ms": 11691.5
+        },
+        "/api/datasets": {
+          "requests": 197,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 12.3,
+          "avg_ms": 1742.6,
+          "p50_ms": 1393.0,
+          "p95_ms": 5213.8,
+          "p99_ms": 8432.6,
+          "max_ms": 12049.9
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 202,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 12.6,
+          "avg_ms": 1815.0,
+          "p50_ms": 1600.9,
+          "p95_ms": 4411.0,
+          "p99_ms": 5900.1,
+          "max_ms": 10921.9
+        },
+        "/api/kpis": {
+          "requests": 208,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 13.0,
+          "avg_ms": 2263.9,
+          "p50_ms": 1765.2,
+          "p95_ms": 5561.3,
+          "p99_ms": 8228.8,
+          "max_ms": 12079.2
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 212.3,
+        "server_cpu_pct_max": 308.9,
+        "server_rss_mb_avg": 246.7,
+        "server_rss_mb_max": 258.1,
+        "machine_cpu_pct_avg": 87.5
+      },
+      "breaking_point": true
+    }
+  ],
+  "steps_light": [
+    {
+      "concurrency": 1,
+      "seconds": 15.0,
+      "requests": 2842,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 189.5,
+      "avg_ms": 5.2,
+      "p50_ms": 5.2,
+      "p95_ms": 7.2,
+      "p99_ms": 8.5,
+      "max_ms": 115.5,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 948,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 63.2,
+          "avg_ms": 3.7,
+          "p50_ms": 3.5,
+          "p95_ms": 5.3,
+          "p99_ms": 5.9,
+          "max_ms": 8.1
+        },
+        "/api/datasets": {
+          "requests": 947,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 63.1,
+          "avg_ms": 5.6,
+          "p50_ms": 5.4,
+          "p95_ms": 7.2,
+          "p99_ms": 8.5,
+          "max_ms": 32.3
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 947,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 63.1,
+          "avg_ms": 6.1,
+          "p50_ms": 5.7,
+          "p95_ms": 7.8,
+          "p99_ms": 9.0,
+          "max_ms": 115.5
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 73.3,
+        "server_cpu_pct_max": 87.5,
+        "server_rss_mb_avg": 233.2,
+        "server_rss_mb_max": 241.0,
+        "machine_cpu_pct_avg": 52.7
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 5,
+      "seconds": 15.0,
+      "requests": 3406,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 227.1,
+      "avg_ms": 21.5,
+      "p50_ms": 21.5,
+      "p95_ms": 33.3,
+      "p99_ms": 44.2,
+      "max_ms": 130.3,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 1134,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 75.6,
+          "avg_ms": 14.2,
+          "p50_ms": 13.8,
+          "p95_ms": 19.0,
+          "p99_ms": 25.3,
+          "max_ms": 115.8
+        },
+        "/api/datasets": {
+          "requests": 1136,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 75.7,
+          "avg_ms": 26.1,
+          "p50_ms": 25.1,
+          "p95_ms": 37.8,
+          "p99_ms": 47.6,
+          "max_ms": 130.3
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 1136,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 75.7,
+          "avg_ms": 24.4,
+          "p50_ms": 23.3,
+          "p95_ms": 33.5,
+          "p99_ms": 45.5,
+          "max_ms": 122.8
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 94.9,
+        "server_cpu_pct_max": 115.6,
+        "server_rss_mb_avg": 227.3,
+        "server_rss_mb_max": 227.3,
+        "machine_cpu_pct_avg": 66.5
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 10,
+      "seconds": 15.0,
+      "requests": 3685,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 245.4,
+      "avg_ms": 39.9,
+      "p50_ms": 40.8,
+      "p95_ms": 52.9,
+      "p99_ms": 62.7,
+      "max_ms": 167.2,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 1229,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 81.8,
+          "avg_ms": 29.3,
+          "p50_ms": 28.9,
+          "p95_ms": 35.4,
+          "p99_ms": 40.0,
+          "max_ms": 140.4
+        },
+        "/api/datasets": {
+          "requests": 1228,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 81.8,
+          "avg_ms": 46.2,
+          "p50_ms": 45.8,
+          "p95_ms": 56.4,
+          "p99_ms": 63.2,
+          "max_ms": 166.3
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 1228,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 81.8,
+          "avg_ms": 44.2,
+          "p50_ms": 43.2,
+          "p95_ms": 52.5,
+          "p99_ms": 69.1,
+          "max_ms": 167.2
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 98.8,
+        "server_cpu_pct_max": 125.0,
+        "server_rss_mb_avg": 216.3,
+        "server_rss_mb_max": 228.4,
+        "machine_cpu_pct_avg": 56.9
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 25,
+      "seconds": 15.1,
+      "requests": 2647,
+      "errors": 1,
+      "error_rate": 0.0004,
+      "rps": 175.4,
+      "avg_ms": 139.4,
+      "p50_ms": 102.9,
+      "p95_ms": 384.3,
+      "p99_ms": 740.0,
+      "max_ms": 1761.2,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 880,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 58.3,
+          "avg_ms": 125.0,
+          "p50_ms": 83.6,
+          "p95_ms": 376.5,
+          "p99_ms": 867.8,
+          "max_ms": 1761.2
+        },
+        "/api/datasets": {
+          "requests": 885,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 58.6,
+          "avg_ms": 149.1,
+          "p50_ms": 110.9,
+          "p95_ms": 382.7,
+          "p99_ms": 684.6,
+          "max_ms": 1414.2
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 882,
+          "errors": 1,
+          "error_rate": 0.0011,
+          "rps": 58.4,
+          "avg_ms": 143.9,
+          "p50_ms": 105.8,
+          "p95_ms": 392.0,
+          "p99_ms": 727.6,
+          "max_ms": 1142.6
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 74.8,
+        "server_cpu_pct_max": 112.5,
+        "server_rss_mb_avg": 214.6,
+        "server_rss_mb_max": 214.7,
+        "machine_cpu_pct_avg": 73.2
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 50,
+      "seconds": 15.1,
+      "requests": 1367,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 90.5,
+      "avg_ms": 545.1,
+      "p50_ms": 377.4,
+      "p95_ms": 1531.8,
+      "p99_ms": 2386.5,
+      "max_ms": 4047.8,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 456,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 30.2,
+          "avg_ms": 572.6,
+          "p50_ms": 407.6,
+          "p95_ms": 1664.3,
+          "p99_ms": 2210.2,
+          "max_ms": 4047.8
+        },
+        "/api/datasets": {
+          "requests": 456,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 30.2,
+          "avg_ms": 512.5,
+          "p50_ms": 370.4,
+          "p95_ms": 1383.1,
+          "p99_ms": 2386.5,
+          "max_ms": 3602.9
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 455,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 30.1,
+          "avg_ms": 550.3,
+          "p50_ms": 362.2,
+          "p95_ms": 1573.3,
+          "p99_ms": 2536.7,
+          "max_ms": 3500.2
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 56.3,
+        "server_cpu_pct_max": 100.0,
+        "server_rss_mb_avg": 221.3,
+        "server_rss_mb_max": 222.5,
+        "machine_cpu_pct_avg": 77.8
+      },
+      "breaking_point": false
+    },
+    {
+      "concurrency": 100,
+      "seconds": 16.0,
+      "requests": 838,
+      "errors": 0,
+      "error_rate": 0.0,
+      "rps": 52.4,
+      "avg_ms": 1835.3,
+      "p50_ms": 1171.0,
+      "p95_ms": 5419.5,
+      "p99_ms": 7064.1,
+      "max_ms": 7830.0,
+      "by_endpoint": {
+        "/api/health": {
+          "requests": 279,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 17.4,
+          "avg_ms": 1959.2,
+          "p50_ms": 1278.1,
+          "p95_ms": 5571.3,
+          "p99_ms": 7209.6,
+          "max_ms": 7552.2
+        },
+        "/api/datasets": {
+          "requests": 281,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 17.6,
+          "avg_ms": 1535.5,
+          "p50_ms": 1078.1,
+          "p95_ms": 4066.1,
+          "p99_ms": 6174.6,
+          "max_ms": 6422.5
+        },
+        "/api/schema?dataset=demo": {
+          "requests": 278,
+          "errors": 0,
+          "error_rate": 0.0,
+          "rps": 17.4,
+          "avg_ms": 2014.0,
+          "p50_ms": 1284.0,
+          "p95_ms": 5752.4,
+          "p99_ms": 7423.4,
+          "max_ms": 7830.0
+        }
+      },
+      "resources": {
+        "server_cpu_pct_avg": 43.0,
+        "server_cpu_pct_max": 102.7,
+        "server_rss_mb_avg": 225.3,
+        "server_rss_mb_max": 226.5,
+        "machine_cpu_pct_avg": 65.4
+      },
+      "breaking_point": true
+    }
+  ],
+  "max_stable_steps": {
+    "concurrency": 50,
+    "rps": 65.7,
+    "p95_ms": 1378.2,
+    "error_rate": 0.0
+  },
+  "breaking_steps": 100,
+  "max_stable_steps_light": {
+    "concurrency": 10,
+    "rps": 245.4,
+    "p95_ms": 52.9,
+    "error_rate": 0.0
+  },
+  "breaking_steps_light": 100,
+  "break_rule": "error rate > 1% or p95 > 2000 ms"
+}
