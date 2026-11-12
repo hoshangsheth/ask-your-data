@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-12T18:29:35+00:00",
+  "generated_at": "2026-11-12T19:11:18+00:00",
   "target": "http://127.0.0.1:8010",
   "browser": "Chromium (Playwright 1.58)",
   "checks_total": 27,
@@ -16,47 +16,47 @@
     "page_load": [
       {
         "cold": true,
-        "ready_ms": 623,
-        "ttfb": 42,
-        "dcl": 518,
-        "load": 518,
-        "fcp": 320,
+        "ready_ms": 767,
+        "ttfb": 48,
+        "dcl": 633,
+        "load": 633,
+        "fcp": 344,
         "transfer_kb": 12
       },
       {
         "cold": false,
-        "ready_ms": 231,
+        "ready_ms": 335,
         "ttfb": 5,
-        "dcl": 169,
-        "load": 169,
+        "dcl": 224,
+        "load": 224,
+        "fcp": 120,
+        "transfer_kb": 12
+      },
+      {
+        "cold": false,
+        "ready_ms": 275,
+        "ttfb": 5,
+        "dcl": 217,
+        "load": 217,
         "fcp": 108,
         "transfer_kb": 12
       },
       {
         "cold": false,
-        "ready_ms": 237,
+        "ready_ms": 283,
         "ttfb": 5,
-        "dcl": 166,
-        "load": 166,
-        "fcp": 112,
+        "dcl": 216,
+        "load": 216,
+        "fcp": 104,
         "transfer_kb": 12
       },
       {
         "cold": false,
-        "ready_ms": 206,
-        "ttfb": 4,
-        "dcl": 149,
-        "load": 150,
-        "fcp": 108,
-        "transfer_kb": 12
-      },
-      {
-        "cold": false,
-        "ready_ms": 218,
-        "ttfb": 8,
-        "dcl": 157,
-        "load": 158,
-        "fcp": 116,
+        "ready_ms": 285,
+        "ttfb": 10,
+        "dcl": 230,
+        "load": 230,
+        "fcp": 132,
         "transfer_kb": 12
       }
     ],
@@ -105,34 +105,34 @@
     "theme_transition_frames": {
       "chromium_headless": {
         "idle": {
-          "frames": 73,
+          "frames": 72,
           "avg_frame_ms": 16.7,
           "max_frame_ms": 16.8,
           "frames_over_34ms": 0,
           "smooth_share": 1.0
         },
         "during_switch": {
-          "frames": 40,
-          "avg_frame_ms": 30.4,
-          "max_frame_ms": 99.9,
-          "frames_over_34ms": 9,
-          "smooth_share": 0.775
+          "frames": 4,
+          "avg_frame_ms": 341.6,
+          "max_frame_ms": 483.4,
+          "frames_over_34ms": 3,
+          "smooth_share": 0.25
         }
       },
       "edge_gpu": {
         "idle": {
           "frames": 72,
           "avg_frame_ms": 16.7,
-          "max_frame_ms": 16.9,
+          "max_frame_ms": 16.8,
           "frames_over_34ms": 0,
           "smooth_share": 1.0
         },
         "during_switch": {
-          "frames": 29,
-          "avg_frame_ms": 41.4,
-          "max_frame_ms": 150,
-          "frames_over_34ms": 8,
-          "smooth_share": 0.724
+          "frames": 30,
+          "avg_frame_ms": 40.6,
+          "max_frame_ms": 166.8,
+          "frames_over_34ms": 10,
+          "smooth_share": 0.667
         }
       }
     }
@@ -141,18 +141,18 @@
     {
       "name": "Page loads (5 loads, cold + warm)",
       "pass": true,
-      "ms": 1609,
+      "ms": 2067,
       "detail": {
-        "cold_ready_ms": 623,
-        "warm_ready_ms_median": 224.5,
-        "fcp_ms": 320
+        "cold_ready_ms": 767,
+        "warm_ready_ms_median": 284.0,
+        "fcp_ms": 344
       },
       "error": null
     },
     {
       "name": "How-to-use popup on first visit, dismiss, reopen",
       "pass": true,
-      "ms": 4792,
+      "ms": 6095,
       "detail": {
         "steps": 6
       },
@@ -161,18 +161,18 @@
     {
       "name": "Quick-question pills drift and pause on hover",
       "pass": true,
-      "ms": 1562,
+      "ms": 1607,
       "detail": {
         "pills_incl_loop_copies": 16,
         "rows": 2,
-        "px_per_s": 26.8
+        "px_per_s": 28.1
       },
       "error": null
     },
     {
-      "name": "Theme toggle animates every time (10 toggles + scroll)",
+      "name": "Ink-bleed theme switch animates every time (10 + scroll)",
       "pass": true,
-      "ms": 10107,
+      "ms": 27638,
       "detail": {
         "animated_toggles": 10,
         "attempts": 10
@@ -180,31 +180,32 @@
       "error": null
     },
     {
-      "name": "Theme toggle survives rapid clicking",
+      "name": "Theme toggle settles after rapid clicking",
       "pass": true,
-      "ms": 6530,
+      "ms": 12217,
       "detail": {
         "clicks": 5,
-        "final_theme_correct": true
+        "settled": true,
+        "button_matches_theme": true
       },
       "error": null
     },
     {
       "name": "Tap a pill -> answered",
       "pass": true,
-      "ms": 6866,
+      "ms": 8939,
       "detail": {
-        "question": "Show monthly revenue for 2025"
+        "question": "Top 5 products by revenue in 2025"
       },
       "error": null
     },
     {
       "name": "Ask a data question -> chart/table/SQL",
       "pass": true,
-      "ms": 4574,
+      "ms": 5141,
       "detail": {
         "badge": "Answered",
-        "answer": "The top product by revenue in 2025 was the Desi Student Laptop at \u20b91.46 crore, followed by the Urban Ultrabook 14 at \u20b91.40 crore and the Desi 2-in-1 Laptop at \u20b91.26 crore. Rounding out the top five were the Lotus Student Laptop at \u20b993.82 lakh and the Sapphire Gaming Laptop 15 at \u20b986.50 lakh.",
+        "answer": "The top product by revenue in 2025 was the Desi Student Laptop with \u20b91.46 crore, followed closely by the Urban Ultrabook 14 at \u20b91.40 crore. Rounding out the top five are the Desi 2-in-1 Laptop at \u20b91.26 crore, Lotus Student Laptop at \u20b993.82 lakh, and Sapphire Gaming Laptop 15 at \u20b986.50 lakh.",
         "tabs": [
           "Chart",
           "Table \u00b7 5",
@@ -212,17 +213,17 @@
           "How it worked"
         ],
         "followup": "Follow-up \u00b7 understood as \u201cWhat are the top 5 products by revenue in 2025?\u201d",
-        "meta": "4.0s 2,808 tokens"
+        "meta": "4.5s 2,915 tokens"
       },
       "error": null
     },
     {
       "name": "Follow-up uses conversation context",
       "pass": true,
-      "ms": 5046,
+      "ms": 4650,
       "detail": {
         "badge": "Answered",
-        "answer": "In 2025, the top product by revenue was the Desi Student Laptop at \u20b91.46 crore, followed closely by the Urban Ultrabook 14 at \u20b91.40 crore and the Desi 2-in-1 Laptop at \u20b91.26 crore.",
+        "answer": "The top product by revenue in 2025 was the Desi Student Laptop at \u20b91.46 crore, followed closely by the Urban Ultrabook 14 at \u20b91.40 crore and the Desi 2-in-1 Laptop at \u20b91.26 crore.",
         "tabs": [
           "Chart",
           "Table \u00b7 10",
@@ -230,68 +231,68 @@
           "How it worked"
         ],
         "followup": "Follow-up \u00b7 understood as \u201cWhat are the top 10 products by revenue in 2025?\u201d",
-        "meta": "4.5s 3,216 tokens"
+        "meta": "4.2s 3,342 tokens"
       },
       "error": null
     },
     {
       "name": "Chat about the data (no SQL)",
       "pass": true,
-      "ms": 3167,
+      "ms": 4954,
       "detail": {
         "badge": "About the data",
-        "answer": "This dataset contains e-commerce sales and customer data across India for 2024 and 2025. It tracks customer profiles, product catalog details across various categories, order headers with lifecycle statuses and channels, and line-item purchases including quantities, prices, and discounts.",
+        "answer": "This dataset tracks an Indian e-commerce business between January 1, 2024, and December 31, 2025. It contains information across four tables: `customers` (demographics, segment, location across Indian states/regions), `products` (catalogue, categories, unit prices, and unit costs in INR), `orders` (",
         "tabs": [
           "How it worked"
         ],
-        "followup": "Follow-up",
-        "meta": "2.6s 2,398 tokens"
+        "followup": "Follow-up \u00b7 understood as \u201cWhat is this dataset about?\u201d",
+        "meta": "4.3s 2,570 tokens"
       },
       "error": null
     },
     {
       "name": "Ask what a metric means (no SQL)",
       "pass": true,
-      "ms": 9654,
+      "ms": 2993,
       "detail": {
         "badge": "About the data",
-        "answer": "Revenue (also referred to as sales or GMV) is defined as the sum of line revenue: `quantity * unit_price * (1 - discount)` from `order_items`. It only includes orders with a status of 'delivered' or 'shipped'; cancelled and returned orders are excluded.",
+        "answer": "Revenue (also called sales or GMV) is defined as the sum of line revenue across orders with a status of 'delivered' or 'shipped'. Line revenue is calculated as `quantity * unit_price * (1 - discount)`. Orders that are 'cancelled' or 'returned' are excluded from revenue.",
         "tabs": [
           "How it worked"
         ],
         "followup": "Follow-up \u00b7 understood as \u201cHow is revenue defined in this dataset?\u201d",
-        "meta": "9.4s 2,257 tokens"
+        "meta": "2.7s 2,355 tokens"
       },
       "error": null
     },
     {
       "name": "Off-topic question is declined",
       "pass": true,
-      "ms": 3019,
+      "ms": 3522,
       "detail": {
         "badge": "Not in this data",
-        "answer": "The database only contains e-commerce sales, customer profiles, product catalog, and order information. Weather data is not tracked in this dataset.",
+        "answer": "The database only contains e-commerce sales, customer, order, and product data. Weather information is not tracked or stored in this dataset.",
         "tabs": [
           "How it worked"
         ],
         "followup": "Follow-up",
-        "meta": "2.6s 2,016 tokens"
+        "meta": "3.0s 2,087 tokens"
       },
       "error": null
     },
     {
       "name": "Rate an answer helpful",
       "pass": true,
-      "ms": 888,
+      "ms": 1639,
       "detail": {},
       "error": null
     },
     {
       "name": "Export CSV",
       "pass": true,
-      "ms": 446,
+      "ms": 942,
       "detail": {
-        "bytes": 214,
+        "bytes": 220,
         "file": "Top_5_products_by_revenue_in_2025.csv"
       },
       "error": null
@@ -299,9 +300,9 @@
     {
       "name": "Export XLSX",
       "pass": true,
-      "ms": 295,
+      "ms": 298,
       "detail": {
-        "bytes": 5748,
+        "bytes": 5754,
         "file": "Top_5_products_by_revenue_in_2025.xlsx"
       },
       "error": null
@@ -309,9 +310,9 @@
     {
       "name": "Export PDF",
       "pass": true,
-      "ms": 303,
+      "ms": 351,
       "detail": {
-        "bytes": 10672,
+        "bytes": 10699,
         "file": "Top_5_products_by_revenue_in_2025.pdf"
       },
       "error": null
@@ -319,7 +320,7 @@
     {
       "name": "Export PNG",
       "pass": true,
-      "ms": 217,
+      "ms": 233,
       "detail": {
         "bytes": 18046,
         "file": "Top_5_products_by_revenue_in_2025.png"
@@ -329,7 +330,7 @@
     {
       "name": "Upload asks guests to sign in",
       "pass": true,
-      "ms": 82,
+      "ms": 85,
       "detail": {
         "reason": "Sign in to upload your own data. Your files stay private to your account."
       },
@@ -338,7 +339,7 @@
     {
       "name": "Sign up -> success animation -> signed in",
       "pass": true,
-      "ms": 2818,
+      "ms": 4190,
       "detail": {
         "title": "Account created"
       },
@@ -347,7 +348,7 @@
     {
       "name": "Upload a CSV (multi-part) -> selected",
       "pass": true,
-      "ms": 590,
+      "ms": 599,
       "detail": {
         "dataset": "sales_sample"
       },
@@ -356,24 +357,24 @@
     {
       "name": "Ask about the upload (query + about)",
       "pass": true,
-      "ms": 7294,
+      "ms": 18632,
       "detail": {
-        "query": "The total sales amount is led by the South region with 5,600, followed by the North with 2,150, the West with 1,750, and the East with 800.",
-        "about": "The `sales_sample` table contains four columns:\n- `region`: The geographic sales area (e.g., East, North, South, West).\n- `order_date`: The date when the order occurred (format YYYY-MM-DD).\n- `amount`: The total monetary value of the sale in Rupees (\u20b9).\n- `units`: The number of items sold in that or"
+        "query": "The total sales amount is led by the South region with 5,600, followed by the North at 2,150, West at 1,750, and East at 800.",
+        "about": "The `sales_sample` table contains four columns:\n- `region`: The geographic sales area (East, North, South, West).\n- `order_date`: The date when the order occurred (between 2025-01-05 and 2025-03-28).\n- `amount`: The monetary value of the order in INR (\u20b9).\n- `units`: The quantity or number of items p"
       },
       "error": null
     },
     {
       "name": "Sign out hides private upload",
       "pass": true,
-      "ms": 1258,
+      "ms": 1422,
       "detail": {},
       "error": null
     },
     {
       "name": "Sign in again -> upload visible",
       "pass": true,
-      "ms": 3427,
+      "ms": 3719,
       "detail": {
         "datasets_visible": 2
       },
@@ -382,7 +383,7 @@
     {
       "name": "Wrong password shows an error",
       "pass": true,
-      "ms": 1918,
+      "ms": 1899,
       "detail": {
         "message": "Wrong email or password"
       },
@@ -391,7 +392,7 @@
     {
       "name": "Dashboard view renders KPIs",
       "pass": true,
-      "ms": 128,
+      "ms": 202,
       "detail": {
         "kpis": 6
       },
@@ -400,7 +401,7 @@
     {
       "name": "Data view renders",
       "pass": true,
-      "ms": 1576,
+      "ms": 1756,
       "detail": {
         "text": "This is the built-in demo: a synthetic Indian e-commerce store with planted patt"
       },
@@ -409,14 +410,14 @@
     {
       "name": "Metrics page hidden from normal users",
       "pass": true,
-      "ms": 6,
+      "ms": 92,
       "detail": {},
       "error": null
     },
     {
       "name": "Mobile layout (375 px): no overflow, menu opens",
       "pass": true,
-      "ms": 1328,
+      "ms": 1483,
       "detail": {
         "horizontal_overflow_px": 0
       },

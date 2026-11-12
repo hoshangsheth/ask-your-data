@@ -146,8 +146,8 @@ run in CI on SQLite and PostgreSQL on every push.
 
 | # | Defect | Impact | Status |
 |---|---|---|---|
-| 1 | Theme switch fell back to an instant toggle whenever the page had changed or scrolled in the last ~1.2 s (pre-captured snapshots invalidated) | the reported "transition isn't smooth / sometimes just toggles" | **Fixed**: rebuilt on the View Transitions API; 10 / 10 toggles animate |
-| 2 | Clicks during the ~1 s theme transition were swallowed by the transition overlay | first click after a switch sometimes did nothing | **Fixed** (`::view-transition { pointer-events: none }`) |
+| 1 | Theme switch fell back to an instant toggle whenever the page had changed or scrolled in the last ~1.2 s (pre-captured snapshots invalidated) | the reported "transition isn't smooth / sometimes just toggles" | **Fixed**: the original Ink Bleed shader now needs only one snapshot (the live page is the "from" layer), stale snapshots are re-captured on click instead of falling back, and the moving pills are kept live above the ink; 10 / 10 toggles show the ink |
+| 2 | html2canvas's own temporary nodes counted as page changes, so a snapshot went stale the moment it was taken | most switches had to re-capture first | **Fixed** (only changes inside the app count) |
 | 3 | Sign-in dialog reopened in "create account" mode after sign-out → signing back in failed (409) | users could not sign back in without switching mode | **Fixed** (dialog always opens on "Sign in") |
 | 4 | Elements with the `hidden` attribute could still render (component CSS overrode it) | admin-only Metrics menu item visible to users | **Fixed** (global `[hidden]` rule) |
 
@@ -229,12 +229,13 @@ writing the answer 1.0 s. **The model is ~97% of answer time; the app's own work
 Production CPU / memory per function invocation is not exposed outside the Vercel dashboard and
 was not measured.
 
-### 5.6 Theme switch smoothness [M]
-Frame pacing over 1.2 s (budget ≤ 34 ms per frame ≈ 30 fps; 100% when idle in both browsers):
-headless Chromium 80% of frames on time during the switch (56–93% across five runs); headed Edge
-on this 2014 integrated GPU 60% (23–63%). A plain theme flip **with no animation** also drops frames on this machine (whole-page
-restyle), so these numbers mostly reflect the test hardware. Reliability (the reported problem) is
-fixed: 10 / 10 switches animate.
+### 5.6 Theme switch (Ink Bleed) [M]
+24 / 24 switches showed the ink effect in headless Chromium and in Edge with GPU (12 each,
+including right after changing views), and 10 / 10 in the browser suite including after scrolling.
+On this 2014 machine the ink starts ~0.17–0.2 s after the click when its snapshot is ready, and
+~0.55–0.75 s when the page changed just before and the snapshot is re-captured on the spot
+(html2canvas ≈ 0.7 s per full-page capture here); the spread itself takes 1.4 s plus a 0.15 s fade.
+The earlier View Transitions interim version (circle reveal) was replaced by the original effect.
 
 ---
 
@@ -425,7 +426,7 @@ binding factors are accuracy on the customer's own data and user trust, not runn
 | Performance | 7 / 10 | sub-10 ms core APIs; dashboard and model latency dominate; CDN and region issues |
 | Scalability | 7 / 10 | stateless, serverless; per-instance limits and cold starts |
 | Security | 8 / 10 | 18 / 18 malicious SQL blocked, private data isolation, injection handled; per-instance rate limit |
-| UX | 8 / 10 | reliable theme switch, onboarding, follow-ups, exports; first-load outliers |
+| UX | 8 / 10 | reliable ink-bleed theme switch, onboarding, follow-ups, exports; first-load outliers |
 | Business value | 7 / 10 | strong cost case on assumptions; no real users yet |
 | **Overall** | **8.1 / 10** | |
 

@@ -139,10 +139,12 @@ def run(url: str, full: bool) -> dict:
                 400 <= res.status < 500 and r.client_errors.append(f"{res.status} {res.request.method} {res.url}")
             ),
         )
-        # Count every View Transition the app starts (the theme switch uses them).
+        # Count every ink-bleed spread (the WebGL overlay becoming active).
         page.add_init_script(
-            """window.__vt = 0; const o = document.startViewTransition?.bind(document);
-            if (o) document.startViewTransition = (cb) => { window.__vt++; return o(cb); };"""
+            """window.__vt = 0; document.addEventListener("DOMContentLoaded", () => {
+              const c = document.getElementById("ink-canvas"); let on = false;
+              new MutationObserver(() => { const a = c.classList.contains("is-active"); if (a && !on) window.__vt++; on = a; })
+                .observe(c, { attributes: true, attributeFilter: ["class"] }); });"""
         )
 
         # ---- loading -------------------------------------------------------------------------
@@ -230,7 +232,7 @@ def run(url: str, full: bool) -> dict:
                 vt_before = page.evaluate("() => window.__vt")
                 box = btn.bounding_box()
                 page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-                page.wait_for_timeout(950)
+                page.wait_for_timeout(2600)  # snapshot (if needed) + 1.4 s spread + fade
                 after = page.evaluate("() => document.documentElement.dataset.theme")
                 animated = page.evaluate("() => window.__vt") > vt_before
                 results.append(after != before and animated)
@@ -249,11 +251,16 @@ def run(url: str, full: bool) -> dict:
             for _ in range(5):
                 btn.click()
                 page.wait_for_timeout(120)
-            page.wait_for_timeout(1200)
+            page.wait_for_timeout(4000)
             end = page.evaluate("() => document.documentElement.dataset.theme")
-            stuck = page.evaluate("() => !!document.querySelector('html.theme-fade')")
-            expect(end != start and not stuck, f"start={start} end={end} stuck={stuck}")
-            return {"clicks": 5, "final_theme_correct": True}
+            state = page.evaluate(
+                """() => ({ fade: document.documentElement.classList.contains('theme-fade'),
+                    overlay: document.getElementById('ink-canvas').classList.contains('is-active'),
+                    pressed: document.getElementById('theme-toggle').getAttribute('aria-pressed') }) """
+            )
+            consistent = state["pressed"] == str(end == "dark").lower()
+            expect(not state["fade"] and not state["overlay"] and consistent, f"start={start} end={end} {state}")
+            return {"clicks": 5, "settled": True, "button_matches_theme": consistent}
 
         def theme_smoothness():
             """Frame pacing during a theme switch vs. the same page idle. Headless Chromium renders
@@ -272,8 +279,8 @@ def run(url: str, full: bool) -> dict:
             # laptop, integrated GPU) frame pacing varies run to run; see EVALUATION_REPORT.md.
             return out
 
-        r.check("Theme toggle animates every time (10 toggles + scroll)", theme_reliability)
-        r.check("Theme toggle survives rapid clicking", theme_rapid)
+        r.check("Ink-bleed theme switch animates every time (10 + scroll)", theme_reliability)
+        r.check("Theme toggle settles after rapid clicking", theme_rapid)
         theme_smoothness_result = theme_smoothness()  # measurement only (see the function)
         r.measurements["theme_transition_frames"] = theme_smoothness_result
 

@@ -1,30 +1,30 @@
-server ready in 8.44s at http://127.0.0.1:8010
-PASS  Page loads (5 loads, cold + warm)                1609 ms 
-PASS  How-to-use popup on first visit, dismiss, reopen 4792 ms 
-PASS  Quick-question pills drift and pause on hover    1562 ms 
-PASS  Theme toggle animates every time (10 toggles + scroll) 10107 ms 
-PASS  Theme toggle survives rapid clicking             6530 ms 
-PASS  Tap a pill -> answered                           6866 ms 
-PASS  Ask a data question -> chart/table/SQL           4574 ms 
-PASS  Follow-up uses conversation context              5046 ms 
-PASS  Chat about the data (no SQL)                     3167 ms 
-PASS  Ask what a metric means (no SQL)                 9654 ms 
-PASS  Off-topic question is declined                   3019 ms 
-PASS  Rate an answer helpful                           888 ms 
-PASS  Export CSV                                       446 ms 
-PASS  Export XLSX                                      295 ms 
-PASS  Export PDF                                       303 ms 
-PASS  Export PNG                                       217 ms 
-PASS  Upload asks guests to sign in                    82 ms 
-PASS  Sign up -> success animation -> signed in        2818 ms 
-PASS  Upload a CSV (multi-part) -> selected            590 ms 
-PASS  Ask about the upload (query + about)             7294 ms 
-PASS  Sign out hides private upload                    1258 ms 
-PASS  Sign in again -> upload visible                  3427 ms 
-PASS  Wrong password shows an error                    1918 ms 
-PASS  Dashboard view renders KPIs                      128 ms 
-PASS  Data view renders                                1576 ms 
-PASS  Metrics page hidden from normal users            6 ms 
-PASS  Mobile layout (375 px): no overflow, menu opens  1328 ms 
+server ready in 8.7s at http://127.0.0.1:8010
+PASS  Page loads (5 loads, cold + warm)                2067 ms 
+PASS  How-to-use popup on first visit, dismiss, reopen 6095 ms 
+PASS  Quick-question pills drift and pause on hover    1607 ms 
+PASS  Ink-bleed theme switch animates every time (10 + scroll) 27638 ms 
+PASS  Theme toggle settles after rapid clicking        12217 ms 
+PASS  Tap a pill -> answered                           8939 ms 
+PASS  Ask a data question -> chart/table/SQL           5141 ms 
+PASS  Follow-up uses conversation context              4650 ms 
+PASS  Chat about the data (no SQL)                     4954 ms 
+PASS  Ask what a metric means (no SQL)                 2993 ms 
+PASS  Off-topic question is declined                   3522 ms 
+PASS  Rate an answer helpful                           1639 ms 
+PASS  Export CSV                                       942 ms 
+PASS  Export XLSX                                      298 ms 
+PASS  Export PDF                                       351 ms 
+PASS  Export PNG                                       233 ms 
+PASS  Upload asks guests to sign in                    85 ms 
+PASS  Sign up -> success animation -> signed in        4190 ms 
+PASS  Upload a CSV (multi-part) -> selected            599 ms 
+PASS  Ask about the upload (query + about)             18632 ms 
+PASS  Sign out hides private upload                    1422 ms 
+PASS  Sign in again -> upload visible                  3719 ms 
+PASS  Wrong password shows an error                    1899 ms 
+PASS  Dashboard view renders KPIs                      202 ms 
+PASS  Data view renders                                1756 ms 
+PASS  Metrics page hidden from normal users            92 ms 
+PASS  Mobile layout (375 px): no overflow, menu opens  1483 ms 
 
 27/27 checks passed; console errors: 1; 5xx: 0
