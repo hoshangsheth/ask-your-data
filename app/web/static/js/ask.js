@@ -17,6 +17,7 @@ import { currentDataset, describeSize, onDatasetChange } from "./datasets.js";
 import { escapeHtml, formatCell, highlightSql, isMoneyColumn, isRatioColumn, label, num, toCsv } from "./format.js";
 import { hydrateIcons, icon } from "./icons.js";
 import { remember } from "./recent.js";
+import { saveChart } from "./saved-charts.js";
 import { toast } from "./toast.js";
 
 // Icons and tags for starter questions (demo store); uploads cycle through generic ones.
@@ -92,11 +93,27 @@ function scrollToBottom() {
   t.scrollTop = t.scrollHeight;
 }
 
+/** Bring a new exchange to the top of the thread, so its answer is read from the beginning. */
+function scrollToExchange(questionEl) {
+  const t = $("thread");
+  const top = t.scrollTop + questionEl.getBoundingClientRect().top - t.getBoundingClientRect().top - 12;
+  t.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+}
+
+/** Answer charts and tables are sized to the visible thread (CSS reads --thread-h). */
+function trackThreadHeight() {
+  const t = $("thread");
+  const set = () => t.style.setProperty("--thread-h", `${t.clientHeight}px`);
+  set();
+  if ("ResizeObserver" in window) new ResizeObserver(set).observe(t);
+}
+
 function addQuestion(text) {
   const el = document.createElement("div");
   el.className = "msg-q";
   el.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
   thread().appendChild(el);
+  return el;
 }
 
 function addAssistantShell() {
@@ -226,7 +243,7 @@ function renderAnswer(card, r) {
     const yi = r.columns.indexOf(r.chart.y);
     const labels = r.rows.map((row) => String(row[xi]));
     const longLabels = labels.reduce((a, l) => a + l.length, 0) / labels.length > 14;
-    drawChart(card.querySelector("canvas"), {
+    const spec = {
       type: r.chart.type,
       labels,
       values: r.rows.map((row) => row[yi]),
@@ -235,7 +252,16 @@ function renderAnswer(card, r) {
       ratio: isRatioColumn(r.chart.y),
       compact: r.currency !== "INR", // uploaded data: 1.2K / 3.4M axis labels
       horizontal: r.chart.type === "bar" && longLabels,
-    });
+    };
+    drawChart(card.querySelector("canvas"), spec);
+    // Every charted answer also appears on the Dashboard ("From your questions").
+    if (r.status === "ok") {
+      saveChart(r.dataset_id || currentDataset().id, {
+        id: r.question_id || `${Date.now()}`,
+        question: r.standalone_question || r.question,
+        spec,
+      });
+    }
   }
 
   // Tabs, copy, CSV, ask again.
@@ -405,7 +431,7 @@ export async function askQuestion(text) {
   $("welcome").hidden = true;
   remember(question);
 
-  addQuestion(question);
+  const questionEl = addQuestion(question);
   const card = addAssistantShell();
   const stop = renderWorking(card);
   scrollToBottom();
@@ -422,7 +448,7 @@ export async function askQuestion(text) {
     busy = false;
     delete document.documentElement.dataset.busy;
     $("send-btn").disabled = false;
-    scrollToBottom();
+    scrollToExchange(questionEl);
   }
 }
 
@@ -484,6 +510,7 @@ export function newChat() {
 
 export function initAsk() {
   renderWelcome();
+  trackThreadHeight();
   onDatasetChange(() => newChat()); // a conversation is about one dataset
   $("new-chat").addEventListener("click", () => {
     newChat();
