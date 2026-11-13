@@ -19,7 +19,8 @@ import pandas as pd
 
 MAX_TABLES = 50
 MAX_COLUMNS = 300
-MAX_ROWS = 1_000_000
+MAX_ROWS = 2_000_000  # per table
+MAX_TOTAL_ROWS = 3_000_000  # across all tables of one upload
 CONVERT_THRESHOLD = 0.9  # share of non-empty values that must parse to change a column's type
 
 _SQL_RESERVED = {
@@ -107,10 +108,22 @@ def _non_empty(col: pd.Series) -> pd.Series:
     return col.notna() & (col.astype(str).str.strip() != "")
 
 
+SAMPLE = 2000  # values checked first, so obviously non-numeric / non-date columns are skipped fast
+
+
+def _sample(col: pd.Series, present: pd.Series) -> pd.Series:
+    values = col[present]
+    return values.sample(SAMPLE, random_state=0) if len(values) > SAMPLE else values
+
+
 def _try_numeric(col: pd.Series) -> pd.Series | None:
     present = _non_empty(col)
     if not present.any():
         return None
+    if len(col) > SAMPLE:  # cheap check on a sample before converting the whole column
+        probe = _sample(col, present).astype(str).str.strip().str.replace(_NUMBER_JUNK, "", regex=True)
+        if pd.to_numeric(probe, errors="coerce").notna().mean() < CONVERT_THRESHOLD:
+            return None
     text = col.astype(str).str.strip().str.replace(_NUMBER_JUNK, "", regex=True)
     text = text.str.replace(r"^\((.*)\)$", r"-\1", regex=True)  # "(1,234)" = accounting negative
     parsed = pd.to_numeric(text, errors="coerce")
@@ -123,6 +136,10 @@ def _try_dates(col: pd.Series) -> pd.Series | None:
     present = _non_empty(col)
     if not present.any():
         return None
+    if len(col) > SAMPLE:
+        probe = _sample(col, present).astype(str).str.strip()
+        if probe.str.contains(r"\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}", regex=True).mean() < CONVERT_THRESHOLD:
+            return None
     text = col.astype(str).str.strip()
     # Only text that looks like a date (digits with separators); avoids turning codes into dates.
     if text[present].str.contains(r"\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}", regex=True).mean() < CONVERT_THRESHOLD:
@@ -171,6 +188,10 @@ def clean_tables(raw: list[tuple[str, pd.DataFrame]]) -> list[CleanTable]:
         raise ValueError("no data rows found in the file")
     if len(raw) > MAX_TABLES:
         raise TooLarge(f"the file has {len(raw)} tables; the limit is {MAX_TABLES}")
+
+    total = sum(len(df) for _, df in raw)
+    if total > MAX_TOTAL_ROWS:
+        raise TooLarge(f"the upload has {total:,} rows in all; the limit is {MAX_TOTAL_ROWS:,}")
 
     names = _unique([safe_identifier(n, f"table_{i + 1}") for i, (n, _) in enumerate(raw)])
     tables = []

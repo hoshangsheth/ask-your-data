@@ -134,41 +134,63 @@ def schema_text(meta: DatasetMeta, dialect: str = "sqlite") -> str:
 
 # ---- Starter questions ----------------------------------------------------------------------
 def _human(name: str) -> str:
-    return name.replace("_", " ")
+    """'olist_order_items_dataset' -> 'olist order items' (file-name noise like 'dataset' dropped)."""
+    words = [w for w in name.split("_") if w not in ("dataset", "data", "table", "tbl")]
+    return " ".join(words or name.split("_"))
 
 
 def _is_id(c: ColumnProfile, rows: int) -> bool:
     return c.name == "id" or c.name.endswith("_id") or (c.type == "INTEGER" and c.distinct == rows and rows > 20)
 
 
+# Numbers that are labels or positions, not amounts: summing them makes no sense.
+_CODE_LIKE = ("zip", "code", "prefix", "postal", "pincode", "phone", "lat", "lng", "lon", "sequential", "number")
 _MONEY_LIKE = ("revenue", "sales", "amount", "total", "price", "cost", "profit", "value", "spend", "income")
 
 
-def suggest_questions(meta: DatasetMeta, limit: int = 6) -> list[str]:
+def _is_measure(c: ColumnProfile, rows: int) -> bool:
+    words = c.name.split("_")
+    code_like = any(w.startswith(k) for w in words for k in _CODE_LIKE)
+    return c.type in ("INTEGER", "REAL") and not _is_id(c, rows) and not code_like and c.distinct > 2
+
+
+def _table_questions(t: TableProfile) -> tuple[int, list[str]]:
+    """Starter questions for one table, and how promising the table is (money and dates first)."""
+    measures = [c for c in t.columns if _is_measure(c, t.rows)]
+    # Money-like columns make the most useful first questions ("revenue by store").
+    measures.sort(key=lambda c: not any(w in c.name for w in _MONEY_LIKE))
+    categories = [c for c in t.columns if c.type == "TEXT" and 2 <= c.distinct <= 30]
+    dates = [c for c in t.columns if c.type == "DATE"]
+    table = _human(t.name)
+    money = bool(measures) and any(w in measures[0].name for w in _MONEY_LIKE)
     out: list[str] = []
-    for t in meta.tables:
-        measures = [c for c in t.columns if c.type in ("INTEGER", "REAL") and not _is_id(c, t.rows) and c.distinct > 2]
-        # Money-like columns make the most useful first questions ("revenue by store").
-        measures.sort(key=lambda c: not any(w in c.name for w in _MONEY_LIKE))
-        categories = [c for c in t.columns if c.type == "TEXT" and 2 <= c.distinct <= 30]
-        dates = [c for c in t.columns if c.type == "DATE"]
-        table = _human(t.name)
-        if measures and categories:
-            m, g = measures[0], categories[0]
-            out.append(f"What is the total {_human(m.name)} by {_human(g.name)}?")
-            out.append(f"Which {_human(g.name)} has the highest average {_human(m.name)}?")
-        if measures and dates:
-            out.append(f"Show the monthly trend of {_human(measures[0].name)}")
-        elif dates:
-            out.append(f"How many {table} records are there per month?")
-        if categories:
-            out.append(f"What are the most common {_human(categories[-1].name)} values in {table}?")
-        if len(measures) > 1:
-            out.append(f"What are the average {_human(measures[0].name)} and {_human(measures[1].name)}?")
+    if measures and categories:
+        m, g = measures[0], categories[0]
+        how = "total" if money else "average"  # adding up ratings or sizes means nothing
+        out.append(f"What is the {how} {_human(m.name)} by {_human(g.name)}?")
+        out.append(f"Which {_human(g.name)} has the highest average {_human(m.name)}?")
+    if measures and dates:
+        out.append(f"Show the monthly trend of {_human(measures[0].name)}")
+    elif dates:
+        out.append(f"How many {table} records are there per month?")
+    if categories:
+        out.append(f"What are the most common {_human(categories[-1].name)} values in {table}?")
+    if len(measures) > 1:
+        out.append(f"What are the average {_human(measures[0].name)} and {_human(measures[1].name)}?")
+    if not out:
         out.append(f"How many rows are in {table}?")
-    seen, unique = set(), []
-    for q in out:
-        if q not in seen:
-            seen.add(q)
-            unique.append(q)
-    return unique[:limit]
+    return 2 * money + bool(dates) + bool(categories), out
+
+
+def suggest_questions(meta: DatasetMeta, limit: int = 6) -> list[str]:
+    """A few useful first questions. With several tables, the best tables lead and take turns."""
+    ranked = sorted((_table_questions(t) for t in meta.tables), key=lambda x: -x[0])
+    queues = [qs for _, qs in ranked]
+    out: list[str] = []
+    while len(out) < limit and any(queues):
+        for qs in queues:
+            if qs and len(out) < limit:
+                q = qs.pop(0)
+                if q not in out:
+                    out.append(q)
+    return out

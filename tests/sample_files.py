@@ -152,3 +152,29 @@ def stata() -> bytes:
     buf = io.BytesIO()
     NUMERIC.rename(columns={"Amount (₹)": "amount", "Order Date": "order_date"}).to_stata(buf, write_index=False)
     return buf.getvalue()
+
+
+def zip_of(entries: dict[str, bytes]) -> bytes:
+    """A .zip holding the given files (name -> bytes)."""
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for name, data in entries.items():
+            zf.writestr(name, data)
+    return buf.getvalue()
+
+
+def relational_zip() -> bytes:
+    """Two related tables, like an export of a small shop: customers and their orders."""
+    customers = b"customer_id,city\nc1,Mumbai\nc2,Pune\nc3,Delhi\n"
+    orders = b"order_id,customer_id,amount\no1,c1,100\no2,c1,250\no3,c2,80\no4,c3,40\n"
+    return zip_of(
+        {
+            "shop/customers.csv": customers,
+            "shop/orders.csv": orders,
+            "shop/readme.md": b"not data",
+            "__MACOSX/shop/._orders.csv": b"junk",
+            "shop/.DS_Store": b"junk",
+        }
+    )

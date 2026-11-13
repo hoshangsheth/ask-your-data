@@ -134,3 +134,24 @@ def test_health_reports_storage(settings):
         sign_up(c)
         storage = c.get("/api/health").json()["storage"]
         assert storage["files"] == "local" and storage["datasets"] in ("sqlite-files", "postgres")
+
+
+def test_zip_upload_makes_one_dataset_with_related_tables(settings):
+    join = SQLDraft(
+        True,
+        "SELECT c.city, SUM(o.amount) AS revenue FROM orders o JOIN customers c ON c.customer_id = o.customer_id "
+        "GROUP BY c.city ORDER BY revenue DESC",
+        "Revenue by city.",
+    )
+    llm = FakeLLM([join], Summary("Mumbai leads.", "bar", "city", "revenue"))
+    with TestClient(create_app(settings, llm)) as c:
+        sign_up(c)
+        r = upload(c, files.relational_zip(), "shop.zip")
+        assert r.status_code == 201, r.text
+        ds = r.json()
+        assert ds["file_format"] == "zip" and ds["name"] == "shop"
+        assert sorted((t["name"], t["rows"]) for t in ds["tables"]) == [("customers", 3), ("orders", 4)]
+        answer = c.post("/api/ask", json={"question": "Revenue by city?", "dataset_id": ds["id"]}).json()
+        assert answer["status"] == "ok" and answer["rows"][0] == ["Mumbai", 350]
+        assert "TABLE customers" in llm.calls[0]["schema"] and "TABLE orders" in llm.calls[0]["schema"]
+        assert ".zip" in c.get("/api/formats").json()["extensions"]

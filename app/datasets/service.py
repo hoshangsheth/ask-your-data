@@ -4,6 +4,7 @@ Upload orchestration: validate -> read -> clean -> profile -> store.
 Usage:
     service = DatasetService(store, max_upload_mb=50)
     meta = service.ingest(data, "Q3 sales.xlsx")      # raises UploadError with a user-safe message
+    meta = service.ingest(zip_bytes, "olist.zip")     # a .zip: one table per data file inside
 """
 
 import uuid
@@ -11,7 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from app.datasets.cleaning import TooLarge, clean_tables
-from app.datasets.formats import SUPPORTED_EXTENSIONS, UnreadableFile, UnsupportedFile, read_tables
+from app.datasets.formats import SUPPORTED_EXTENSIONS, TooManyFiles, UnreadableFile, UnsupportedFile, read_tables
 from app.datasets.profile import DatasetMeta, profile_table, suggest_questions
 from app.datasets.store import DatasetStore
 
@@ -58,7 +59,7 @@ class DatasetService:
             tables = clean_tables(read_tables(data, filename))
         except UnsupportedFile as e:
             raise UploadError(str(e), status_code=415) from e
-        except TooLarge as e:
+        except (TooLarge, TooManyFiles) as e:
             raise UploadError(str(e), status_code=413) from e
         except (UnreadableFile, ValueError) as e:
             raise UploadError(str(e), status_code=422) from e

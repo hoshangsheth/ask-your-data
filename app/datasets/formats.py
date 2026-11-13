@@ -10,16 +10,19 @@ Supported formats (extension -> reader):
     Documents        .docx (tables, else paragraphs)  .pdf (tables, else text lines)
     Databases        .sqlite .sqlite3 .db          (every table)
     Statistics       .dta (Stata) .sas7bdat .xpt (SAS)
+    Archives         .zip                          (every supported file inside; one table per file)
 
 Readers never touch the database and never use the uploaded file name as a path; they only
 get bytes. Raise UnsupportedFile / UnreadableFile with a message that is safe to show users.
 """
 
+import csv
 import io
 import json
 import os
 import sqlite3
 import tempfile
+import zipfile
 from collections.abc import Callable
 from pathlib import Path
 
@@ -38,6 +41,10 @@ class UnreadableFile(ValueError):
     """The file type is supported but its content could not be read as tables."""
 
 
+class TooManyFiles(ValueError):
+    """A zip archive holds too many files or too much data. The message is safe to show users."""
+
+
 # ---- Delimited text -------------------------------------------------------------------------
 def _decode(data: bytes) -> str:
     """Decode text trying UTF-8 (with/without BOM) first, then common Windows encodings."""
@@ -54,11 +61,25 @@ def _read_delimited(data: bytes, stem: str, sep: str | None = None) -> RawTables
     if not text.strip():
         raise UnreadableFile("the file is empty")
     try:
-        # sep=None makes pandas sniff the delimiter (comma, semicolon, tab, pipe, ...).
-        df = pd.read_csv(io.StringIO(text), sep=sep, engine="python")
+        # Sniff the delimiter (comma, semicolon, tab, pipe, ...) from a sample, then use pandas'
+        # fast C parser; fall back to the slower, more forgiving Python parser if that fails.
+        sep = sep or _sniff_delimiter(text[:65536])
+        try:
+            df = pd.read_csv(io.StringIO(text), sep=sep, low_memory=False) if sep else None
+        except Exception:
+            df = None
+        if df is None:
+            df = pd.read_csv(io.StringIO(text), sep=None, engine="python")
     except Exception as e:  # pandas raises several parser error types
         raise UnreadableFile(f"could not read the file as a table: {str(e).splitlines()[0][:200]}") from e
     return [(stem, df)]
+
+
+def _sniff_delimiter(sample: str) -> str | None:
+    try:
+        return csv.Sniffer().sniff(sample, delimiters=",;	|").delimiter
+    except csv.Error:
+        return None
 
 
 def _read_text(data: bytes, stem: str) -> RawTables:
@@ -257,6 +278,55 @@ def _read_sqlite(data: bytes, stem: str) -> RawTables:
     return tables
 
 
+# ---- Zip archives ---------------------------------------------------------------------------
+MAX_ZIP_FILES = 50  # data files read from one archive
+MAX_UNZIPPED_BYTES = 400 * 1024 * 1024  # total uncompressed size: stops "zip bombs"
+
+
+def _zip_members(zf: zipfile.ZipFile) -> list[zipfile.ZipInfo]:
+    """Data files in the archive: no folders, macOS metadata, hidden files or nested archives."""
+    members = []
+    for m in zf.infolist():
+        parts = Path(m.filename).parts
+        if m.is_dir() or "__MACOSX" in parts or any(p.startswith(".") for p in parts):
+            continue
+        if Path(m.filename).suffix.lower() in READERS:
+            members.append(m)
+    return members
+
+
+def _read_zip(data: bytes, stem: str) -> RawTables:
+    """Every supported file in a .zip becomes one table (or several, e.g. Excel sheets), named after the file."""
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(data))
+    except zipfile.BadZipFile as e:
+        raise UnreadableFile("not a valid zip file") from e
+    with zf:
+        members = _zip_members(zf)
+        if not members:
+            raise UnreadableFile("the zip has no supported data files (CSV, Excel, JSON, Parquet, ...)")
+        if len(members) > MAX_ZIP_FILES:
+            raise TooManyFiles(f"the zip has {len(members)} data files; the limit is {MAX_ZIP_FILES}")
+        if sum(m.file_size for m in members) > MAX_UNZIPPED_BYTES:
+            raise TooManyFiles(f"the unzipped files are larger than {MAX_UNZIPPED_BYTES // (1024 * 1024)} MB")
+        tables: RawTables = []
+        budget = MAX_UNZIPPED_BYTES
+        for m in members:
+            if m.flag_bits & 0x1:
+                raise UnreadableFile("password-protected zip files are not supported")
+            with zf.open(m) as f:
+                content = f.read(budget + 1)  # never trust the sizes in the zip header
+            budget -= len(content)
+            if budget < 0:
+                raise TooManyFiles(f"the unzipped files are larger than {MAX_UNZIPPED_BYTES // (1024 * 1024)} MB")
+            name = Path(m.filename).name
+            try:
+                tables += READERS[Path(name).suffix.lower()](content, Path(name).stem or "data")
+            except UnreadableFile as e:
+                raise UnreadableFile(f"{name}: {e}") from e
+        return tables
+
+
 # ---- Registry -------------------------------------------------------------------------------
 READERS: dict[str, Callable[[bytes, str], RawTables]] = {
     ".csv": lambda d, s: _read_delimited(d, s),
@@ -286,15 +356,17 @@ READERS: dict[str, Callable[[bytes, str], RawTables]] = {
     ".xpt": _read_with(pd.read_sas, format="xport"),
 }
 
-SUPPORTED_EXTENSIONS: tuple[str, ...] = tuple(READERS)
+SUPPORTED_EXTENSIONS: tuple[str, ...] = (*READERS, ".zip")
 
 
 def read_tables(data: bytes, filename: str) -> RawTables:
     """Read an uploaded file into raw tables, choosing the reader by extension."""
     ext = Path(filename).suffix.lower()
-    if ext not in READERS:
+    if ext not in SUPPORTED_EXTENSIONS:
         raise UnsupportedFile(
             f"'{ext or filename}' files are not supported. Supported: {', '.join(SUPPORTED_EXTENSIONS)}"
         )
     stem = Path(filename).stem or "data"
+    if ext == ".zip":  # an archive of data files (also how the browser sends several files at once)
+        return _read_zip(data, stem)
     return READERS[ext](data, stem)
