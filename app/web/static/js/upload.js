@@ -4,9 +4,9 @@
  * Entry points: the sidebar "Upload" button, the paperclip in the composer, the dropzone on the
  * welcome screen, or dropping files anywhere. Several files at once (for example the 9 CSVs of a
  * relational dataset) are zipped in the browser and uploaded as one dataset with one table per
- * file; a .zip file is uploaded as it is. While uploading, a progress row appears in the
- * "Your data" list ("Uploading 45%" -> "Reading tables…"). On success the new dataset is
- * selected and a new chat starts on it.
+ * file; a .zip file is uploaded as it is. Progress shows in a popup (upload-popup.js) that can
+ * be hidden while the upload continues. On success the new dataset is selected and a new chat
+ * starts on it.
  *
  * Exports: initUpload()
  */
@@ -14,34 +14,14 @@
 import { getFormats, uploadDataset } from "./api.js";
 import { currentUser, requireSignIn } from "./auth.js";
 import { addDataset, describeSize } from "./datasets.js";
-import { escapeHtml } from "./format.js";
-import { icon } from "./icons.js";
 import { toast } from "./toast.js";
+import { createUploadPopup } from "./upload-popup.js";
 
 const $ = (id) => document.getElementById(id);
 let formats = { extensions: [".csv", ".xlsx", ".json"], max_upload_mb: 50 };
 let uploading = false;
 
-/** Progress row shown at the top of the dataset list while a file uploads. */
-function progressRow(name) {
-  const li = document.createElement("li");
-  li.className = "ds-item is-uploading";
-  li.innerHTML = `<div class="ds-select"><span class="ds-icon">${icon("upload")}</span>
-    <span class="ds-text"><span class="ds-name">${escapeHtml(name)}</span>
-    <span class="ds-meta" data-status>Uploading 0%</span>
-    <span class="ds-progress"><span data-bar></span></span></span></div>`;
-  const list = $("dataset-list");
-  list.insertBefore(li, list.children[1] ?? null);
-  return {
-    progress(fraction) {
-      const pct = Math.round(fraction * 100);
-      li.querySelector("[data-bar]").style.width = `${pct}%`;
-      li.querySelector("[data-status]").textContent = pct < 100 ? `Uploading ${pct}%` : "Reading tables…";
-    },
-    status: (text) => (li.querySelector("[data-status]").textContent = text),
-    remove: () => li.remove(),
-  };
-}
+let popup = null; // created in initUpload()
 
 const FFLATE_URL = "https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js";
 const extOf = (name) => `.${name.split(".").pop().toLowerCase()}`;
@@ -74,28 +54,23 @@ async function upload(fileList) {
   // Drag and drop skips the picker, so check here too.
   if (!(await requireSignIn("Sign in to upload your own data. Your files stay private to your account."))) return;
   uploading = true;
-  const label = files.length > 1 ? `${files.length} files` : files[0].name;
-  const row = progressRow(label);
+  const compressing = files.length > 1;
+  popup.start(files, { compressing });
   try {
-    let file = files[0];
-    if (files.length > 1) {
-      row.status("Compressing…");
-      file = await zipFiles(files);
-    }
+    const file = compressing ? await zipFiles(files) : files[0];
     if (file.size > formats.max_upload_mb * 1024 * 1024) {
       throw new Error(
-        files.length > 1
+        compressing
           ? `even compressed, these files are larger than ${formats.max_upload_mb} MB`
           : `the file is larger than ${formats.max_upload_mb} MB (zipping it first usually helps)`,
       );
     }
-    const dataset = await uploadDataset(file, (f) => row.progress(f));
-    row.remove();
+    popup.uploading(file);
+    const dataset = await uploadDataset(file, (f) => popup.progress(f));
     addDataset(dataset); // selects it -> views switch and a new chat starts
-    toast(`"${dataset.name}" is ready: ${describeSize(dataset)}`);
+    if (!popup.done(dataset)) toast(`"${dataset.name}" is ready: ${describeSize(dataset)}`);
   } catch (err) {
-    row.remove();
-    toast(`Upload failed: ${err.message}`, { error: true });
+    if (!popup.fail(err.message || "something went wrong")) toast(`Upload failed: ${err.message}`, { error: true });
   } finally {
     uploading = false;
   }
@@ -132,6 +107,7 @@ export async function initUpload() {
   const pick = async () => {
     if (currentUser().signed_in || (await requireSignIn(SIGN_IN_REASON))) input.click();
   };
+  popup = createUploadPopup({ onPickAgain: pick });
   $("upload-btn").addEventListener("click", pick);
   $("attach-btn").addEventListener("click", pick);
   $("dropzone").addEventListener("click", pick);

@@ -196,6 +196,40 @@
   </dialog>
 
   <!-- Sign in / create account (js/auth.js) -->
+  <!-- Upload progress: pops up while files upload and become tables (states set by js/upload.js). -->
+  <dialog class="upload-dialog" id="upload-dialog" aria-labelledby="up-title" data-state="upload">
+    <div class="up-body">
+      <button type="button" class="icon-btn auth-close" id="up-close" aria-label="Hide" title="Keep uploading in the background"><span data-icon="x"></span></button>
+      <div class="up-visual" aria-hidden="true">
+        <div class="up-orbit"></div>
+        <div class="up-tile">
+          <svg class="up-doc" viewBox="0 0 48 48"><path d="M14 6h14l10 10v24a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M28 6v10h10"/></svg>
+          <svg class="up-arrow" viewBox="0 0 24 24"><path d="M12 18V7M7 11.5L12 6.5l5 5"/></svg>
+          <span class="up-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <svg class="up-check" viewBox="0 0 52 52"><circle cx="26" cy="26" r="23"/><path d="M15.5 27.5l7 7 14-15"/></svg>
+          <svg class="up-fail" viewBox="0 0 52 52"><circle cx="26" cy="26" r="23"/><path d="M19 19l14 14M33 19L19 33"/></svg>
+        </div>
+      </div>
+      <h2 id="up-title">Uploading</h2>
+      <p class="up-sub" id="up-sub"></p>
+      <ul class="up-files" id="up-files"></ul>
+      <div class="up-progress" id="up-progress">
+        <div class="up-track"><span class="up-fill" id="up-fill"></span></div>
+        <div class="up-stats"><span id="up-pct">0%</span><span id="up-detail"></span></div>
+      </div>
+      <ol class="up-steps" id="up-steps">
+        <li data-step="compress">Compress</li>
+        <li data-step="upload">Upload</li>
+        <li data-step="read">Read tables</li>
+      </ol>
+      <p class="up-error" id="up-error" hidden></p>
+      <div class="up-actions" id="up-actions" hidden>
+        <button type="button" class="btn" id="up-secondary">Close</button>
+        <button type="button" class="btn btn-primary" id="up-primary">Start asking</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
     <form id="auth-form" class="auth-form" novalidate>
       <button type="button" class="icon-btn auth-close" id="auth-close" aria-label="Close"><span data-icon="x"></span></button>

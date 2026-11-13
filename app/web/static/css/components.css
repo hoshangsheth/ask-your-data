@@ -580,3 +580,117 @@ html.theme-switching .pill svg { transition: color 0.3s ease; }
 .auth-signup-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .auth-signup-fields label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text-2); }
 @media (max-width: 420px) { .auth-signup-fields { grid-template-columns: 1fr; } }
+
+/* ===== Upload popup =====
+   One dialog follows the upload through its states (data-state on the dialog):
+   compress -> upload -> read -> done | error. The tile in the middle changes with the state:
+   a rising arrow while sending, a filling grid while tables are read, a drawn check or a cross. */
+.upload-dialog { border: 1px solid var(--border); border-radius: 22px; padding: 0; width: min(420px, calc(100vw - 32px));
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-lg); overflow: hidden; }
+.upload-dialog::backdrop { background: rgb(15 23 42 / 0.5); backdrop-filter: blur(4px); }
+.upload-dialog[open] { animation: up-in 0.5s cubic-bezier(0.18, 0.95, 0.22, 1.08); }
+.upload-dialog[open]::backdrop { animation: backdrop-in 0.35s ease; }
+.upload-dialog.is-closing { animation: dialog-out 0.2s ease forwards; }
+@keyframes up-in { from { opacity: 0; transform: translateY(26px) scale(0.92); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
+
+.up-body { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 26px 24px; text-align: center; }
+.up-body::before { /* soft glow behind the tile */
+  content: ""; position: absolute; top: -90px; left: 50%; width: 320px; height: 220px; transform: translateX(-50%);
+  background: radial-gradient(closest-side, var(--primary-soft), transparent); opacity: 0.9; pointer-events: none; }
+.up-body > * { position: relative; }
+.up-body > .auth-close { position: absolute; }
+.up-body h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin-top: 4px; }
+.up-sub { font-size: 13px; color: var(--muted); max-width: 320px; overflow-wrap: anywhere; }
+
+/* Tile with a spinning gradient ring around it */
+.up-visual { position: relative; width: 92px; height: 92px; display: grid; place-items: center; }
+.up-orbit { position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 55%, #7c8cff 75%, #a77bff 92%, transparent);
+  -webkit-mask: radial-gradient(circle, transparent 41px, #000 42px); mask: radial-gradient(circle, transparent 41px, #000 42px);
+  animation: spin 1.4s linear infinite; transition: opacity 0.4s ease; }
+.up-tile { position: relative; width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center;
+  background: var(--gradient); box-shadow: 0 12px 28px rgba(79, 70, 229, 0.38); color: #fff;
+  transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.25, 1.3), background 0.4s ease, box-shadow 0.4s ease, border-radius 0.4s ease; }
+.up-tile > * { position: absolute; transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.2, 0.9, 0.25, 1.2); }
+.up-doc { width: 34px; height: 34px; fill: rgba(255, 255, 255, 0.16); stroke: #fff; stroke-width: 2.2; stroke-linejoin: round; }
+.up-arrow { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+  top: 26px; animation: up-rise 1.1s cubic-bezier(0.5, 0, 0.3, 1) infinite; }
+@keyframes up-rise { 0% { transform: translateY(7px); opacity: 0; } 35% { opacity: 1; } 75% { transform: translateY(-5px); opacity: 1; } 100% { transform: translateY(-9px); opacity: 0; } }
+.up-grid { display: grid; grid-template-columns: repeat(3, 9px); gap: 3px; opacity: 0; transform: scale(0.6); }
+.up-grid i { width: 9px; height: 9px; border-radius: 2.5px; background: rgba(255, 255, 255, 0.28); }
+.up-check, .up-fail { width: 64px; height: 64px; fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+.up-check circle, .up-fail circle { stroke: #fff; stroke-width: 2.5; stroke-dasharray: 145; stroke-dashoffset: 145; }
+.up-check path { stroke: #fff; stroke-width: 3.5; stroke-dasharray: 32; stroke-dashoffset: 32; }
+.up-fail path { stroke: #fff; stroke-width: 3.5; stroke-dasharray: 20; stroke-dashoffset: 20; }
+
+/* compress: the document breathes */
+.upload-dialog[data-state="compress"] .up-doc { animation: up-breathe 1s ease-in-out infinite; }
+.upload-dialog[data-state="compress"] .up-arrow { opacity: 0; animation: none; }
+@keyframes up-breathe { 50% { transform: scale(0.88); } }
+/* read: the document gives way to a grid whose cells light up in turn */
+.upload-dialog[data-state="read"] :is(.up-doc, .up-arrow) { opacity: 0; transform: scale(0.6); animation: none; }
+.upload-dialog[data-state="read"] .up-grid { opacity: 1; transform: none; }
+.upload-dialog[data-state="read"] .up-grid i { animation: up-cell 1.35s ease-in-out infinite; }
+.up-grid i:nth-child(2) { animation-delay: 0.08s; } .up-grid i:nth-child(3) { animation-delay: 0.16s; }
+.up-grid i:nth-child(4) { animation-delay: 0.24s; } .up-grid i:nth-child(5) { animation-delay: 0.32s; }
+.up-grid i:nth-child(6) { animation-delay: 0.4s; } .up-grid i:nth-child(7) { animation-delay: 0.48s; }
+.up-grid i:nth-child(8) { animation-delay: 0.56s; } .up-grid i:nth-child(9) { animation-delay: 0.64s; }
+@keyframes up-cell { 0%, 100% { background: rgba(255, 255, 255, 0.25); transform: scale(0.85); } 40% { background: #fff; transform: scale(1); } }
+/* done and error: the tile becomes a circle, the ring fades, a mark is drawn */
+.upload-dialog:is([data-state="done"], [data-state="error"]) .up-orbit { opacity: 0; }
+.upload-dialog:is([data-state="done"], [data-state="error"]) .up-tile { border-radius: 50%; transform: scale(1.12); }
+.upload-dialog:is([data-state="done"], [data-state="error"]) :is(.up-doc, .up-arrow, .up-grid) { opacity: 0; transform: scale(0.5); animation: none; }
+.upload-dialog[data-state="done"] .up-tile { background: linear-gradient(135deg, #12a150, #10b981); box-shadow: 0 12px 30px rgba(18, 161, 80, 0.38); }
+.upload-dialog[data-state="done"] .up-check { opacity: 1; }
+.upload-dialog[data-state="done"] .up-check circle { animation: draw 0.6s 0.1s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+.upload-dialog[data-state="done"] .up-check path { animation: draw 0.35s 0.55s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+.upload-dialog[data-state="error"] .up-tile { background: linear-gradient(135deg, #e5484d, #d92d20); box-shadow: 0 12px 30px rgba(217, 45, 32, 0.35);
+  animation: up-shake 0.45s 0.2s ease; }
+.upload-dialog[data-state="error"] .up-fail { opacity: 1; }
+.upload-dialog[data-state="error"] .up-fail circle { animation: draw 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+.upload-dialog[data-state="error"] .up-fail path { animation: draw 0.3s 0.4s ease forwards; }
+@keyframes up-shake { 20%, 60% { transform: scale(1.12) translateX(-6px); } 40%, 80% { transform: scale(1.12) translateX(6px); } }
+
+/* File and table chips (staggered in) */
+.up-files { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 360px; }
+.up-files:empty { display: none; }
+.up-files li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px;
+  color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); max-width: 100%;
+  animation: up-chip 0.4s cubic-bezier(0.2, 0.9, 0.25, 1.2) both; }
+.up-files li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+.up-files li b { font-weight: 600; color: var(--text); }
+.up-files svg { width: 13px; height: 13px; color: var(--primary); flex: none; }
+@keyframes up-chip { from { opacity: 0; transform: translateY(6px) scale(0.9); } }
+
+/* Progress bar: gradient fill with a moving sheen; a sliding bar while the length is unknown */
+.up-progress { width: 100%; margin-top: 8px; }
+.up-track { position: relative; height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.up-fill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; border-radius: inherit; background: var(--gradient); transition: width 0.35s ease; overflow: hidden; }
+.up-fill::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: translateX(-100%); animation: up-sheen 1.3s ease-in-out infinite; }
+@keyframes up-sheen { to { transform: translateX(100%); } }
+.upload-dialog:is([data-state="read"], [data-state="compress"]) .up-fill { width: 38% !important; animation: up-slide 1.2s ease-in-out infinite; transition: none; }
+@keyframes up-slide { from { left: -38%; } to { left: 100%; } }
+.up-stats { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+#up-pct { font-weight: 700; color: var(--text); }
+.upload-dialog:is([data-state="done"], [data-state="error"]) .up-progress { display: none; }
+
+/* Steps */
+.up-steps { list-style: none; display: flex; gap: 18px; margin: 6px 0 0; padding: 0; font-size: 12px; color: var(--muted); }
+.up-steps li { display: flex; align-items: center; gap: 6px; transition: color 0.3s ease; }
+.up-steps li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.3s ease; }
+.up-steps li.is-active { color: var(--text); font-weight: 600; }
+.up-steps li.is-active::before { background: var(--primary); animation: up-dot 1.2s ease-out infinite; }
+.up-steps li.is-done::before { background: var(--success); }
+@keyframes up-dot { from { box-shadow: 0 0 0 0 var(--primary-soft); } to { box-shadow: 0 0 0 7px transparent; } }
+.upload-dialog:is([data-state="done"], [data-state="error"]) .up-steps { display: none; }
+
+.up-error { font-size: 13px; color: var(--danger); background: var(--danger-soft); padding: 9px 12px; border-radius: 10px; width: 100%; }
+.up-actions { display: flex; gap: 10px; width: 100%; margin-top: 8px; animation: swap-in 0.35s 0.45s ease both; }
+.up-actions .btn { flex: 1; justify-content: center; padding: 10px; font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-dialog[open], .upload-dialog.is-closing, .up-orbit, .up-arrow, .up-doc, .up-grid i, .up-fill, .up-fill::after,
+  .up-files li, .up-steps li::before, .up-tile, .up-actions { animation: none !important; }
+  .up-check circle, .up-check path, .up-fail circle, .up-fail path { stroke-dashoffset: 0; animation: none !important; }
+}
