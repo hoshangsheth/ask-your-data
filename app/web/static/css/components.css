@@ -84,21 +84,23 @@
 .nav-item:hover { background: var(--surface-2); color: var(--text); }
 .nav-item.is-active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
 
-.recent-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+.recent-list { list-style: none; margin: 0; padding: 0 2px 0 0; display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .recent-list button {
-  width: 100%; display: flex; gap: 10px; align-items: flex-start;
-  padding: 8px 10px; border: 0; border-radius: 9px; background: none;
+  width: 100%; display: flex; gap: 10px; align-items: center;
+  padding: 7px 10px; border: 0; border-radius: 9px; background: none;
   color: var(--text-2); font-size: 13px; text-align: left; line-height: 1.4;
 }
+/* One line per question (full text on hover), so more of the history fits. */
+.recent-list button span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recent-list button:hover { background: var(--surface-2); color: var(--text); }
-.recent-list svg { margin-top: 2px; color: var(--muted); flex: none; }
+.recent-list svg { color: var(--muted); flex: none; }
 .recent-list svg { width: 14px; height: 14px; }
 .recent-empty { font-size: 13px; color: var(--muted); padding: 0 10px; }
 .side-head .link-btn { display: inline-flex; align-items: center; gap: 4px; }
 .side-head .link-btn svg { width: 13px; height: 13px; }
 
 /* Dataset list ("Your data"). */
-.dataset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow-y: auto; }
+.dataset-list { list-style: none; margin: 0; padding: 0 2px 0 0; display: flex; flex-direction: column; gap: 2px; max-height: clamp(110px, 24vh, 260px); min-height: 0; overflow-y: auto; }
 .ds-item { position: relative; display: flex; align-items: center; border-radius: 10px; }
 .ds-item:hover { background: var(--surface-2); }
 .ds-item.is-active { background: var(--primary-soft); }

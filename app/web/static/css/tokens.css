@@ -26,6 +26,8 @@
   --surface: #ffffff;
   --surface-2: #f2f3f8;
   --border: #e4e6ef;
+  --scroll-thumb: rgba(79, 70, 229, 0.2);
+  --scroll-thumb-hover: rgba(79, 70, 229, 0.42);
   --text: #151833;
   --text-2: #4a4f6a;
   --muted: #7a7f99;
@@ -57,6 +59,10 @@
     --surface: #151931;
     --surface-2: #1c2140;
     --border: #262c4d;
+  --scroll-thumb: rgba(138, 144, 176, 0.26);
+  --scroll-thumb-hover: rgba(129, 140, 248, 0.55);
+    --scroll-thumb: rgba(138, 144, 176, 0.26);
+    --scroll-thumb-hover: rgba(129, 140, 248, 0.55);
     --text: #e9ebfa;
     --text-2: #b9bed8;
     --muted: #8a90b0;

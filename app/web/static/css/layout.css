@@ -15,7 +15,7 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   padding: 20px 16px 16px;
   background: var(--bg-elev);
   border-right: 1px solid var(--border);
@@ -35,8 +35,13 @@
 .nav { display: flex; flex-direction: column; gap: 2px; }
 
 /* Sidebar sections ("Your data", "Recent questions") with a small uppercase heading. */
+/* The fixed parts (brand, buttons, nav, account) never shrink. "Your data" takes what it needs up
+   to about a third of the screen, "Recent questions" gets the rest (at least ~4 rows); each list
+   scrolls inside its own section. On very short screens the whole sidebar scrolls instead. */
+.sidebar > * { flex-shrink: 0; }
 .side-section { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
-.side-section.recent { flex: 1; }
+.side-section.datasets { flex: 0 1 auto; min-height: 124px; }
+.side-section.recent { flex: 1 1 0; min-height: 190px; }
 .side-head {
   display: flex; justify-content: space-between; align-items: center;
   padding: 0 10px; font-size: 12px; font-weight: 600; color: var(--muted);
@@ -81,4 +86,10 @@
   .page-title { font-size: 19px; }
   .page-sub { display: none; }
   .view { padding: 8px 16px 24px; }
+}
+
+/* Short laptop screens: drop the two least important lines so the lists keep their room. */
+@media (min-width: 900px) and (max-height: 720px) {
+  .brand-sub, .powered-by { display: none; }
+  .side-section.recent { min-height: 150px; }
 }

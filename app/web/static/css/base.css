@@ -47,3 +47,14 @@ kbd {
 
 /* The hidden attribute always wins over component display rules (e.g. .nav-item is flex). */
 [hidden] { display: none !important; }
+
+/* Scrollbars: thin and themed everywhere (sidebar lists, chat thread, tables, code, dialogs). */
+* { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb); border-radius: 999px;
+  border: 3px solid transparent; background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background-color: var(--scroll-thumb-hover); }
+*::-webkit-scrollbar-corner { background: transparent; }
