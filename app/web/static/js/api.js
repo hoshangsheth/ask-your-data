@@ -20,9 +20,12 @@
  */
 
 export class ApiError extends Error {
-  constructor(message, status) {
+  /** code: a machine-readable reason when the server gives one (e.g. "daily_guest", "ai_busy"). */
+  constructor(message, status, { code = "", retryAfter = 0 } = {}) {
     super(message);
     this.status = status;
+    this.code = code;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -30,8 +33,11 @@ function errorMessage(body, status) {
   const detail = body?.detail;
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) return detail[0]?.msg ?? `HTTP ${status}`;
+  if (detail?.message) return detail.message;
   return `HTTP ${status}`;
 }
+
+const errorInfo = (body) => ({ code: body?.detail?.code || "", retryAfter: body?.detail?.retry_after || 0 });
 
 async function request(path, options = {}) {
   let res;
@@ -47,7 +53,7 @@ async function request(path, options = {}) {
   } catch {
     /* non-JSON error page */
   }
-  if (!res.ok) throw new ApiError(errorMessage(body, res.status), res.status);
+  if (!res.ok) throw new ApiError(errorMessage(body, res.status), res.status, errorInfo(body));
   return body;
 }
 

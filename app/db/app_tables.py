@@ -5,6 +5,7 @@ Tables the application itself owns (separate from the demo store and uploaded da
     app_secrets    generated secrets shared by every instance (e.g. the session-signing key)
     questions      one row per question asked: answer, SQL, timings, tokens, cost, feedback
     usage_events   other measured events (uploads), payload as JSON
+    usage_counters question quotas: per minute, per day and site-wide counts (app/api/quota.py)
 
 They are created at startup (app/api/factory.py) next to the demo tables; columns added after a
 table already existed in a database are added by add_missing_columns() (a tiny migration step). Model-generated SQL can't
@@ -97,6 +98,15 @@ usage_events = Table(
     Column("kind", String(20), nullable=False, index=True),  # "upload"
     Column("user_id", String(12)),
     Column("data", JSON, nullable=False),
+)
+
+
+usage_counters = Table(
+    "usage_counters",
+    app_metadata,
+    Column("key", String(120), primary_key=True),  # e.g. "d:u:<user id>:2026-11-13", "s:2026-11-13"
+    Column("day", String(10), nullable=False, index=True),  # India date, for cleaning up old rows
+    Column("count", Integer, nullable=False, default=0),
 )
 
 

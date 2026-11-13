@@ -52,7 +52,7 @@ def test_uploaded_dataset_cannot_read_demo_tables(settings):
         sign_up(c)
         ds = upload(c, files.csv(), "sales.csv").json()
         out = c.post("/api/ask", json={"question": "count orders", "dataset_id": ds["id"]}).json()
-        assert out["status"] == "failed" and "unknown table" in out["answer"]
+        assert out["status"] == "failed" and "unknown table" in out["explanation"]
 
 
 def test_demo_answers_keep_inr(settings):

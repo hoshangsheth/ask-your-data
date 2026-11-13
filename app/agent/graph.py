@@ -162,11 +162,12 @@ class SQLAgent:
         }
 
     def _fail(self, state: AgentState) -> AgentState:
-        """Terminal node when all attempts failed."""
+        """Terminal node when all attempts failed. The answer is for people; the detail is the error."""
         return {
             "status": "failed",
-            "answer": f"I couldn't build a working query after {state.get('attempts', 0)} attempts. "
-            f"Last error: {state.get('error')}",
+            "answer": f"I couldn't get a working query for this after {state.get('attempts', 0)} tries. "
+            "Try rephrasing it, or name the table or columns you mean (the Data tab lists them).",
+            "explanation": f"Last error: {state.get('error')}",
         }
 
     # ---- Routing ----------------------------------------------------------------------------
@@ -212,7 +213,13 @@ class SQLAgent:
         try:
             final = self.graph.invoke(start)
         except LLMError as e:  # this question failed at the model; report it as an answer
-            final = {"status": "failed", "answer": f"Model error: {e}", "trace": []}
+            final = {
+                "status": "failed",
+                "answer": "The AI model gave an unusable reply to this question. Asking again usually works; "
+                "rephrasing it helps too.",
+                "explanation": f"Model error: {e}",
+                "trace": [],
+            }
 
         trace = final.get("trace", [])
         return {

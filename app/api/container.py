@@ -22,6 +22,7 @@ from pathlib import Path
 
 from app.accounts import AccountStore
 from app.agent import SQLAgent
+from app.api.quota import QuestionQuota
 from app.api.rate_limit import RateLimiter
 from app.core.config import DATA_ROOT, Settings
 from app.datasets.pg_store import PostgresDatasetStore
@@ -47,7 +48,14 @@ class Services:
     def __init__(self, settings: Settings, llm: LLM | None = None):
         self.settings = settings
         self.owner_engine, self.readonly_engine = make_engines(settings.database_url, settings.readonly_database_url)
-        self.limiter = RateLimiter(settings.rate_limit_per_minute)
+        self.limiter = RateLimiter(settings.upload_requests_per_minute)  # uploads and deletes
+        self.quota = QuestionQuota(
+            self.owner_engine,
+            settings.questions_per_minute,
+            settings.questions_per_day_user,
+            settings.questions_per_day_guest,
+            settings.questions_per_day_site,
+        )
         self.login_limiter = RateLimiter(settings.login_attempts_per_minute)
         self.accounts = AccountStore(
             self.owner_engine, set(settings.admin_emails.split(",")), secret_override=settings.session_secret

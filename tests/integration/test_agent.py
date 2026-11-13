@@ -45,7 +45,8 @@ def test_gives_up_after_max_attempts(ro_engine):
     llm = FakeLLM([bad, bad, bad])
     out = make_agent(ro_engine, llm).ask("anything")
     assert out["status"] == "failed" and out["attempts"] == 3
-    assert "unknown table" in out["answer"]
+    assert "unknown table" in out["explanation"]  # the error detail, for the "Technical detail" toggle
+    assert "rephrasing" in out["answer"] and "Last error" not in out["answer"]  # plain advice for people
     assert not any(c["fn"] == "summarize" for c in llm.calls)
 
 
@@ -74,4 +75,4 @@ def test_llm_error_is_reported_as_failed_answer(ro_engine):
             raise LLMError("the model declined to answer this question")
 
     out = make_agent(ro_engine, Broken([])).ask("x")
-    assert out["status"] == "failed" and "declined" in out["answer"]
+    assert out["status"] == "failed" and "declined" in out["explanation"] and "Asking again" in out["answer"]

@@ -82,7 +82,12 @@ class Settings(BaseSettings):
 
     # ---- API protection ----------------------------------------------------------------------
     app_api_key: str = ""  # if set, POST /api/ask requires header X-API-Key
-    rate_limit_per_minute: int = 20  # per client IP on POST /api/ask; 0 disables
+    # Question limits (app/api/quota.py), shared by all instances through the database; 0 disables.
+    questions_per_minute: int = 10  # per account (guests: per IP)
+    questions_per_day_user: int = 35  # per signed-in account
+    questions_per_day_guest: int = 5  # per guest IP
+    questions_per_day_site: int = 250  # everyone together: keeps the AI bill bounded
+    upload_requests_per_minute: int = 120  # per IP on upload/delete requests (a 50 MB file is ~15)
     login_attempts_per_minute: int = 10  # per client IP on sign-in / sign-up; 0 disables
 
     # ---- Accounts ----------------------------------------------------------------------------

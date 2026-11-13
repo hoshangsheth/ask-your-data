@@ -55,6 +55,7 @@ class AskResponse(BaseModel):
     standalone_question: str  # how a follow-up was understood ("same for 2024" -> full question)
     kind: Literal["query", "about"] = "query"  # "about": answered from the schema, no SQL or table
     cost_usd: float | None = None  # estimated model cost of this answer
+    questions_left_today: int | None = None  # None: not limited (admin, or limits off)
 
 
 # ---- /api/auth --------------------------------------------------------------------------------

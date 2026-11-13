@@ -16,6 +16,7 @@ import { drawChart } from "./charts.js";
 import { currentDataset, describeSize, onDatasetChange } from "./datasets.js";
 import { escapeHtml, formatCell, highlightSql, isMoneyColumn, isRatioColumn, label, num, toCsv } from "./format.js";
 import { hydrateIcons, icon } from "./icons.js";
+import { requireSignIn } from "./auth.js";
 import { remember } from "./recent.js";
 import { saveChart } from "./saved-charts.js";
 import { toast } from "./toast.js";
@@ -26,7 +27,8 @@ const UPLOAD_TAGS = [["chart", "Breakdown"], ["trend", "Ranking"], ["clock", "Ov
 
 // Shown while waiting. The server answers in one response, so these advance on a timer
 // to show what is happening; the real per-step timings appear in "How it worked".
-const WORKING_STEPS = ["Understanding your question", "Writing SQL", "Checking it's safe", "Running it on the data", "Writing the answer"];
+// Worded so they hold whether or not the answer needs SQL (questions about the data itself don't).
+const WORKING_STEPS = ["Reading your question", "Looking at the data", "Working out the answer", "Checking the result", "Writing it up"];
 
 // Friendly names for the agent's trace steps.
 const STEP_NAMES = { generate_sql: "Wrote SQL", validate: "Safety check", execute: "Ran the query", summarize: "Wrote the answer" };
@@ -163,7 +165,7 @@ function statusBadge(status) {
 
 function metaHtml(r) {
   const parts = [`${icon("clock")} ${(r.latency_ms / 1000).toFixed(1)}s`];
-  if (r.attempts > 1) parts.push(`${icon("retry")} fixed itself after ${r.attempts - 1} retr${r.attempts === 2 ? "y" : "ies"}`);
+  if (r.attempts > 1 && r.status === "ok") parts.push(`${icon("retry")} fixed itself after ${r.attempts - 1} retr${r.attempts === 2 ? "y" : "ies"}`);
   const tokens = (r.usage?.input_tokens || 0) + (r.usage?.output_tokens || 0);
   if (tokens) parts.push(`${icon("cpu")} ${num(tokens)} tokens`);
   return parts.map((p) => `<span style="display:inline-flex;gap:4px;align-items:center">${p}</span>`).join("");
@@ -179,10 +181,18 @@ function tableHtml(columns, rows, currency) {
   return `<div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
+/** Title and icon for one trace step. The first step only wrote SQL when the answer needed it. */
+function stepLabel(t) {
+  if (t.step === "generate_sql" && t.kind === "about") return ["Answered from the table and column descriptions (no SQL needed)", "info"];
+  if (t.step === "generate_sql" && t.answerable === false) return ["Checked the data: it can't answer this", "info"];
+  return [STEP_NAMES[t.step] || t.step, t.ok === false ? "x" : "check"];
+}
+
 function stepsHtml(trace) {
   return `<ul class="steps">${trace
     .map((t) => {
       const err = t.ok === false;
+      const [title, ic] = stepLabel(t);
       const details = [];
       if (t.step === "generate_sql" && t.attempt > 1) details.push(`attempt ${t.attempt}`);
       if (t.rows != null) details.push(`${num(t.rows)} row${t.rows === 1 ? "" : "s"}`);
@@ -190,8 +200,8 @@ function stepsHtml(trace) {
       if (t.input_tokens) details.push(`${num(t.input_tokens + t.output_tokens)} tokens`);
       details.push(`${t.ms} ms`);
       return `<li class="${err ? "err" : ""}">
-        <span class="step-dot">${icon(err ? "x" : "check")}</span>
-        <div><div class="step-title">${STEP_NAMES[t.step] || t.step}</div>
+        <span class="step-dot${ic === "info" ? " info" : ""}">${icon(ic)}</span>
+        <div><div class="step-title">${title}</div>
           <div class="step-detail">${escapeHtml(details.join(" · "))}</div>
           ${err ? `<div class="step-detail err">${escapeHtml(t.error)}</div>` : ""}</div>
       </li>`;
@@ -212,6 +222,7 @@ function renderAnswer(card, r) {
     ${followUpHtml(r)}
     <p class="answer-text${r.kind === "about" ? " is-prose" : ""}">${escapeHtml(r.answer)}</p>
     ${r.explanation && r.status === "ok" && r.kind !== "about" ? `<p class="answer-explain">${escapeHtml(r.explanation)}</p>` : ""}
+    ${r.explanation && r.status === "failed" ? `<details class="answer-detail"><summary>Technical detail</summary><p>${escapeHtml(r.explanation)}</p></details>` : ""}
     ${tabs.length ? `<div class="tabs" role="tablist">${tabs
       .map(([id, ic, text], i) => `<button class="tab ${i === 0 ? "is-active" : ""}" data-tab="${id}" role="tab">${icon(ic)}${text}</button>`)
       .join("")}</div>` : ""}
@@ -285,21 +296,65 @@ function renderAnswer(card, r) {
   });
 }
 
+function waitText(seconds) {
+  if (!seconds) return "";
+  if (seconds < 90) return `in about ${Math.max(1, Math.round(seconds))} seconds`;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.round((seconds % 3600) / 60);
+  return `in ${h ? `${h} h ` : ""}${m} min (midnight India time)`;
+}
+
+/**
+ * What went wrong and what to do, for each kind of failure. Returns
+ * [title, message (HTML), show "Try again", show "Sign in"].
+ */
+function explainError(err) {
+  const api = err instanceof ApiError;
+  const code = api ? err.code : "";
+  const when = api ? waitText(err.retryAfter) : "";
+  switch (code) {
+    case "rate_minute":
+      return ["Slow down a little", `<p>You can ask ${escapeHtml(err.message.match(/\d+/)?.[0] ?? "10")} questions a minute. Try again ${when}.</p>`, true, false];
+    case "daily_guest":
+      return ["You've used today's guest questions", `<p>Guests can ask ${escapeHtml(err.message.match(/\d+/)?.[0] ?? "5")} questions a day. Sign in (it's free) to ask more, or come back ${when}.</p>`, false, true];
+    case "daily_user":
+      return ["You've reached today's limit", `<p>Each account can ask ${escapeHtml(err.message.match(/\d+/)?.[0] ?? "35")} questions a day. It resets ${when}.</p>`, false, false];
+    case "daily_site":
+      return ["The demo is resting for today", `<p>Everyone together has used today's questions for this demo. It opens again ${when}.</p>`, false, false];
+    case "ai_busy":
+      return ["The AI is busy right now", "<p>The model provider is limiting requests or its quota is used up. Nothing was counted against your questions. Try again in a minute.</p>", true, false];
+    case "ai_down":
+      return ["Couldn't reach the AI", "<p>The model provider had a temporary problem. Nothing was counted against your questions. Try again shortly.</p>", true, false];
+    case "ai_not_configured":
+      return ["The AI isn't set up yet", setupStepsHtml(health?.llm_provider || "gemini"), true, false];
+  }
+  if (api && err.status === 0) return ["Can't reach the server", "<p>Check your connection and try again.</p>", true, false];
+  if (api && err.status === 503) return ["The AI isn't set up yet", setupStepsHtml(health?.llm_provider || "gemini"), true, false];
+  if (api && err.status === 429) return ["Too many requests", "<p>Please wait a minute and try again.</p>", true, false];
+  return ["Something went wrong", `<p class="answer-explain">${escapeHtml(err.message)}</p>`, true, false];
+}
+
 function renderError(card, question, err) {
-  const keyMissing = err instanceof ApiError && err.status === 503;
-  const rate = err instanceof ApiError && err.status === 429;
-  const title = keyMissing ? "The AI isn't set up yet" : rate ? "Too many questions at once" : "Something went wrong";
-  const hint = keyMissing
-    ? setupStepsHtml(health?.llm_provider || "gemini")
-    : rate
-      ? "<p>Please wait a minute and try again.</p>"
-      : `<p class="answer-explain">${escapeHtml(err.message)}</p>`;
+  const [title, hint, retry, signIn] = explainError(err);
   card.innerHTML = `
     <div class="answer-head">${statusBadge("failed")}</div>
     <p class="answer-text">${title}</p>
     <div class="setup-inline">${hint}</div>
-    <div class="answer-actions"><button class="btn" data-action="again">${icon("retry")}Try again</button></div>`;
-  card.querySelector('[data-action="again"]').addEventListener("click", () => askQuestion(question));
+    ${retry || signIn ? `<div class="answer-actions">
+      ${signIn ? `<button class="btn btn-primary" data-action="signin">${icon("user")}Sign in</button>` : ""}
+      ${retry ? `<button class="btn" data-action="again">${icon("retry")}Try again</button>` : ""}</div>` : ""}`;
+  card.querySelector('[data-action="again"]')?.addEventListener("click", () => askQuestion(question));
+  card.querySelector('[data-action="signin"]')?.addEventListener("click", async () => {
+    if (await requireSignIn("Sign in to keep asking questions today.")) askQuestion(question);
+  });
+}
+
+/** "4 questions left today" in the composer hint, once few are left. */
+function showQuestionsLeft(left) {
+  const el = $("composer-left");
+  if (!el) return;
+  el.hidden = left == null || left > 10;
+  el.textContent = left === 0 ? "No questions left today" : `${left} question${left === 1 ? "" : "s"} left today`;
 }
 
 /* ---------- Actions ---------- */
@@ -441,6 +496,7 @@ export async function askQuestion(text) {
     conversationId = result.conversation_id;
     stop();
     renderAnswer(card, result);
+    showQuestionsLeft(result.questions_left_today);
   } catch (err) {
     stop();
     renderError(card, question, err);

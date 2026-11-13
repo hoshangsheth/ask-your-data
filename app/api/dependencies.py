@@ -5,7 +5,8 @@ FastAPI dependencies shared by the routes.
     get_identity       who is calling: a signed-in user or an anonymous guest (set by the session
                        middleware in app/api/session.py)
     require_user       401 unless signed in (uploads, private datasets)
-    require_access     optional API-key check + per-client rate limit (used on paid endpoints)
+    require_access     optional API-key check + per-IP request limit (uploads, deletes)
+    require_api_key    the API-key check alone (questions: limited by app/api/quota.py instead)
     dataset_for(...)   resolve a dataset id the caller may use (404 for other users' datasets)
     client_ip          the caller's IP (Vercel's forwarded header when deployed)
 """
@@ -43,14 +44,19 @@ def client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def require_access(request: Request, x_api_key: str | None = Header(default=None)) -> None:
-    """Reject the request with 401 (bad/missing key) or 429 (too many requests)."""
-    services = get_services(request)
-    settings = services.settings
-    if settings.app_api_key and x_api_key != settings.app_api_key:
+def require_api_key(request: Request, x_api_key: str | None = Header(default=None)) -> None:
+    """Reject the request with 401 when an API key is configured and missing or wrong."""
+    key = get_services(request).settings.app_api_key
+    if key and x_api_key != key:
         raise HTTPException(401, "missing or invalid X-API-Key")
+
+
+def require_access(request: Request, x_api_key: str | None = Header(default=None)) -> None:
+    """Reject the request with 401 (bad/missing key) or 429 (too many requests from this IP)."""
+    require_api_key(request, x_api_key)
+    services = get_services(request)
     if not services.limiter.allow(client_ip(request)):
-        raise HTTPException(429, f"rate limit: {settings.rate_limit_per_minute} questions per minute")
+        raise HTTPException(429, {"code": "rate_uploads", "message": "too many requests; wait a minute and try again"})
 
 
 def owned_upload(services: Services, dataset_id: str, identity: Identity) -> DatasetMeta:

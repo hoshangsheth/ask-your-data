@@ -65,10 +65,13 @@ so instances that cold-start at the same time don't load the data twice.
 
 ## Before sharing the link publicly
 
-- Anyone with the URL can upload files and spend your AI quota. The per-IP rate limit
-  (`RATE_LIMIT_PER_MINUTE`) is kept per function instance, so treat it as a speed bump. Set a
-  spending limit on the AI provider's side, or protect the deployment (Vercel Deployment
-  Protection, or `APP_API_KEY` for API clients).
+- Questions are limited in the database, so the limits hold across every function instance:
+  `QUESTIONS_PER_MINUTE` (10, per account or guest IP), `QUESTIONS_PER_DAY_USER` (35),
+  `QUESTIONS_PER_DAY_GUEST` (5) and `QUESTIONS_PER_DAY_SITE` (250 for everyone, which keeps the
+  AI bill bounded: about Rs 45 a day at most). Days reset at midnight India time; admins are
+  exempt. Still set a spending limit on the AI provider's side as a backstop.
+- Upload requests are limited per IP and per instance (`UPLOAD_REQUESTS_PER_MINUTE`), a speed
+  bump only; uploads already need an account.
 - Uploads are private: uploading needs an account and each dataset is visible only to its owner.
   Set `ADMIN_EMAILS` (your sign-in email) in the Vercel environment variables to review answers
   rated "not helpful" on the Metrics page.

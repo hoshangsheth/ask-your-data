@@ -50,6 +50,10 @@ def settings(db_url, tmp_path) -> Settings:
         readonly_database_url=os.environ.get("TEST_READONLY_DATABASE_URL", ""),
         auto_seed=False,
         app_api_key="",
-        rate_limit_per_minute=0,
+        questions_per_minute=0,
+        questions_per_day_user=0,
+        questions_per_day_guest=0,
+        questions_per_day_site=0,
+        upload_requests_per_minute=0,
         _env_file=None,
     )
