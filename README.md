@@ -9,7 +9,7 @@ Works on a built-in demo store or on your own uploaded file.
 
 | Answer accuracy | Answer time | Cost per question | Tests | Load test |
 |---|---|---|---|---|
-| **97.9%** on a 48-question benchmark (100% on follow-ups) | **4.4 s** median | **$0.002** | **191** passing, 87.5% coverage | **64,968** requests, 0.0015% errors |
+| **97.9%** on a 48-question benchmark (100% on follow-ups) | **4.4 s** median | **$0.002** | **217** passing, 88.1% coverage | **64,968** requests, 0.0015% errors |
 
 A LangGraph agent writes the SQL with an LLM, a guard checks it, the database runs it read-only,
 and if anything fails the error goes back to the model to fix (up to 3 attempts). Questions about the
@@ -20,12 +20,16 @@ is a config setting: Gemini by default, Claude or OpenAI with a one-line change.
 .xls), OpenDocument (.ods), JSON / JSON Lines, Parquet, Feather, XML, HTML tables, Word (.docx
 tables), PDF (tables, or text lines), SQLite databases, Stata (.dta) and SAS (.sas7bdat .xpt).
 Column names are cleaned, numbers like `"₹1,200"` and dates are detected, every sheet or table
-becomes a SQL table, and starter questions are suggested for the file.
+becomes a SQL table, and starter questions are suggested for the file. Relational exports
+work too: upload **several files at once** (zipped in the browser) or a **.zip**, and every file
+becomes a table you can join, e.g. the 9 CSVs of the Olist e-commerce dataset (1.55M rows).
 
 **Also:** private uploads per account (email sign-in), **follow-up questions** that build on the
 conversation ("same for 2024", "break that down by city"), 👍/👎 feedback on every answer,
-**export** to CSV, Excel, chart PNG or a one-page PDF report, a how-to-use guide, and an animated
-ink-bleed light/dark theme.
+**export** to CSV, Excel, chart PNG or a one-page PDF report, a Dashboard that collects the chart of
+every question you ask, an animated upload popup, a how-to-use guide, an animated ink-bleed
+light/dark theme, and question limits that keep the AI bill bounded (10 a minute, 35 a day per
+account, 5 per guest, 250 a day site-wide).
 
 | A single answer, with the SQL one click away | Demo-store dashboard (dark theme) |
 |---|---|
@@ -58,8 +62,9 @@ flowchart LR
 | **Conversations** (`app/telemetry/log.py`, `app/llm/prompts.py`) | Each chat is a conversation: the last 3 answered turns (question, SQL, answer) go to the model, which also returns the question rewritten to stand alone. |
 | **Telemetry** (`app/telemetry/`) | Every question is logged with per-step timings, tokens, estimated cost and feedback; uploads with size, rows and processing time. Aggregated into live metrics (percentiles, rates, satisfaction). |
 | **Exports** (`app/exports.py`) | Re-runs the stored, validated SQL (up to 10K rows) for CSV/Excel; PDF report with question, answer, chart, table and SQL. |
-| **API** (`app/api/`) | FastAPI with one router per feature: `/api/ask`, `/api/auth/*`, `/api/datasets` + `/api/uploads` (multi-part), `/api/questions/{id}/feedback\|export\|report`, `/api/metrics`, `/api/schema`, `/api/kpis`, `/api/health`; typed request/response models; optional API key and per-IP rate limit; JSON request logs. |
-| **UI** (`app/web/static/`) | Chat-style answers (chart, table, SQL, step trace), new chat, dataset switcher with drag-and-drop upload and progress, KPI dashboard, data browser, light/dark theme with the animated ink-bleed transition (WebGL, ported from MIT-licensed "Ink Bleed"; one live-page layer + one pre-captured snapshot, re-captured on demand; see `THIRD_PARTY_NOTICES.md`), a how-to-use popup and drifting quick-question pills. |
+| **API** (`app/api/`) | FastAPI with one router per feature: `/api/ask`, `/api/auth/*`, `/api/datasets` + `/api/uploads` (multi-part), `/api/questions/{id}/feedback\|export\|report`, `/api/metrics`, `/api/schema`, `/api/kpis`, `/api/health`; typed request/response models; optional API key; JSON request logs. |
+| **Limits** (`app/api/quota.py`) | Question quotas kept in the database, so they hold across every serverless instance: per minute, per account or guest per day, and site-wide per day (India-time days). Rejected questions aren't counted, questions are given back when the AI provider fails, and errors carry a code the UI turns into a specific message. |
+| **UI** (`app/web/static/`) | Chat-style answers sized to fit the screen (chart, table, SQL, step trace), new chat, dataset switcher with drag-and-drop upload of files or a .zip and an animated progress popup, KPI dashboard plus charts from your own questions, data browser, light/dark theme with the animated ink-bleed transition (WebGL, ported from MIT-licensed "Ink Bleed"; one live-page layer + one pre-captured snapshot, re-captured on demand; see `THIRD_PARTY_NOTICES.md`), a how-to-use popup and drifting quick-question pills. |
 | **Evaluation** (`evals/`) | 41 items with hand-written reference SQL: single questions, multi-turn follow-ups and questions that must be declined; execution-accuracy scoring by category, latency and cost; works with any provider. Results in `metrics/eval.json`. |
 
 The demo data is a synthetic Indian e-commerce store (2,500 customers, ~16K orders, 2024–2025) with
@@ -113,12 +118,12 @@ Starts Postgres 16, creates a read-only role, seeds the data and serves the app 
 pytest -q
 ```
 
-185 tests (~88% line coverage), no API key needed (models and SDK clients are replaced by
+217 tests (88% line coverage), no API key needed (models and SDK clients are replaced by
 stubs), split into `tests/unit` (SQL guard, LLM adapters and provider switching, file parsing for
-every upload format, password hashing and session tokens, cost and metric maths, exports, eval
-scoring) and `tests/integration` (read-only execution, timeouts, KPIs, agent retry paths, upload
+every upload format and zip archives, password hashing and session tokens, question quotas, cost
+and metric maths, exports, eval scoring) and `tests/integration` (read-only execution, timeouts, KPIs, agent retry paths, upload
 → ask → delete over HTTP, private datasets between accounts, follow-up context, feedback and
-exports, metrics, rate limiting, eval reference SQL). Sample files for every format are
+exports, metrics, question limits, eval reference SQL). Sample files for every format are
 generated by `tests/sample_files.py`. CI (GitHub Actions) lints with ruff and runs the suite with
 coverage (minimum 85%) against both SQLite and PostgreSQL. `python -m scripts.quality_report`
 writes the numbers to `metrics/quality.json`.
@@ -224,15 +229,17 @@ app/
   api/                    HTTP layer
     factory.py            create_app(): wiring, lifespan, routers, static files
     container.py          long-lived services (engines, dataset store, an agent per dataset)
-    dependencies.py       services, identity, dataset access, API key + rate limit
+    dependencies.py       services, identity, dataset access, API key + upload request limit
     session.py            session middleware (user or guest on every /api request)
-    rate_limit.py         sliding-window limiter
+    quota.py              question limits shared through the database (minute, day, site)
+    rate_limit.py         in-memory sliding-window limiter (uploads, sign-in)
     schemas.py            request/response models
     routes/               health, dashboard, ask, datasets, auth, questions, metrics
   web/static/
     css/                  tokens (light/dark), base, layout, components
-    js/                   one module per concern: api, ask, auth, datasets, upload, dashboard,
-                          data, metrics, charts, format, icons, recent, theme, toast, main
+    js/                   one module per concern: api, ask, auth, datasets, upload, upload-popup,
+                          dashboard, saved-charts, data, metrics, charts, format, icons, recent,
+                          theme, toast, main
     js/ink/               ink-bleed theme transition (WebGL renderer, shaders, page capture)
 evals/                    dataset.py, scoring.py, run_eval.py, questions.jsonl
 scripts/                  quality_report.py (tests + coverage), loadtest.py (API load test)

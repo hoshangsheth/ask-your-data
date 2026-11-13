@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-11-12T18:18:53+00:00",
+  "generated_at": "2026-11-13T18:25:26+00:00",
   "python": "3.12.10",
-  "tests_total": 191,
-  "tests_passed": 191,
+  "tests_total": 217,
+  "tests_passed": 217,
   "tests_failed": 0,
   "tests_skipped": 0,
-  "duration_ms": 54990,
-  "coverage": 0.8746,
-  "statements": 2783,
-  "statements_covered": 2434
+  "duration_ms": 73063,
+  "coverage": 0.8813,
+  "statements": 3076,
+  "statements_covered": 2711
 }
