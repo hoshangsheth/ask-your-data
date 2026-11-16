@@ -17,11 +17,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from fpdf import FPDF
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill
-from openpyxl.utils import get_column_letter
-
 PDF_TABLE_ROWS = 25
 
 
@@ -39,6 +34,10 @@ def to_csv(columns: list[str], rows: list[list[Any]]) -> bytes:
 
 
 def to_xlsx(columns: list[str], rows: list[list[Any]], title: str) -> bytes:
+    from openpyxl import Workbook  # loaded on first export (keeps start-up fast)
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Result"
@@ -91,6 +90,8 @@ def decode_png_data_url(data_url: str) -> bytes | None:
 
 
 def to_pdf(r: Report) -> bytes:
+    from fpdf import FPDF  # loaded on first PDF (keeps start-up fast)
+
     pdf = FPDF(format="A4")
     pdf.set_auto_page_break(auto=True, margin=14)
     pdf.add_page()

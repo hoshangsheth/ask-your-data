@@ -11,11 +11,15 @@ Usage:
     tables = clean_tables(raw_tables)   # -> list[CleanTable]
 """
 
+from __future__ import annotations
+
 import re
 import unicodedata
 from dataclasses import dataclass, field
 
-import pandas as pd
+from app.core.lazy import lazy_module
+
+pd = lazy_module("pandas")  # imported on first use: only uploads need it
 
 MAX_TABLES = 50
 MAX_COLUMNS = 300

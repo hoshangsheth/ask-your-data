@@ -27,7 +27,8 @@ import { ThemeIcon } from "./themeIcon.js";
 const EASE = "power3.out";
 const FADE_OUT = 0.15;
 const CSS_FADE_S = 0.45;
-const IDLE_CAPTURE_MS = 700; // wait for the page (and chart animations) to settle
+const IDLE_CAPTURE_MS = 1500; // wait for the page (and chart animations) to settle
+const CLICK_WAIT_MS = 900; // longest a click waits for a fresh snapshot before using the colour fade
 export const SPREAD = { growth: 0.7, cleanupFrom: 0.45, cleanupReach: 0.4, cleanupPow: 2 };
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -51,6 +52,7 @@ export class InkTransition {
     this.cssFadeTimer = 0;
     this.captureTimer = 0;
     this.capture = null; // in-flight capture: { theme, key, promise }
+    this.lastCaptureMs = 0; // how long the last snapshot took (slow pages are captured less often)
 
     const gsapReady = Boolean(window.gsap);
     this.renderer = gsapReady ? InkRenderer.create(canvas) : null;
@@ -66,6 +68,9 @@ export class InkTransition {
     });
     this.watchContent();
     reducedMotion.addEventListener("change", () => this.scheduleCapture(0));
+    // Captures pause while the tab is in the background; prepare one as soon as it is back, so the
+    // first click after a break doesn't have to wait for it.
+    document.addEventListener("visibilitychange", () => !document.hidden && this.scheduleCapture(400));
     void document.fonts.ready.then(() => this.scheduleCapture(IDLE_CAPTURE_MS));
   }
 
@@ -118,15 +123,21 @@ export class InkTransition {
       // Stale or missing snapshot: take it now (the icon starts turning immediately).
       this.preparing = true;
       this.toggleButton?.classList.add("is-preparing");
+      // Never keep the click waiting long: if the snapshot isn't ready in time, use the colour fade
+      // now (the capture carries on in the background for the next click).
+      let ready = false;
       try {
-        await this.captureTheme(to);
+        ready = await Promise.race([
+          this.captureTheme(to).then(() => true),
+          new Promise((resolve) => window.setTimeout(() => resolve(false), CLICK_WAIT_MS)),
+        ]);
       } catch (err) {
         console.warn("[ink] capture failed; using the colour fade", err);
       } finally {
         this.preparing = false;
         this.toggleButton?.classList.remove("is-preparing");
       }
-      if (!renderer.textures.get(to)) {
+      if (!ready || !renderer.textures.get(to)) {
         root.classList.remove("theme-switching");
         this.crossFade(to);
         return;
@@ -270,6 +281,9 @@ export class InkTransition {
 
   // ---- snapshots -----------------------------------------------------------------------------
   scheduleCapture(delay) {
+    // A page that takes long to snapshot (a long chat) is captured less eagerly, so the work
+    // doesn't keep interrupting scrolling and typing.
+    if (delay > 0) delay = Math.max(delay, Math.min(6000, this.lastCaptureMs * 4));
     window.clearTimeout(this.captureTimer);
     this.captureTimer = window.setTimeout(() => {
       // Capturing blocks the main thread briefly: do it when the browser is idle.
@@ -277,7 +291,7 @@ export class InkTransition {
         if (this.frame || this.preparing || root.classList.contains("theme-fade") || document.hidden) return;
         void this.captureTheme(otherTheme(getTheme())).catch(() => {});
       };
-      if ("requestIdleCallback" in window) window.requestIdleCallback(run, { timeout: 2000 });
+      if ("requestIdleCallback" in window) window.requestIdleCallback(run, { timeout: 5000 });
       else run();
     }, delay);
   }
@@ -291,6 +305,7 @@ export class InkTransition {
     if (this.capture && this.capture.theme === theme && this.capture.key === key) return this.capture.promise;
     const promise = (async () => {
       const snap = await capturePage(theme, renderScale(), renderer.maxTextureSize);
+      this.lastCaptureMs = snap.ms;
       renderer.upload(snap); // tagged with the key at capture start; a later change makes it stale again
     })().finally(() => {
       if (this.capture?.promise === promise) this.capture = null;

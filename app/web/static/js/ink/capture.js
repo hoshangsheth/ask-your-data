@@ -81,6 +81,45 @@ function restoreScroll(doc, positions) {
   });
 }
 
+/**
+ * Mark what the snapshot doesn't need to draw, so html2canvas (which styles and paints every
+ * element it is given) has far less work on a long chat:
+ *   - chat messages and dashboard cards scrolled out of view become empty boxes of the same size
+ *     (the layout, and so every scroll position, stays exactly the same);
+ *   - views that aren't shown, closed dialogs and hidden tab panels are dropped (they take no space).
+ * Returns the placeholder sizes by index.
+ */
+function markSkippable() {
+  const sizes = [];
+  const vh = window.innerHeight;
+  document.querySelectorAll(".thread-inner > *, .chart-grid > *, .saved-grid > *, .kpi-grid > *").forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (r.height > 0 && (r.bottom < -40 || r.top > vh + 40)) {
+      el.dataset.inkSkip = String(sizes.length);
+      sizes.push([r.width, r.height]);
+    }
+  });
+  return sizes;
+}
+
+/**
+ * Used while html2canvas copies the page (copying and measuring every element is most of its
+ * cost): skip hidden things entirely, and the *contents* of off-screen blocks, which are copied
+ * empty and given their real size in sizeSkipped(), so nothing on screen moves.
+ */
+function skipWhileCopying(el) {
+  if (el.matches?.(".view:not(.is-active), dialog:not([open]), [hidden]")) return true;
+  // Contents of off-screen blocks, and of live elements (pills, the toggle) the snapshot hides anyway.
+  return Boolean(el.parentElement?.closest("[data-ink-skip], [data-ink-live]"));
+}
+
+function sizeSkipped(doc, sizes) {
+  doc.querySelectorAll("[data-ink-skip]").forEach((el) => {
+    const [w, h] = sizes[Number(el.dataset.inkSkip)] ?? [0, 0];
+    el.style.cssText += `;width:${w}px;height:${h}px;min-height:${h}px;flex:none;box-sizing:border-box`;
+  });
+}
+
 /** Snapshot the page as it would look in `theme`. Returns { theme, canvas, scale, key, ms }. */
 export async function capturePage(theme, scale, maxTextureSize) {
   const t0 = performance.now();
@@ -89,14 +128,16 @@ export async function capturePage(theme, scale, maxTextureSize) {
   const safeScale = Math.min(scale, maxTextureSize / width, maxTextureSize / height);
   const html2canvas = await loadHtml2canvas();
   const positions = markScrolled();
+  const sizes = markSkippable();
   try {
-    return await render(html2canvas, theme, safeScale, width, height, positions, key, t0);
+    return await render(html2canvas, theme, safeScale, width, height, positions, sizes, key, t0);
   } finally {
     document.querySelectorAll("[data-ink-scroll]").forEach((el) => delete el.dataset.inkScroll);
+    document.querySelectorAll("[data-ink-skip]").forEach((el) => delete el.dataset.inkSkip);
   }
 }
 
-async function render(html2canvas, theme, safeScale, width, height, positions, key, t0) {
+async function render(html2canvas, theme, safeScale, width, height, positions, sizes, key, t0) {
   const canvas = await html2canvas(document.body, {
     scale: safeScale,
     backgroundColor: BACKGROUND[theme],
@@ -110,8 +151,10 @@ async function render(html2canvas, theme, safeScale, width, height, positions, k
     windowHeight: document.documentElement.clientHeight,
     logging: false,
     useCORS: true,
+    ignoreElements: skipWhileCopying,
     onclone: (doc) => {
       doc.documentElement.dataset.theme = theme;
+      sizeSkipped(doc, sizes); // before the scroll positions: those need the final layout
       restoreScroll(doc, positions);
       // The live toggle is drawn above the overlay, so leave a hole for it in the snapshot.
       doc.querySelectorAll("[data-ink-live]").forEach((el) => {

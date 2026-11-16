@@ -166,3 +166,25 @@ def test_static_modules_served_as_javascript(settings):
     with client_for(settings, FakeLLM([])) as c:
         r = c.get("/static/js/main.js")
         assert r.status_code == 200 and "javascript" in r.headers["content-type"]
+
+
+def test_page_and_assets_are_cached_at_the_edge_but_revalidated_by_browsers(settings):
+    with client_for(settings, FakeLLM([])) as c:
+        for path in ("/", "/static/js/main.js", "/static/css/base.css"):
+            r = c.get(path)
+            assert r.status_code == 200, path
+            assert r.headers["cache-control"] == "no-cache"
+            assert r.headers["vercel-cdn-cache-control"] == "max-age=31536000"
+        assert "vercel-cdn-cache-control" not in c.get("/api/health").headers  # API answers are never cached
+
+
+def test_every_module_is_preloaded():
+    """index.html lists each JS module for modulepreload; a new module must be added there too."""
+    import re
+    from pathlib import Path
+
+    static = Path("app/web/static")
+    html = (static / "index.html").read_text(encoding="utf-8")
+    preloaded = set(re.findall(r'rel="modulepreload" href="/static/js/([^"]+)"', html))
+    modules = {p.relative_to(static / "js").as_posix() for p in (static / "js").rglob("*.js")} - {"main.js"}
+    assert modules <= preloaded, f"add to index.html: {sorted(modules - preloaded)}"

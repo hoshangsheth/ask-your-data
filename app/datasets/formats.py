@@ -16,6 +16,8 @@ Readers never touch the database and never use the uploaded file name as a path;
 get bytes. Raise UnsupportedFile / UnreadableFile with a message that is safe to show users.
 """
 
+from __future__ import annotations
+
 import csv
 import io
 import json
@@ -26,9 +28,11 @@ import zipfile
 from collections.abc import Callable
 from pathlib import Path
 
-import pandas as pd
+from app.core.lazy import lazy_module
 
-RawTables = list[tuple[str, pd.DataFrame]]
+pd = lazy_module("pandas")  # imported on first use: only uploads need it
+
+RawTables = list[tuple[str, "pd.DataFrame"]]
 
 MAX_PDF_PAGES = 50  # parsing PDFs is CPU-heavy; enough for reports, bounded for safety
 
@@ -161,10 +165,12 @@ def _read_json_lines(data: bytes, stem: str) -> RawTables:
 
 
 # ---- Columnar / statistical -----------------------------------------------------------------
-def _read_with(reader: Callable[..., pd.DataFrame], **kwargs) -> Callable[[bytes, str], RawTables]:
+def _read_with(reader: str, **kwargs) -> Callable[[bytes, str], RawTables]:
+    """A reader that calls pandas.<reader> (looked up when a file is read, not at import)."""
+
     def read(data: bytes, stem: str) -> RawTables:
         try:
-            return [(stem, reader(io.BytesIO(data), **kwargs))]
+            return [(stem, getattr(pd, reader)(io.BytesIO(data), **kwargs))]
         except Exception as e:
             raise UnreadableFile(f"could not read the file: {str(e).splitlines()[0][:200]}") from e
 
@@ -341,8 +347,8 @@ READERS: dict[str, Callable[[bytes, str], RawTables]] = {
     ".json": _read_json,
     ".jsonl": _read_json_lines,
     ".ndjson": _read_json_lines,
-    ".parquet": _read_with(pd.read_parquet),
-    ".feather": _read_with(pd.read_feather),
+    ".parquet": _read_with("read_parquet"),
+    ".feather": _read_with("read_feather"),
     ".xml": _read_xml,
     ".html": _read_html,
     ".htm": _read_html,
@@ -351,9 +357,9 @@ READERS: dict[str, Callable[[bytes, str], RawTables]] = {
     ".sqlite": _read_sqlite,
     ".sqlite3": _read_sqlite,
     ".db": _read_sqlite,
-    ".dta": _read_with(pd.read_stata),
-    ".sas7bdat": _read_with(pd.read_sas, format="sas7bdat"),
-    ".xpt": _read_with(pd.read_sas, format="xport"),
+    ".dta": _read_with("read_stata"),
+    ".sas7bdat": _read_with("read_sas", format="sas7bdat"),
+    ".xpt": _read_with("read_sas", format="xport"),
 }
 
 SUPPORTED_EXTENSIONS: tuple[str, ...] = (*READERS, ".zip")

@@ -6,12 +6,15 @@ Dataset profiling: what the model (and the user) is told about an uploaded datas
     suggest_questions(meta)     starter questions shown in the UI (heuristic, no model call)
 """
 
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-import pandas as pd
-
+from app.core.lazy import lazy_module
 from app.datasets.cleaning import CleanTable
+
+pd = lazy_module("pandas")  # imported on first use: only uploads need it
 
 MAX_ENUM_VALUES = 15  # list every value for columns with at most this many distinct values
 SAMPLE_VALUES = 3
@@ -55,7 +58,7 @@ class DatasetMeta:
         return asdict(self)
 
     @staticmethod
-    def from_dict(d: dict[str, Any]) -> "DatasetMeta":
+    def from_dict(d: dict[str, Any]) -> DatasetMeta:
         tables = [TableProfile(**{**t, "columns": [ColumnProfile(**c) for c in t["columns"]]}) for t in d["tables"]]
         return DatasetMeta(**{**d, "tables": tables})
 

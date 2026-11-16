@@ -41,6 +41,31 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MorphSVGPlugin.min.js" defer></script>
   <script type="module" src="/static/js/main.js"></script>
+  <!-- Fetch every module at once instead of discovering them one import at a time. -->
+  <link rel="modulepreload" href="/static/js/api.js">
+  <link rel="modulepreload" href="/static/js/format.js">
+  <link rel="modulepreload" href="/static/js/ink/capture.js">
+  <link rel="modulepreload" href="/static/js/ink/noise.js">
+  <link rel="modulepreload" href="/static/js/ink/program.js">
+  <link rel="modulepreload" href="/static/js/ink/shaders.js">
+  <link rel="modulepreload" href="/static/js/ink/renderer.js">
+  <link rel="modulepreload" href="/static/js/ink/themeIcon.js">
+  <link rel="modulepreload" href="/static/js/ink/transition.js">
+  <link rel="modulepreload" href="/static/js/theme.js">
+  <link rel="modulepreload" href="/static/js/charts.js">
+  <link rel="modulepreload" href="/static/js/icons.js">
+  <link rel="modulepreload" href="/static/js/toast.js">
+  <link rel="modulepreload" href="/static/js/datasets.js">
+  <link rel="modulepreload" href="/static/js/auth.js">
+  <link rel="modulepreload" href="/static/js/recent.js">
+  <link rel="modulepreload" href="/static/js/saved-charts.js">
+  <link rel="modulepreload" href="/static/js/ask.js">
+  <link rel="modulepreload" href="/static/js/dashboard.js">
+  <link rel="modulepreload" href="/static/js/data.js">
+  <link rel="modulepreload" href="/static/js/help.js">
+  <link rel="modulepreload" href="/static/js/metrics.js">
+  <link rel="modulepreload" href="/static/js/upload-popup.js">
+  <link rel="modulepreload" href="/static/js/upload.js">
 </head>
 <body>
 <div class="app">

@@ -16,9 +16,6 @@ import urllib.request
 from datetime import UTC, datetime
 from typing import Any
 
-from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.utils import get_column_letter
 from sqlalchemy import Engine, select
 
 from app.db.app_tables import questions, users
@@ -99,6 +96,10 @@ def feedback_rows(engine: Engine, limit: int = 10_000) -> list[dict[str, Any]]:
 
 
 def feedback_xlsx(rows: list[dict[str, Any]]) -> bytes:
+    from openpyxl import Workbook  # loaded on first download (keeps start-up fast)
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Feedback"

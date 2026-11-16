@@ -19,9 +19,9 @@ import os
 import threading
 from collections import OrderedDict
 from pathlib import Path
+from typing import Any
 
 from app.accounts import AccountStore
-from app.agent import SQLAgent
 from app.api.quota import QuestionQuota
 from app.api.rate_limit import RateLimiter
 from app.core.config import DATA_ROOT, Settings
@@ -67,7 +67,7 @@ class Services:
         self.datasets = DatasetService(self.store, settings.max_upload_mb)
         self._llm = llm  # injected (tests) or built from settings on first use
         self._demo_source: DataSource | None = None
-        self._agents: OrderedDict[str, SQLAgent] = OrderedDict()
+        self._agents: OrderedDict[str, Any] = OrderedDict()  # SQLAgent per dataset
         self._lock = threading.Lock()
 
     # ---- storage backends ----------------------------------------------------------------------
@@ -114,13 +114,15 @@ class Services:
         describe = getattr(llm, "describe", None)
         return describe() if describe else {"provider": "test", "sql_model": "", "summary_model": ""}
 
-    def agent(self, dataset_id: str = DEMO_ID) -> SQLAgent:
+    def agent(self, dataset_id: str = DEMO_ID):  # -> SQLAgent
         """Agent for a data source, built on first use and cached (least-recently-used eviction)."""
         with self._lock:
             if dataset_id in self._agents:
                 self._agents.move_to_end(dataset_id)
                 return self._agents[dataset_id]
             s = self.settings
+            from app.agent import SQLAgent  # LangGraph is heavy: load it on the first question
+
             agent = SQLAgent(
                 self._get_llm(),
                 self.source(dataset_id),
